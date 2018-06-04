@@ -71,9 +71,11 @@ namespace FBSEditor.Editor
         /// <param name="e">The event arguments.</param>
         internal void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
         {
+            this.layer.RemoveAllAdornments();
             foreach (ITextViewLine line in e.NewOrReformattedLines)
             {
                 this.CreateVisuals(line);
+                break;
             }
         }
 
