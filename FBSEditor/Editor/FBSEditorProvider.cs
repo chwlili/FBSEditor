@@ -17,7 +17,7 @@ namespace FBSEditor
 
         [Export]
         [Name("fbs")]
-        [BaseDefinition("code")]
+        [BaseDefinition("text")]
         internal ContentTypeDefinition contentType;
 
         [Export]

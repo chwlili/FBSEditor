@@ -16,7 +16,6 @@ namespace FBSEditor
         /// <summary>
         /// Classification type.
         /// </summary>
-        public readonly IClassificationType classificationType;
         public readonly IClassificationType keyType;
         public readonly IClassificationType nameType;
         public readonly IClassificationType commentType;
@@ -29,12 +28,11 @@ namespace FBSEditor
         /// <param name="registry">Classification registry.</param>
         internal FBSEditor(IClassificationTypeRegistryService registry)
         {
-            this.classificationType = registry.GetClassificationType("Normal");
-            this.keyType = registry.GetClassificationType("Key");
-            this.nameType = registry.GetClassificationType("Name");
-            this.commentType = registry.GetClassificationType("Comm");
-            this.errorType =  registry.GetClassificationType("ErrorToken");
-            this.stringToken = registry.GetClassificationType("StringToken");
+            this.keyType = registry.GetClassificationType("FBSKey");
+            this.nameType = registry.GetClassificationType("FBSName");
+            this.commentType = registry.GetClassificationType("FBSComment");
+            this.errorType =  registry.GetClassificationType("FBSError");
+            this.stringToken = registry.GetClassificationType("FBSString");
         }
 
         #region IClassifier
@@ -72,6 +70,13 @@ namespace FBSEditor
             var parser = new FlatbufferParser(new CommonTokenStream(lexer));
             //parser.ErrorHandler = new DefaultErrorStrategy();
 
+            var handler = new MyErrorHandler();
+            handler.editor = this;
+            handler.list = result;
+            handler.span = span;
+            parser.ErrorHandler = handler;
+
+
             var listener = new ErrorListener();
             listener.editor = this;
             listener.list = result;
@@ -93,6 +98,57 @@ namespace FBSEditor
         #endregion
     }
 
+    class MyErrorHandler : DefaultErrorStrategy
+    {
+        public SnapshotSpan span;
+        public List<ClassificationSpan> list;
+        public FBSEditor editor;
+
+        protected internal override void ReportUnwantedToken(Parser recognizer)
+        {
+            if (!InErrorRecoveryMode(recognizer))
+            {
+                var token = recognizer.CurrentToken;
+
+                list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
+            }
+            base.ReportUnwantedToken(recognizer);
+        }
+
+        protected internal override void ReportMissingToken(Parser recognizer)
+        {
+            if (!InErrorRecoveryMode(recognizer))
+            {
+                IToken current = recognizer.CurrentToken;
+                IToken lookback = ((ITokenStream)recognizer.InputStream).LT(-1);
+                if (current.Type == TokenConstants.EOF && lookback != null)
+                {
+                    current = lookback;
+
+                    var token = current;
+                    list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
+                }
+                else
+                {
+                    var token = recognizer.CurrentToken;
+                    list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
+                }
+            }
+            base.ReportMissingToken(recognizer);
+        }
+
+        protected internal override void ReportNoViableAlternative(Parser recognizer, NoViableAltException e)
+        {
+            base.ReportNoViableAlternative(recognizer, e);
+        }
+
+        protected internal override void ReportInputMismatch(Parser recognizer, InputMismatchException e)
+        {
+            base.ReportInputMismatch(recognizer, e);
+        }
+    }
+
+
     class ErrorListener : BaseErrorListener
     {
         public SnapshotSpan span;
@@ -103,9 +159,9 @@ namespace FBSEditor
         {
             base.SyntaxError(output, recognizer, offendingSymbol, line, charPositionInLine, msg, e);
 
-            IToken token = offendingSymbol;
+            //IToken token = offendingSymbol;
 
-            list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
+            //list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
         }
     }
 
@@ -272,7 +328,7 @@ namespace FBSEditor
         }
         private void MakeNameSpan(ParserRuleContext context)
         {
-            if(context!=null && context.Start!=null && context.Stop!=null)
+            if (context != null && context.Start != null && context.Stop != null && context.Stop.StopIndex >= context.Start.StartIndex)
             {
                 list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(context.Start.StartIndex, context.Stop.StopIndex - context.Start.StartIndex + 1)), editor.nameType));
             }

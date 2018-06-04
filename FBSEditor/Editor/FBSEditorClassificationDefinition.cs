@@ -13,30 +13,26 @@ namespace FBSEditor
 #pragma warning disable 169
 
         [Export(typeof(ClassificationTypeDefinition))]
-        [Name("Normal")]
-        private static ClassificationTypeDefinition normalDefinition;
-
-        [Export(typeof(ClassificationTypeDefinition))]
-        [Name("Name")]
-        private static ClassificationTypeDefinition nameDefinition;
-
-        [Export(typeof(ClassificationTypeDefinition))]
-        [Name("Key")]
+        [Name("FBSKey")]
         private static ClassificationTypeDefinition keyDefinition;
 
         [Export(typeof(ClassificationTypeDefinition))]
-        [Name("Comm")]
+        [Name("FBSName")]
+        private static ClassificationTypeDefinition nameDefinition;
+
+        [Export(typeof(ClassificationTypeDefinition))]
+        [Name("FBSComment")]
         private static ClassificationTypeDefinition commentDefinition;
 
         [Export(typeof(ClassificationTypeDefinition))]
-        [Name("ErrorToken")]
-        private static ClassificationTypeDefinition errorDefinition;
-
-        [Export(typeof(ClassificationTypeDefinition))]
-        [Name("StringToken")]
+        [Name("FBSString")]
         private static ClassificationTypeDefinition StringToken;
 
+        [Export(typeof(ClassificationTypeDefinition))]
+        [Name("FBSError")]
+        private static ClassificationTypeDefinition errorDefinition;
 
+        
 
 #pragma warning restore 169
     }
