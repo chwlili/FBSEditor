@@ -22,6 +22,8 @@ namespace FBSEditor
         public readonly IClassificationType errorType;
         public readonly IClassificationType stringToken;
 
+        public static List<SnapshotSpan> ErrorSpans = new List<SnapshotSpan>();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="FBSEditor"/> class.
         /// </summary>
@@ -64,6 +66,8 @@ namespace FBSEditor
         {
             var result = new List<ClassificationSpan>();
 
+            ErrorSpans.Clear();
+
             var aa = span.Snapshot.GetText();
                 
             var lexer = new FlatbufferLexer(new AntlrInputStream(aa));
@@ -98,6 +102,7 @@ namespace FBSEditor
         #endregion
     }
 
+
     class MyErrorHandler : DefaultErrorStrategy
     {
         public SnapshotSpan span;
@@ -110,7 +115,9 @@ namespace FBSEditor
             {
                 var token = recognizer.CurrentToken;
 
-                list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
+                //list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
+
+                FBSEditor.ErrorSpans.Add(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)));
             }
             base.ReportUnwantedToken(recognizer);
         }
@@ -126,12 +133,17 @@ namespace FBSEditor
                     current = lookback;
 
                     var token = current;
-                    list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
+                    //list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
+
+                    FBSEditor.ErrorSpans.Add(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)));
                 }
                 else
                 {
                     var token = recognizer.CurrentToken;
-                    list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
+
+                    //list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
+
+                    FBSEditor.ErrorSpans.Add(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)));
                 }
             }
             base.ReportMissingToken(recognizer);
@@ -144,6 +156,8 @@ namespace FBSEditor
 
         protected internal override void ReportInputMismatch(Parser recognizer, InputMismatchException e)
         {
+            var token = recognizer.CurrentToken;
+            FBSEditor.ErrorSpans.Add(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)));
             base.ReportInputMismatch(recognizer, e);
         }
     }

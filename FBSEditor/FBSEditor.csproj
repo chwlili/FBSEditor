@@ -244,6 +244,8 @@
     <Compile Include="Editor\FBSEditorClassificationDefinition.cs" />
     <Compile Include="Editor\FBSEditorFormat.cs" />
     <Compile Include="Editor\FBSEditorProvider.cs" />
+    <Compile Include="Editor\FBSEditorTextAdornment.cs" />
+    <Compile Include="Editor\FBSEditorTextAdornmentTextViewCreationListener.cs" />
     <Compile Include="Grammar\FlatBuffer\FlatbufferBaseListener.cs" />
     <Compile Include="Grammar\FlatBuffer\FlatbufferBaseVisitor.cs" />
     <Compile Include="Grammar\FlatBuffer\FlatbufferLexer.cs" />

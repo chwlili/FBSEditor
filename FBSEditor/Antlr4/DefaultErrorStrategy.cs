@@ -135,7 +135,7 @@ namespace Antlr4.Runtime
         {
             // if we've already reported an error and have not matched a token
             // yet successfully, don't report any errors.
-            if (InErrorRecoveryMode(recognizer))
+             if (InErrorRecoveryMode(recognizer))
             {
                 //			System.err.print("[SPURIOUS] ");
                 return;
