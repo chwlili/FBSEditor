@@ -74,12 +74,6 @@ public interface IFlatbufferVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFileIdentifier([NotNull] FlatbufferParser.FileIdentifierContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FlatbufferParser.comment"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitComment([NotNull] FlatbufferParser.CommentContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="FlatbufferParser.string"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

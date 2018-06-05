@@ -119,18 +119,6 @@ public partial class FlatbufferBaseListener : IFlatbufferListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitFileIdentifier([NotNull] FlatbufferParser.FileIdentifierContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="FlatbufferParser.comment"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterComment([NotNull] FlatbufferParser.CommentContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="FlatbufferParser.comment"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitComment([NotNull] FlatbufferParser.CommentContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="FlatbufferParser.string"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

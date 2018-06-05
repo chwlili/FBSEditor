@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Text.Classification;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using System.IO;
+using System.ComponentModel.Composition;
 
 namespace FBSEditor
 {
@@ -16,11 +17,18 @@ namespace FBSEditor
         /// <summary>
         /// Classification type.
         /// </summary>
-        public readonly IClassificationType keyType;
-        public readonly IClassificationType nameType;
-        public readonly IClassificationType commentType;
-        public readonly IClassificationType errorType;
-        public readonly IClassificationType stringToken;
+        public readonly IClassificationType FBSKey;
+        public readonly IClassificationType FBSTableName;
+        public readonly IClassificationType FBSStructName;
+        public readonly IClassificationType FBSEnumName;
+        public readonly IClassificationType FBSUnionName;
+        public readonly IClassificationType FBSRpcName;
+        public readonly IClassificationType FBSFieldName;
+        public readonly IClassificationType FBSFieldType;
+        public readonly IClassificationType FBSFieldValue;
+        public readonly IClassificationType FBSFieldMap;
+        public readonly IClassificationType FBSString;
+        public readonly IClassificationType FBSComment;
 
         public static List<SnapshotSpan> ErrorSpans = new List<SnapshotSpan>();
 
@@ -30,11 +38,19 @@ namespace FBSEditor
         /// <param name="registry">Classification registry.</param>
         internal FBSEditor(IClassificationTypeRegistryService registry)
         {
-            this.keyType = registry.GetClassificationType("FBSKey");
-            this.nameType = registry.GetClassificationType("FBSName");
-            this.commentType = registry.GetClassificationType("FBSComment");
-            this.errorType =  registry.GetClassificationType("FBSError");
-            this.stringToken = registry.GetClassificationType("FBSString");
+            this.FBSKey = registry.GetClassificationType("FBSKey");
+            this.FBSTableName = registry.GetClassificationType("FBSTableName");
+            this.FBSStructName = registry.GetClassificationType("FBSStructName");
+            this.FBSEnumName = registry.GetClassificationType("FBSEnumName");
+            this.FBSUnionName = registry.GetClassificationType("FBSUnionName");
+            this.FBSRpcName = registry.GetClassificationType("FBSRpcName");
+
+            this.FBSFieldName = registry.GetClassificationType("FBSFieldName");
+            this.FBSFieldType = registry.GetClassificationType("FBSFieldType");
+            this.FBSFieldValue = registry.GetClassificationType("FBSFieldValue");
+            this.FBSFieldMap = registry.GetClassificationType("FBSFieldMap");
+            this.FBSString = registry.GetClassificationType("FBSString");
+            this.FBSComment = registry.GetClassificationType("FBSComment");
         }
 
         #region IClassifier
@@ -53,15 +69,6 @@ namespace FBSEditor
 
 #pragma warning restore 67
 
-        /// <summary>
-        /// Gets all the <see cref="ClassificationSpan"/> objects that intersect with the given range of text.
-        /// </summary>
-        /// <remarks>
-        /// This method scans the given SnapshotSpan for potential matches for this classification.
-        /// In this instance, it classifies everything and returns each span as a new ClassificationSpan.
-        /// </remarks>
-        /// <param name="span">The span currently being classified.</param>
-        /// <returns>A list of ClassificationSpans that represent spans identified to be of this classification.</returns>
         public IList<ClassificationSpan> GetClassificationSpans(SnapshotSpan span)
         {
             var result = new List<ClassificationSpan>();
@@ -72,7 +79,6 @@ namespace FBSEditor
                 
             var lexer = new FlatbufferLexer(new AntlrInputStream(aa));
             var parser = new FlatbufferParser(new CommonTokenStream(lexer));
-            //parser.ErrorHandler = new DefaultErrorStrategy();
 
             var handler = new MyErrorHandler();
             handler.editor = this;
@@ -96,6 +102,15 @@ namespace FBSEditor
             visitor.span = span;
             root.Accept<int>(visitor);
 
+            lexer.Reset();
+            foreach (var token in lexer.GetAllTokens())
+            {
+                if (token.Type == FlatbufferLexer.COMMENT || token.Type == FlatbufferLexer.COMMENT1)
+                {
+                    result.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), FBSComment));
+                }
+            }
+
             return result;
         }
 
@@ -115,8 +130,6 @@ namespace FBSEditor
             {
                 var token = recognizer.CurrentToken;
 
-                //list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
-
                 FBSEditor.ErrorSpans.Add(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)));
             }
             base.ReportUnwantedToken(recognizer);
@@ -133,15 +146,11 @@ namespace FBSEditor
                     current = lookback;
 
                     var token = current;
-                    //list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
-
                     FBSEditor.ErrorSpans.Add(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)));
                 }
                 else
                 {
                     var token = recognizer.CurrentToken;
-
-                    //list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
 
                     FBSEditor.ErrorSpans.Add(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)));
                 }
@@ -157,7 +166,7 @@ namespace FBSEditor
         protected internal override void ReportInputMismatch(Parser recognizer, InputMismatchException e)
         {
             var token = recognizer.CurrentToken;
-            FBSEditor.ErrorSpans.Add(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)));
+            //FBSEditor.ErrorSpans.Add(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)));
             base.ReportInputMismatch(recognizer, e);
         }
     }
@@ -173,6 +182,8 @@ namespace FBSEditor
         {
             base.SyntaxError(output, recognizer, offendingSymbol, line, charPositionInLine, msg, e);
 
+            Console.Error.WriteLine(msg);
+
             //IToken token = offendingSymbol;
 
             //list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.errorType));
@@ -187,35 +198,40 @@ namespace FBSEditor
 
         public override int VisitTable([NotNull] FlatbufferParser.TableContext context)
         {
-            MakeKeySpan(context.key);
-            MakeNameSpan(context.name);
+            MakeSpan(context.key,editor.FBSKey);
+            MakeSpan(context.name,editor.FBSTableName);
             return base.VisitTable(context);
         }
 
         public override int VisitTableField([NotNull] FlatbufferParser.TableFieldContext context)
         {
-            MakeNameSpan(context.fieldType);
-            MakeNameSpan(context.fieldMap);
+            MakeSpan(context.fieldName, editor.FBSFieldName);
+            MakeSpan(context.fieldType, editor.FBSFieldType);
+            MakeSpan(context.fieldValue, editor.FBSFieldValue);
+            MakeSpan(context.fieldArrow, editor.FBSFieldMap);
+            MakeSpan(context.fieldMap, editor.FBSFieldMap);
             return base.VisitTableField(context);
         }
 
         public override int VisitStruct([NotNull] FlatbufferParser.StructContext context)
         {
-            MakeKeySpan(context.key);
-            MakeNameSpan(context.name);
+            MakeSpan(context.key, editor.FBSKey);
+            MakeSpan(context.name, editor.FBSStructName);
             return base.VisitStruct(context);
         }
 
         public override int VisitStructField([NotNull] FlatbufferParser.StructFieldContext context)
         {
-            MakeNameSpan(context.fieldType);
+            MakeSpan(context.fieldName, editor.FBSFieldName);
+            MakeSpan(context.fieldType, editor.FBSFieldType);
+            MakeSpan(context.fieldValue, editor.FBSFieldValue);
             return base.VisitStructField(context);
         }
 
         public override int VisitEnum([NotNull] FlatbufferParser.EnumContext context)
         {
-            MakeKeySpan(context.key);
-            MakeNameSpan(context.name);
+            MakeSpan(context.key, editor.FBSKey);
+            MakeSpan(context.name, editor.FBSEnumName);
             return base.VisitEnum(context);
         }
 
@@ -226,8 +242,8 @@ namespace FBSEditor
 
         public override int VisitUnion([NotNull] FlatbufferParser.UnionContext context)
         {
-            MakeKeySpan(context.key);
-            MakeNameSpan(context.name);
+            MakeSpan(context.key, editor.FBSKey);
+            MakeSpan(context.name, editor.FBSUnionName);
             return base.VisitUnion(context);
         }
 
@@ -238,120 +254,93 @@ namespace FBSEditor
 
         public override int VisitRpc([NotNull] FlatbufferParser.RpcContext context)
         {
-            MakeKeySpan(context.key);
-            MakeNameSpan(context.name);
+            MakeSpan(context.key, editor.FBSKey);
+            MakeSpan(context.name, editor.FBSRpcName);
             return base.VisitRpc(context);
         }
 
         public override int VisitRpcField([NotNull] FlatbufferParser.RpcFieldContext context)
         {
-            MakeNameSpan(context.fieldName);
-            MakeNameSpan(context.fieldParam);
-            MakeNameSpan(context.fieldReturn);
+            MakeSpan(context.fieldName, editor.FBSFieldName);
+            MakeSpan(context.fieldParam, editor.FBSFieldType);
+            MakeSpan(context.fieldReturn, editor.FBSFieldType);
             return base.VisitRpcField(context);
         }
 
-
         public override int VisitInclude([NotNull] FlatbufferParser.IncludeContext context)
         {
-            MakeKeySpan(context.key);
+            MakeSpan(context.key, editor.FBSKey);
             return base.VisitInclude(context);
         }
         public override int VisitNamespace([NotNull] FlatbufferParser.NamespaceContext context)
         {
-            MakeKeySpan(context.key);
+            MakeSpan(context.key, editor.FBSKey);
             return base.VisitNamespace(context);
         }
         public override int VisitAttribute([NotNull] FlatbufferParser.AttributeContext context)
         {
-            MakeKeySpan(context.key);
+            MakeSpan(context.key, editor.FBSKey);
             return base.VisitAttribute(context);
         }
         public override int VisitRootType([NotNull] FlatbufferParser.RootTypeContext context)
         {
-            MakeKeySpan(context.key);
+            MakeSpan(context.key, editor.FBSKey);
             return base.VisitRootType(context);
         }
         public override int VisitFileExtension([NotNull] FlatbufferParser.FileExtensionContext context)
         {
-            MakeKeySpan(context.key);
+            MakeSpan(context.key, editor.FBSKey);
             return base.VisitFileExtension(context);
         }
         public override int VisitFileIdentifier([NotNull] FlatbufferParser.FileIdentifierContext context)
         {
-            MakeKeySpan(context.key);
+            MakeSpan(context.key, editor.FBSKey);
             return base.VisitFileIdentifier(context);
-        }
-
-
-
-        public override int VisitComment([NotNull] FlatbufferParser.CommentContext context)
-        {
-            IToken token = context.text;
-            if (token != null)
-            {
-                list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.commentType));
-            }
-            return base.VisitComment(context);
-        }
-
-        public override int VisitString([NotNull] FlatbufferParser.StringContext context)
-        {
-            MakeStringSpan(context.text);
-
-            return base.VisitString(context);
         }
 
         public override int VisitBindMeta([NotNull] FlatbufferParser.BindMetaContext context)
         {
-            MakeNameSpan(context.key);
+            MakeSpan(context.key, editor.FBSKey);
             return base.VisitBindMeta(context);
         }
 
         public override int VisitIndexMeta([NotNull] FlatbufferParser.IndexMetaContext context)
         {
-            MakeNameSpan(context.key);
-
+            MakeSpan(context.key, editor.FBSKey);
             return base.VisitIndexMeta(context);
         }
 
         public override int VisitNullableMeta([NotNull] FlatbufferParser.NullableMetaContext context)
         {
-            MakeNameSpan(context.key);
+            MakeSpan(context.key, editor.FBSKey);
             return base.VisitNullableMeta(context);
         }
 
         public override int VisitReferenceMeta([NotNull] FlatbufferParser.ReferenceMetaContext context)
         {
-            MakeNameSpan(context.key);
+            MakeSpan(context.key, editor.FBSKey);
             return base.VisitReferenceMeta(context);
         }
 
-
-
-        private void MakeKeySpan(IToken token)
+        public override int VisitString([NotNull] FlatbufferParser.StringContext context)
         {
-            if (token == null) { return; }
-            list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.keyType));
+            MakeSpan(context.text, editor.FBSString);
+            return base.VisitString(context);
         }
 
-        private void MakeNameSpan(IToken token)
+
+
+        private void MakeSpan(IToken token, IClassificationType classification)
         {
-            if (token == null) { return; }
-            list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.nameType));
+            if (token == null || token.TokenIndex < 0) { return; }
+            list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), classification));
         }
-        private void MakeNameSpan(ParserRuleContext context)
+        private void MakeSpan(ParserRuleContext context, IClassificationType classification)
         {
             if (context != null && context.Start != null && context.Stop != null && context.Stop.StopIndex >= context.Start.StartIndex)
             {
-                list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(context.Start.StartIndex, context.Stop.StopIndex - context.Start.StartIndex + 1)), editor.nameType));
+                list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(context.Start.StartIndex, context.Stop.StopIndex - context.Start.StartIndex + 1)), classification));
             }
-        }
-
-        private void MakeStringSpan(IToken token)
-        {
-            if (token == null) { return; }
-            list.Add(new ClassificationSpan(new SnapshotSpan(span.Snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), editor.stringToken));
         }
 
     }

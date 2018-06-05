@@ -101,16 +101,6 @@ public interface IFlatbufferListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitFileIdentifier([NotNull] FlatbufferParser.FileIdentifierContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="FlatbufferParser.comment"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterComment([NotNull] FlatbufferParser.CommentContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="FlatbufferParser.comment"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitComment([NotNull] FlatbufferParser.CommentContext context);
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="FlatbufferParser.string"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

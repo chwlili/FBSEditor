@@ -1,6 +1,6 @@
 grammar Flatbuffer;
 
-schema : ( include | namespace | attribute | rootType | fileExtension | fileIdentifier | table | struct | enum | union | rpc | objectValue | comment)* ;
+schema : ( include | namespace | attribute | rootType | fileExtension | fileIdentifier | table | struct | enum | union | rpc | objectValue)* ;
 
 include : key = 'include' STRING ';'? ;
 
@@ -15,30 +15,28 @@ fileExtension : key = 'file_extension' STRING  ';'? ;
 fileIdentifier : key = 'file_identifier' STRING ';'? ;
 
 
-comment : text = COMMENT;
-
 string : text = STRING;
 
 metas : (bindMeta | indexMeta | nullableMeta | referenceMeta)*;
-bindMeta : '[' key='Bind' '(' path = string ')' ']' comment* ;
-indexMeta : '[' key='Index' '(' (fields += IDENT (',' fields += IDENT)*)? ')' ']' comment* ;
-nullableMeta : '[' key='Nullable' ('(' val = BOOL? ')')? ']' comment* ;
-referenceMeta : '[' key='Reference' '(' path = string ')' ']' comment* ;
+bindMeta : '[' key='Bind' '(' path = string ')' ']' ;
+indexMeta : '[' key='Index' '(' (fields += IDENT (',' fields += IDENT)*)? ')' ']'  ;
+nullableMeta : '[' key='Nullable' ('(' val = BOOL? ')')? ']'  ;
+referenceMeta : '[' key='Reference' '(' path = string ')' ']'  ;
 
-table : comment*  meta = metas key = 'table' name = IDENT metadata? '{' tableField* '}' ;
-tableField : comment*  meta = metas fieldName = IDENT ':' fieldType = type ('=' fieldValue = scalarValue)? metadata? ('=>' fieldMap = IDENT)? ';'? ;
+table : meta = metas key = 'table' name = IDENT metadata? '{' tableField* '}' ;
+tableField : meta = metas fieldName = IDENT ':' fieldType = type ('=' fieldValue = scalarValue)? metadata? (fieldArrow = '=>' fieldMap = IDENT)? ';'? ;
 
-struct : comment*  meta = metas key = 'struct' name = IDENT metadata? '{' structField* '}' ;
-structField : comment*  meta = metas fieldName = IDENT ':' fieldType = type ('=' fieldValue = scalarValue)? metadata? ';'? ;
+struct : meta = metas key = 'struct' name = IDENT metadata? '{' structField* '}' ;
+structField : meta = metas fieldName = IDENT ':' fieldType = type ('=' fieldValue = scalarValue)? metadata? ';'? ;
 
-rpc : comment*  meta = metas key = 'rpc_service' name = IDENT '{' rpcField* '}' ;
-rpcField : comment*  meta = metas fieldName = IDENT '(' fieldParam = IDENT ')' ':' fieldReturn = IDENT metadata? ';'? ;
+rpc : meta = metas key = 'rpc_service' name = IDENT '{' rpcField* '}' ;
+rpcField : meta = metas fieldName = IDENT '(' fieldParam = IDENT ')' ':' fieldReturn = IDENT metadata? ';'? ;
 
-enum : comment*  meta = metas key = 'enum' name = IDENT (':' type)?  metadata? '{' enumField* '}' ;
-enumField : comment*  meta = metas fieldName = IDENT ('=' fieldValue = INTEGER)? ','?;
+enum : meta = metas key = 'enum' name = IDENT (':' type)?  metadata? '{' enumField* '}' ;
+enumField : meta = metas fieldName = IDENT ('=' fieldValue = INTEGER)? ','?;
 
-union : comment*  meta = metas key = 'union' name = IDENT metadata? '{' unionField* '}' ;
-unionField : comment*  meta = metas fieldName = IDENT ('=' fieldValue = INTEGER)? ','?;
+union : meta = metas key = 'union' name = IDENT metadata? '{' unionField* '}' ;
+unionField : meta = metas fieldName = IDENT ('=' fieldValue = INTEGER)? ','?;
 
 metadata : '(' (metadataField (',' metadataField)*)? ')' ;
 metadataField : IDENT (':' singleValue)? ;
@@ -68,8 +66,10 @@ BOOL : ('true' | 'false') ;
 
 STRING : '"' .*? '"' ;
 
-COMMENT : '//' ~[\r\n]* '\r'? '\n';
+IDENT : [a-zA-Z_][a-zA-Z0-9_]*;
 
-IDENT : [a-zA-Z_][a-zA-Z0-9_]* ;
+COMMENT : '//' ~[\r\n]* '\r'? '\n' -> channel(HIDDEN) ;
+COMMENT1 : '/*' .*? '*/' -> channel(HIDDEN) ;
+//COMMENT2 : '//' .*? EOF -> skip;
 
 WS : [ \t\r\n]+ -> skip ;
