@@ -194,4 +194,17 @@ namespace FBSEditor
         }
     }
 
+    [Export(typeof(EditorFormatDefinition))]
+    [ClassificationType(ClassificationTypeNames = "FBSBraceMatching")]
+    [Name("FBSBraceMatching")]
+    [UserVisible(true)]
+    [Order(Before = Priority.High)]
+    internal sealed class BraceMatchingFormat : ClassificationFormatDefinition
+    {
+        public BraceMatchingFormat()
+        {
+            this.DisplayName = "FBS括号区配";
+            this.BackgroundColor = Color.FromRgb(203, 203, 203);
+        }
+    }
 }

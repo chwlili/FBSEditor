@@ -240,12 +240,16 @@
     <Compile Include="Antlr4\UnbufferedCharStream.cs" />
     <Compile Include="Antlr4\UnbufferedTokenStream.cs" />
     <Compile Include="Antlr4\Vocabulary.cs" />
-    <Compile Include="Editor\FBSEditor.cs" />
-    <Compile Include="Editor\FBSEditorClassificationDefinition.cs" />
+    <Compile Include="Editor\Constants.cs" />
+    <Compile Include="Editor\FBSBraceCompletion.cs" />
+    <Compile Include="Editor\FBSBraceMatching.cs" />
+    <Compile Include="Editor\FBSClassification.cs" />
+    <Compile Include="Editor\FBSClassificationDefinition.cs" />
+    <Compile Include="Editor\FBSCompletion.cs" />
     <Compile Include="Editor\FBSEditorFormat.cs" />
-    <Compile Include="Editor\FBSEditorProvider.cs" />
-    <Compile Include="Editor\FBSEditorTextAdornment.cs" />
-    <Compile Include="Editor\FBSEditorTextAdornmentTextViewCreationListener.cs" />
+    <Compile Include="Editor\FBSQuickInfo.cs" />
+    <Compile Include="Editor\FBSTextAdornment.cs" />
+    <Compile Include="Editor\FBSOutline.cs" />
     <Compile Include="Grammar\FlatBuffer\FlatbufferBaseListener.cs" />
     <Compile Include="Grammar\FlatBuffer\FlatbufferBaseVisitor.cs" />
     <Compile Include="Grammar\FlatBuffer\FlatbufferLexer.cs" />
@@ -294,6 +298,11 @@
       <HintPath>..\packages\Microsoft.VisualStudio.CoreUtility.15.0.26201\lib\net45\Microsoft.VisualStudio.CoreUtility.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.VisualStudio.Editor, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.Language, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.Language.Intellisense, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.OLE.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.Shell.15.0, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.Text.Data, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.VisualStudio.Text.Data.15.0.26201\lib\net45\Microsoft.VisualStudio.Text.Data.dll</HintPath>
       <Private>True</Private>
@@ -302,14 +311,13 @@
       <HintPath>..\packages\Microsoft.VisualStudio.Text.Logic.15.0.26201\lib\net45\Microsoft.VisualStudio.Text.Logic.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.Text.UI, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.VisualStudio.Text.UI.15.0.26201\lib\net45\Microsoft.VisualStudio.Text.UI.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Text.UI, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.Text.UI.Wpf, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.VisualStudio.Text.UI.Wpf.15.0.26201\lib\net45\Microsoft.VisualStudio.Text.UI.Wpf.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.VisualStudio.TextManager.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.Workspace, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
@@ -322,6 +330,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
