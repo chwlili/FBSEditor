@@ -65,6 +65,7 @@ namespace FBSEditor
         public List<ClassificationSpan> ClassfificationList { get; } = new List<ClassificationSpan>();
         public Dictionary<int, string> CommentTable { get; } = new Dictionary<int, String>();
         public List<QuickInfoData> QuickInfoList { get; } = new List<QuickInfoData>();
+        public List<string> StructNameList { get; } = new List<string>();
         public List<SnapshotSpan> ErrorList { get; } = new List<SnapshotSpan>();
 
         public event EventHandler<ClassificationChangedEventArgs> ClassificationChanged;
@@ -109,11 +110,12 @@ namespace FBSEditor
 
         private void RebuidTokens()
         {
+            CommentTable.Clear();
+            ClassfificationList.Clear();
+            QuickInfoList.Clear();
+            StructNameList.Clear();
             BracePairList.Clear();
             OutlineList.Clear();
-            ClassfificationList.Clear();
-            CommentTable.Clear();
-            QuickInfoList.Clear();
             ErrorList.Clear();
 
             var snapshot = this.Buffer.CurrentSnapshot;
@@ -266,6 +268,7 @@ namespace FBSEditor
             MakeQuickInfo(context, context.name);
             MakeBracePair(context.BRACE_L(), context.BRACE_R());
             MakeOutline(context.name, context.Stop);
+            MakeStructName(context.name);
             return base.VisitTable(context);
         }
 
@@ -287,6 +290,7 @@ namespace FBSEditor
             MakeQuickInfo(context, context.name);
             MakeBracePair(context.BRACE_L(), context.BRACE_R());
             MakeOutline(context.name, context.Stop);
+            MakeStructName(context.name);
             return base.VisitStruct(context);
         }
 
@@ -306,6 +310,7 @@ namespace FBSEditor
             MakeQuickInfo(context, context.name);
             MakeBracePair(context.BRACE_L(), context.BRACE_R());
             MakeOutline(context.name, context.Stop);
+            MakeStructName(context.name);
             return base.VisitEnum(context);
         }
 
@@ -322,6 +327,7 @@ namespace FBSEditor
             MakeQuickInfo(context, context.name);
             MakeBracePair(context.BRACE_L(), context.BRACE_R());
             MakeOutline(context.name, context.Stop);
+            MakeStructName(context.name);
             return base.VisitUnion(context);
         }
 
@@ -472,6 +478,13 @@ namespace FBSEditor
                 }
                 startLine--;
                 if (startLine < stopLine) { break; }
+            }
+        }
+        private void MakeStructName(IToken token)
+        {
+            if(token!=null)
+            {
+                classificater.StructNameList.Add(token.Text);
             }
         }
         private void MakeOutline(IToken l, IToken r)

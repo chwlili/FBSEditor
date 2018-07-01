@@ -28,10 +28,29 @@ namespace FBSEditor
             this.sourceProvider = completonSourceProvider;
             this.textBuffer = textBuffer;
         }
+
+        private List<string> GetStructNameList()
+        {
+            var key = typeof(FBSClassification);
+            if (textBuffer.Properties.ContainsProperty(key))
+            {
+                var classification = textBuffer.Properties.GetProperty<FBSClassification>(key);
+                if (classification != null)
+                {
+                    return classification.StructNameList;
+                }
+            }
+            return null;
+        }
+
         public void AugmentCompletionSession(ICompletionSession session, IList<CompletionSet> completionSets)
         {
             List<Completion> completionList = new List<Completion>();
             foreach (var item in Constants.FBSLangTypes)
+            {
+                completionList.Add(new Completion(item, item, item, null, null));
+            }
+            foreach(var item in GetStructNameList())
             {
                 completionList.Add(new Completion(item, item, item, null, null));
             }
@@ -154,7 +173,7 @@ namespace FBSEditor
                         completionSession.Dismissed += OnCompletionSessionDismissed;
                         completionSession.Start();
 
-                        //if (completionSession != null) { completionSession.Filter(); }
+                        if (completionSession != null) { completionSession.Filter(); }
                         return VSConstants.S_OK;
                     }
                 }
