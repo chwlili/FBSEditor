@@ -23,7 +23,7 @@ namespace FBSEditor
             this.textBuffer = textBuffer;
         }
 
-        private List<CommentData> GetTipList()
+        private List<QuickInfoData> GetTipList()
         {
             var key = typeof(FBSClassification);
             if (textBuffer.Properties.ContainsProperty(key))
@@ -31,7 +31,7 @@ namespace FBSEditor
                 var classification = textBuffer.Properties.GetProperty<FBSClassification>(key);
                 if (classification != null)
                 {
-                    return classification.CommentTipList;
+                    return classification.QuickInfoList;
                 }
             }
             return null;
@@ -39,7 +39,7 @@ namespace FBSEditor
 
         public Task<QuickInfoItem> GetQuickInfoItemAsync(IAsyncQuickInfoSession session, CancellationToken cancellationToken)
         {
-            CommentData comment = null;
+            QuickInfoData comment = null;
 
             SnapshotPoint? triggerPoint = session.GetTriggerPoint(textBuffer.CurrentSnapshot);
             if(triggerPoint.HasValue)
@@ -48,7 +48,7 @@ namespace FBSEditor
                 var position = triggerPoint.Value.Position;
                 foreach (var tip in tips)
                 {
-                    if (position >= tip.start || position <= tip.stop)
+                    if (position >= tip.start && position <= tip.stop)
                     {
                         comment = tip;
                         break;

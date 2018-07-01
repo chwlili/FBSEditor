@@ -55,7 +55,7 @@ namespace FBSEditor
                 var classification = textBuffer.Properties.GetProperty<FBSClassification>(key);
                 if (classification != null)
                 {
-                    return classification.BraceList;
+                    return classification.BracePairList;
                 }
             }
             return null;
