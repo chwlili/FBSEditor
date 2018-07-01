@@ -84,6 +84,8 @@ namespace FBSEditor
         private IOleCommandTarget nextCommandHandler;
         private ICompletionSession completionSession;
         private bool checking;
+        private int checkPosition;
+        private int startPosition;
 
         public FBSCompletionCommandHandlder(IVsTextView textViewAdapter, ITextView textView, FBSCompletionHandlerPrvider handlerProvider)
         {
@@ -126,33 +128,82 @@ namespace FBSEditor
 
             int returnValue = nextCommandHandler.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
 
-            if (typedChar == ':')
+            if (typedChar == ':' && (completionSession == null || completionSession.IsDismissed))
             {
-                checking = true;
-            }
-            else if(checking && !typedChar.Equals(char.MinValue) && typedChar !=' ' && typedChar != '\t' && typedChar!='\r' && typedChar!='\n')
-            {
-                checking = false;
-                if (completionSession != null) { completionSession.Dismiss(); }
-
                 SnapshotPoint? caretPoint = textView.Caret.Position.Point.GetPoint(textBuffer => !textBuffer.ContentType.IsOfType("projection"), PositionAffinity.Predecessor);
                 if (caretPoint.HasValue)
                 {
-                    completionSession = completionHandlerProvider.CompletionBroker.CreateCompletionSession(textView, caretPoint.Value.Snapshot.CreateTrackingPoint(caretPoint.Value.Position + 1, PointTrackingMode.Positive), false);
-                    completionSession.Dismissed += OnCompletionSessionDismissed;
-                    completionSession.Start();
-
-                    //if (completionSession != null) { completionSession.Filter(); }
+                    checking = true;
+                    checkPosition = caretPoint.Value.Position;
+                    startPosition = -1;
                 }
-                return VSConstants.S_OK;
+            }
+            else if(checking)
+            {
+                if (!typedChar.Equals(char.MinValue) && typedChar != ' ' && typedChar != '\t' && typedChar != '\r' && typedChar != '\n' && typedChar!='[')
+                {
+                    if (completionSession != null) { completionSession.Dismiss(); }
+
+                    SnapshotPoint? caretPoint = textView.Caret.Position.Point.GetPoint(textBuffer => !textBuffer.ContentType.IsOfType("projection"), PositionAffinity.Predecessor);
+                    if (caretPoint.HasValue && caretPoint.Value.Position > checkPosition)
+                    {
+                        checking = false;
+                        startPosition = caretPoint.Value.Position;
+
+                        completionSession = completionHandlerProvider.CompletionBroker.CreateCompletionSession(textView, caretPoint.Value.Snapshot.CreateTrackingPoint(caretPoint.Value.Position + 1, PointTrackingMode.Positive), false);
+                        completionSession.Dismissed += OnCompletionSessionDismissed;
+                        completionSession.Start();
+
+                        //if (completionSession != null) { completionSession.Filter(); }
+                        return VSConstants.S_OK;
+                    }
+                }
+            }
+            else if(cmdID == (uint)VSConstants.VSStd2KCmdID.BACKSPACE || cmdID == (uint)VSConstants.VSStd2KCmdID.DELETE)
+            {
+                if (completionSession != null && !completionSession.IsDismissed)
+                {
+                    SnapshotPoint? caretPoint = textView.Caret.Position.Point.GetPoint(textBuffer => !textBuffer.ContentType.IsOfType("projection"), PositionAffinity.Predecessor);
+                    if (caretPoint.HasValue)
+                    {
+                        if (caretPoint.Value.Position < checkPosition)
+                        {
+                            completionSession.Dismiss();
+                            checking = false;
+                            checkPosition = -1;
+                            startPosition = -1;
+                        }
+                        else if (caretPoint.Value.Position < startPosition)
+                        {
+                            completionSession.Dismiss();
+                            checking = checkPosition != -1;
+                            startPosition = -1;
+                        }
+                        else
+                        {
+                            completionSession.Filter();
+                        }
+                        return VSConstants.S_OK;
+                    }
+                }
+                else
+                {
+                    SnapshotPoint? caretPoint = textView.Caret.Position.Point.GetPoint(textBuffer => !textBuffer.ContentType.IsOfType("projection"), PositionAffinity.Predecessor);
+                    if (caretPoint.HasValue && caretPoint.Value.Position <= checkPosition)
+                    {
+                        checking = false;
+                        checkPosition = -1;
+                        startPosition = -1;
+                    }
+                }
             }
             else if(completionSession != null && !completionSession.IsDismissed)
             {
-                if(typedChar == '=' || typedChar==';' || typedChar=='(' || cmdID =='\n' || cmdID=='\r')
+                if (!typedChar.Equals(char.MinValue) && (typedChar == '=' || typedChar == ';' || typedChar == '(' || cmdID == '\n' || cmdID == '\r' || cmdID==']'))
                 {
                     completionSession.Dismiss();
                 }
-                if (!typedChar.Equals(char.MinValue) || cmdID == (uint)VSConstants.VSStd2KCmdID.BACKSPACE || cmdID == (uint)VSConstants.VSStd2KCmdID.DELETE)
+                else
                 {
                     completionSession.Filter();
                 }
