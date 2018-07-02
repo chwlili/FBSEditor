@@ -484,7 +484,10 @@ namespace FBSEditor
         {
             if(token!=null)
             {
-                classificater.StructNameList.Add(token.Text);
+                if(!classificater.StructNameList.Contains(token.Text))
+                {
+                    classificater.StructNameList.Add(token.Text);
+                }
             }
         }
         private void MakeOutline(IToken l, IToken r)

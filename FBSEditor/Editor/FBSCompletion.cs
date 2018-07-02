@@ -12,6 +12,13 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
+using System.Windows.Media.Imaging;
+using System.Windows.Media;
+using System.IO;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Windows.Interop;
+using System.Windows;
 
 namespace FBSEditor
 {
@@ -23,10 +30,16 @@ namespace FBSEditor
         private FBSCompletionSourceProvider sourceProvider;
         private ITextBuffer textBuffer;
 
+        private BitmapSource fbsTypeIcon;
+        private BitmapSource userTypeIcon;
+
         public FBSCompletionSource(FBSCompletionSourceProvider completonSourceProvider, ITextBuffer textBuffer)
         {
             this.sourceProvider = completonSourceProvider;
             this.textBuffer = textBuffer;
+
+            fbsTypeIcon = Imaging.CreateBitmapSourceFromHBitmap(Properties.Resources.FbsTypeIcon.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+            userTypeIcon = Imaging.CreateBitmapSourceFromHBitmap(Properties.Resources.UserTypeIcon.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
         }
 
         private List<string> GetStructNameList()
@@ -45,14 +58,15 @@ namespace FBSEditor
 
         public void AugmentCompletionSession(ICompletionSession session, IList<CompletionSet> completionSets)
         {
+
             List<Completion> completionList = new List<Completion>();
             foreach (var item in Constants.FBSLangTypes)
             {
-                completionList.Add(new Completion(item, item, item, null, null));
+                completionList.Add(new Completion(item, item, item, fbsTypeIcon, null));
             }
             foreach(var item in GetStructNameList())
             {
-                completionList.Add(new Completion(item, item, item, null, null));
+                completionList.Add(new Completion(item, item, item, userTypeIcon, null));
             }
             completionSets.Add(new CompletionSet("", "", FindTokenSpanAtPosition(session.GetTriggerPoint(this.textBuffer), session), completionList, null));
         }
@@ -218,15 +232,22 @@ namespace FBSEditor
             }
             else if(completionSession != null && !completionSession.IsDismissed)
             {
-                if (!typedChar.Equals(char.MinValue) && (typedChar == '=' || typedChar == ';' || typedChar == '(' || cmdID == '\n' || cmdID == '\r' || cmdID==']'))
+                if (!typedChar.Equals(char.MinValue))
+                {
+                    if ((typedChar == '=' || typedChar == ';' || typedChar == '(' || cmdID == '\n' || cmdID == '\r' || cmdID == ']'))
+                    {
+                        completionSession.Dismiss();
+                    }
+                    else
+                    {
+                        completionSession.Filter();
+                    }
+                    return VSConstants.S_OK;
+                }
+                else if (nCmdID == (uint)VSConstants.VSStd2KCmdID.LEFT || nCmdID == (uint)VSConstants.VSStd2KCmdID.RIGHT)
                 {
                     completionSession.Dismiss();
                 }
-                else
-                {
-                    completionSession.Filter();
-                }
-                return VSConstants.S_OK;
             }
 
             return returnValue;
