@@ -1,39 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Antlr4.Runtime;
+using Antlr4.Runtime.Misc;
 using EnvDTE;
-using System.IO;
-using Antlr4.Runtime;
-using Antlr4.Runtime.Misc;
-using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Classification;
-using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.IO;
-using Antlr4.Runtime;
-using Antlr4.Runtime.Misc;
-using Antlr4.Runtime.Tree;
-using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Text.Tagging;
-using Microsoft.VisualStudio.Utilities;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.Composition;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace FBSEditor.Build
 {
     public class FBSBuilder
     {
+        private BuildCommandPackage pack;
         private Project project;
         private string[] paths;
 
-        public FBSBuilder(Project project, string[] paths)
+        public FBSBuilder(BuildCommandPackage pack, Project project, string[] paths)
         {
+            this.pack = pack;
             this.project = project;
             this.paths = paths;
         }
@@ -50,7 +34,9 @@ namespace FBSEditor.Build
 
                     var lexer = new FlatbufferLexer(new AntlrInputStream(text));
                     var parser = new FlatbufferParser(new CommonTokenStream(lexer));
-                    var visitor = new Visitor();
+                    var visitor = new Visitor(pack);
+                    visitor.file.Path = path;
+                    visitor.project = project;
 
                     parser.schema().Accept<int>(visitor);
 
@@ -59,13 +45,18 @@ namespace FBSEditor.Build
                     files.Add(file);
                 }
             }
-
-            Console.WriteLine(files.Count);
         }
 
         class Visitor : FlatbufferBaseVisitor<int>
         {
+            public BuildCommandPackage pack;
+            public Project project;
             public FBSFile file = new FBSFile();
+
+            public Visitor(BuildCommandPackage pack)
+            {
+                this.pack = pack;
+            }
 
             public override int VisitNamespace([NotNull] FlatbufferParser.NamespaceContext context)
             {
@@ -101,6 +92,33 @@ namespace FBSEditor.Build
 
                         table.Fields.Add(field);
                     }
+                }
+
+                if (file.HasDefine(table.Name))
+                {
+                    var ivsSolution = (IVsSolution)Package.GetGlobalService(typeof(IVsSolution));
+                    IVsHierarchy hierarchyItem;
+                    ivsSolution.GetProjectOfUniqueName(project.FileName, out hierarchyItem);
+
+                    var error = new ErrorTask();
+                    error.Line = context.name.Line-1;
+                    error.Column = context.name.Column;
+                    error.Text = "name exits!";
+                    error.ErrorCategory = TaskErrorCategory.Error;
+                    error.Category = TaskCategory.BuildCompile;
+                    error.Document = file.Path;
+                    error.HierarchyItem = hierarchyItem;
+
+                    error.Navigate += (sender, e) =>
+                    {
+                        //there are two Bugs in the errorListProvider.Navigate method:
+                        // Line number needs adjusting
+                        // Column is not shown
+                        error.Line++;
+                        pack.ErrorList.Navigate(error, new Guid(EnvDTE.Constants.vsViewKindCode));
+                        error.Line--;
+                    };
+                    pack.ErrorList.Tasks.Add(error);
                 }
 
                 file.Tables.Add(table);

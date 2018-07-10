@@ -29,6 +29,8 @@ namespace FBSEditor
         public const string OutputPanelGuidString = "FAF9C7D3-FD49-4CBC-9F2B-8E1CBADA4299";
         public Guid OutputPanelGuid = new Guid(OutputPanelGuidString);
 
+        public ErrorListProvider ErrorList;
+
         public BuildCommandPackage()
         {
         }
@@ -38,6 +40,8 @@ namespace FBSEditor
         protected override void Initialize()
         {
             BuildCommand.Initialize(this);
+
+            ErrorList = new ErrorListProvider(this);
 
             var dte = ServiceProvider.GlobalProvider.GetService(typeof(DTE)) as DTE;
             
@@ -53,9 +57,11 @@ namespace FBSEditor
             var dte = ServiceProvider.GlobalProvider.GetService(typeof(DTE)) as DTE;
             var panel = ServiceProvider.GlobalProvider.GetService(typeof(IVsOutputWindow)) as IVsOutputWindow;
 
+            //var provider = ServiceProvider.GlobalProvider.GetService(typeof(ModelingErrorListProvider)) as ModelingErrorListProvider; 
+
             IVsOutputWindowPane aa = null;
             panel.GetPane(VSConstants.OutputWindowPaneGuid.BuildOutputPane_guid,out aa);
-            aa.OutputString(".............................");
+            aa.OutputString(".............................\n");
 
 
             var edition = dte.Edition;
@@ -125,8 +131,12 @@ namespace FBSEditor
                 names.Add(first.Name);
             }
 
-            var builder = new Build.FBSBuilder(project, paths.ToArray());
+            ErrorList.Tasks.Clear();
+
+            var builder = new Build.FBSBuilder(this, project, paths.ToArray());
             builder.Build();
+
+            ErrorList.Show();
         }
 
         #endregion
