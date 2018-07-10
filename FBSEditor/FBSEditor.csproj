@@ -249,9 +249,13 @@
     <Compile Include="Antlr4\Vocabulary.cs" />
     <Compile Include="BuildCommand.cs" />
     <Compile Include="BuildCommandPackage.cs" />
+    <Compile Include="Build\Enum.cs" />
+    <Compile Include="Build\EnumField.cs" />
     <Compile Include="Build\FBSBuilder.cs" />
     <Compile Include="Build\FBSFile.cs" />
     <Compile Include="Build\Meta.cs" />
+    <Compile Include="Build\Struct.cs" />
+    <Compile Include="Build\StructField.cs" />
     <Compile Include="Build\Table.cs" />
     <Compile Include="Build\TableField.cs" />
     <Compile Include="Editor\Constants.cs" />

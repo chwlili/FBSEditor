@@ -29,40 +29,76 @@ namespace FBSEditor
         public const string OutputPanelGuidString = "FAF9C7D3-FD49-4CBC-9F2B-8E1CBADA4299";
         public Guid OutputPanelGuid = new Guid(OutputPanelGuidString);
 
-        public ErrorListProvider ErrorList;
-
-        public BuildCommandPackage()
-        {
-        }
-
-        #region Package Members
+        private DTE dte;
+        private ErrorListProvider ErrorList;
+        private IVsOutputWindow outputWindow;
 
         protected override void Initialize()
         {
             BuildCommand.Initialize(this);
 
+            dte = ServiceProvider.GlobalProvider.GetService(typeof(DTE)) as DTE;
+            dte.Events.BuildEvents.OnBuildBegin += BuildEvents_OnBuildBegin;
+
             ErrorList = new ErrorListProvider(this);
 
-            var dte = ServiceProvider.GlobalProvider.GetService(typeof(DTE)) as DTE;
-            
-            dte.Events.BuildEvents.OnBuildBegin += BuildEvents_OnBuildBegin;
+            outputWindow = ServiceProvider.GlobalProvider.GetService(typeof(IVsOutputWindow)) as IVsOutputWindow;
 
             base.Initialize();
         }
 
+        #region 输出面板管理
+
+        public void Output(string text)
+        {
+            IVsOutputWindowPane outputPanel = null;
+            outputWindow.GetPane(VSConstants.OutputWindowPaneGuid.BuildOutputPane_guid, out outputPanel);
+            outputPanel.OutputString(text + "\n");
+        }
+
+        #endregion
+
+        #region 错误列表管理
+
+        public void ClearError()
+        {
+            ErrorList.Tasks.Clear();
+        }
+
+        public void AddError(string projectFileName,string filePath,string text,int line,int column)
+        {
+            var ivsSolution = (IVsSolution)Package.GetGlobalService(typeof(IVsSolution));
+            IVsHierarchy hierarchyItem;
+            ivsSolution.GetProjectOfUniqueName(projectFileName, out hierarchyItem);
+
+            var error = new ErrorTask();
+            error.Line = line - 1;
+            error.Column = column;
+            error.Text = text;
+            error.ErrorCategory = TaskErrorCategory.Error;
+            error.Category = TaskCategory.BuildCompile;
+            error.Document = filePath;
+            error.HierarchyItem = hierarchyItem;
+
+            error.Navigate += (sender, e) =>
+            {
+                error.Line++;
+                ErrorList.Navigate(error, new Guid(EnvDTE.Constants.vsViewKindCode));
+                error.Line--;
+            };
+            ErrorList.Tasks.Add(error);
+        }
+
+        public void ShowError()
+        {
+            ErrorList.Show();
+        }
+
+        #endregion
+
         private void BuildEvents_OnBuildBegin(vsBuildScope Scope, vsBuildAction Action)
         {
             var projectList = new List<Project>();
-
-            var dte = ServiceProvider.GlobalProvider.GetService(typeof(DTE)) as DTE;
-            var panel = ServiceProvider.GlobalProvider.GetService(typeof(IVsOutputWindow)) as IVsOutputWindow;
-
-            //var provider = ServiceProvider.GlobalProvider.GetService(typeof(ModelingErrorListProvider)) as ModelingErrorListProvider; 
-
-            IVsOutputWindowPane aa = null;
-            panel.GetPane(VSConstants.OutputWindowPaneGuid.BuildOutputPane_guid,out aa);
-            aa.OutputString(".............................\n");
-
 
             var edition = dte.Edition;
             var fileName = dte.FileName;
@@ -133,12 +169,10 @@ namespace FBSEditor
 
             ErrorList.Tasks.Clear();
 
-            var builder = new Build.FBSBuilder(this, project, paths.ToArray());
+            var builder = new Build.FBSBuilder(this, project.FileName, paths.ToArray());
             builder.Build();
 
             ErrorList.Show();
         }
-
-        #endregion
     }
 }

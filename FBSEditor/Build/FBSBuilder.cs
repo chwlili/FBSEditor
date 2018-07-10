@@ -1,24 +1,20 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
-using EnvDTE;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 
 namespace FBSEditor.Build
 {
     public class FBSBuilder
     {
-        private BuildCommandPackage pack;
-        private Project project;
-        private string[] paths;
+        public BuildCommandPackage pack;
+        public string projectFileName;
+        public string[] paths;
 
-        public FBSBuilder(BuildCommandPackage pack, Project project, string[] paths)
+        public FBSBuilder(BuildCommandPackage pack, string projectFileName, string[] paths)
         {
             this.pack = pack;
-            this.project = project;
+            this.projectFileName = projectFileName;
             this.paths = paths;
         }
 
@@ -34,9 +30,7 @@ namespace FBSEditor.Build
 
                     var lexer = new FlatbufferLexer(new AntlrInputStream(text));
                     var parser = new FlatbufferParser(new CommonTokenStream(lexer));
-                    var visitor = new Visitor(pack);
-                    visitor.file.Path = path;
-                    visitor.project = project;
+                    var visitor = new Visitor(this, path);
 
                     parser.schema().Accept<int>(visitor);
 
@@ -49,13 +43,14 @@ namespace FBSEditor.Build
 
         class Visitor : FlatbufferBaseVisitor<int>
         {
-            public BuildCommandPackage pack;
-            public Project project;
-            public FBSFile file = new FBSFile();
+            public FBSBuilder builder;
+            public FBSFile file;
 
-            public Visitor(BuildCommandPackage pack)
+            public Visitor(FBSBuilder builder, string path)
             {
-                this.pack = pack;
+                this.builder = builder;
+                this.file = new FBSFile();
+                this.file.Path = path;
             }
 
             public override int VisitNamespace([NotNull] FlatbufferParser.NamespaceContext context)
@@ -65,17 +60,15 @@ namespace FBSEditor.Build
                 {
                     tokens[i] = context.IDENT(i).GetText();
                 }
-
                 file.NameSpace = string.Join(".", tokens);
-
                 return 0;
             }
 
             public override int VisitTable([NotNull] FlatbufferParser.TableContext context)
             {
-                var table = new Table();
-                table.Name = context.name.Text;
-                table.Metas = GetMetas(context.metas(), "Bind", "Index");
+                var data = new Table();
+                data.Name = context.name.Text;
+                data.Metas = GetMetas(context.metas(), "Bind", "Index");
 
                 var fieldsContext = context.tableField();
                 if (fieldsContext != null)
@@ -90,38 +83,84 @@ namespace FBSEditor.Build
                         field.LinkFieldName = fieldContext.fieldMap != null ? fieldContext.fieldMap.Text : field.Name;
                         field.Metas = GetMetas(fieldContext.metas(), "Nullable");
 
-                        table.Fields.Add(field);
+                        data.Fields.Add(field);
                     }
                 }
 
-                if (file.HasDefine(table.Name))
+                if (file.HasDefine(data.Name))
                 {
-                    var ivsSolution = (IVsSolution)Package.GetGlobalService(typeof(IVsSolution));
-                    IVsHierarchy hierarchyItem;
-                    ivsSolution.GetProjectOfUniqueName(project.FileName, out hierarchyItem);
-
-                    var error = new ErrorTask();
-                    error.Line = context.name.Line-1;
-                    error.Column = context.name.Column;
-                    error.Text = "name exits!";
-                    error.ErrorCategory = TaskErrorCategory.Error;
-                    error.Category = TaskCategory.BuildCompile;
-                    error.Document = file.Path;
-                    error.HierarchyItem = hierarchyItem;
-
-                    error.Navigate += (sender, e) =>
-                    {
-                        //there are two Bugs in the errorListProvider.Navigate method:
-                        // Line number needs adjusting
-                        // Column is not shown
-                        error.Line++;
-                        pack.ErrorList.Navigate(error, new Guid(EnvDTE.Constants.vsViewKindCode));
-                        error.Line--;
-                    };
-                    pack.ErrorList.Tasks.Add(error);
+                    builder.pack.AddError(builder.projectFileName, file.Path, string.Format("文件\"{0}\"中重复包含名称为\"{1}\"的定义",file.Path,data.Name), context.name.Line, context.name.Column);
+                }
+                else
+                {
+                    file.Tables.Add(data);
                 }
 
-                file.Tables.Add(table);
+                return 0;
+            }
+
+            public override int VisitStruct([NotNull] FlatbufferParser.StructContext context)
+            {
+                var data = new Struct();
+                data.Name = context.name.Text;
+                data.Metas = GetMetas(context.metas(), "Bind", "Index");
+
+                var fieldsContext = context.structField();
+                if (fieldsContext != null)
+                {
+                    foreach (var fieldContext in fieldsContext)
+                    {
+                        var field = new StructField();
+                        field.Name = fieldContext.fieldName != null ? fieldContext.fieldName.Text : "";
+                        field.Type = fieldContext.fieldType != null ? fieldContext.fieldType.GetText().Trim('[').Trim(']') : "";
+                        field.IsArray = fieldContext.fieldType != null ? fieldContext.fieldType.GetText().StartsWith("[") : true;
+                        field.DefaultValue = fieldContext.fieldValue != null ? fieldContext.fieldValue.GetText() : "";
+                        //field.LinkFieldName = fieldContext.fieldMap != null ? fieldContext.fieldMap.Text : field.Name;
+                        field.Metas = GetMetas(fieldContext.metas(), "Nullable");
+
+                        data.Fields.Add(field);
+                    }
+                }
+
+                if (file.HasDefine(data.Name))
+                {
+                    builder.pack.AddError(builder.projectFileName, file.Path, string.Format("文件\"{0}\"中重复包含名称为\"{1}\"的定义", file.Path, data.Name), context.name.Line, context.name.Column);
+                }
+                else
+                {
+                    file.Structs.Add(data);
+                }
+
+                return 0;
+            }
+
+            public override int VisitEnum([NotNull] FlatbufferParser.EnumContext context)
+            {
+                var data = new Enum();
+                data.Name = context.name.Text;
+                data.Metas = GetMetas(context.metas());
+
+                var fieldsContext = context.enumField();
+                if (fieldsContext != null)
+                {
+                    foreach (var fieldContext in fieldsContext)
+                    {
+                        var field = new EnumField();
+                        field.Name = fieldContext.fieldName != null ? fieldContext.fieldName.Text : "";
+                        field.Value = fieldContext.fieldValue != null ? fieldContext.fieldName.Text : "";
+
+                        data.Fields.Add(field);
+                    }
+                }
+
+                if (file.HasDefine(data.Name))
+                {
+                    builder.pack.AddError(builder.projectFileName, file.Path, string.Format("文件\"{0}\"中重复包含名称为\"{1}\"的定义", file.Path, data.Name), context.name.Line, context.name.Column);
+                }
+                else
+                {
+                    file.Enums.Add(data);
+                }
 
                 return 0;
             }
@@ -142,6 +181,10 @@ namespace FBSEditor.Build
                             meta.Value = bindMeta.path != null ? bindMeta.path.GetText().Trim('"') : "";
                             metas.Add(meta);
                         }
+                        else
+                        {
+                            builder.pack.AddError(builder.projectFileName, file.Path, "无效的元数据标记", bindMeta.Start.Line, bindMeta.Start.Column);
+                        }
                     }
                     foreach (var indexMeta in metaContext.indexMeta())
                     {
@@ -152,11 +195,21 @@ namespace FBSEditor.Build
                             {
                                 fieldNames[i] = indexMeta._fields[i].Text;
                             }
-
-                            var meta = new Meta();
-                            meta.Name = indexMeta.key.Text;
-                            meta.Value = string.Join(",", fieldNames);
-                            metas.Add(meta);
+                            if (fieldNames.Length > 0)
+                            {
+                                var meta = new Meta();
+                                meta.Name = indexMeta.key.Text;
+                                meta.Value = string.Join(",", fieldNames);
+                                metas.Add(meta);
+                            }
+                            else
+                            {
+                                builder.pack.AddError(builder.projectFileName, file.Path, "无效的元数据标记", indexMeta.key.Line, indexMeta.key.Column);
+                            }
+                        }
+                        else
+                        {
+                            builder.pack.AddError(builder.projectFileName, file.Path, "无效的元数据标记", indexMeta.Start.Line, indexMeta.Start.Column);
                         }
                     }
                     foreach (var nullableMeta in metaContext.nullableMeta())
@@ -167,6 +220,10 @@ namespace FBSEditor.Build
                             meta.Name = nullableMeta.key.Text;
                             meta.Value = nullableMeta.val != null ? nullableMeta.val.Text : "true";
                             metas.Add(meta);
+                        }
+                        else
+                        {
+                            builder.pack.AddError(builder.projectFileName, file.Path, "无效的元数据标记", nullableMeta.Start.Line, nullableMeta.Start.Column);
                         }
                     }
                 }
