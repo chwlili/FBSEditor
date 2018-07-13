@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FBSEditor.Build
 {
-    class StructField
+    public class StructField
     {
         /// <summary>
         /// 元数据列表
@@ -39,5 +39,10 @@ namespace FBSEditor.Build
 
 
         public string LinkFieldName { get; set; }
+
+        /// <summary>
+        /// 注释
+        /// </summary>
+        public string Comment { get; set; }
     }
 }

@@ -13,6 +13,9 @@ using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.Win32;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using FBSEditor;
+using FBSEditor.Generator;
 
 namespace FBSEditor
 {
@@ -137,42 +140,84 @@ namespace FBSEditor
 
         private void BuildProject(Project project)
         {
-            project.Globals["tttttttttttt"] = "xxxxxx";
-            project.Globals.VariablePersists["tttttttttttt"] = true;
+            //project.Globals["tttttttttttt"] = "xxxxxx";
+            //project.Globals.VariablePersists["tttttttttttt"] = true;
 
             var paths = new List<string>();
-            var names = new List<string>();
-
             var files = new List<ProjectItem>();
             var folder = new List<ProjectItem>();
-            for(var i=1;i<=project.ProjectItems.Count;i++)
-            {
-                folder.Add(project.ProjectItems.Item(i));
-            }
+
+            for (var i = 1; i <= project.ProjectItems.Count; i++) { folder.Add(project.ProjectItems.Item(i)); }
+
             while(folder.Count>0)
             {
                 var first = folder[0];
-                folder.RemoveAt(0);
+                var fileName = first.Name;
+                var filePath = first.FileNames[0];
+                var isFile = File.Exists(filePath) && !Directory.Exists(filePath);
 
-                for (int i = 1; i <= first.ProjectItems.Count; i++)
+                if(isFile && fileName.ToLower().EndsWith(Constants.FBSExtName))
                 {
-                    folder.Add(first.ProjectItems.Item(i));
+                    var csFilePath = filePath.Substring(0, filePath.Length - Constants.FBSExtName.Length) + ".cs";
+
+                    var csFileCount = 0;
+                    var invalidateFiles = new List<ProjectItem>();
+                    for (int i = 1; i <= first.ProjectItems.Count; i++)
+                    {
+                        var current = first.ProjectItems.Item(i);
+                        if(!current.FileNames[0].Equals(csFilePath))
+                        {
+                            invalidateFiles.Add(current);
+                        }
+                        else
+                        {
+                            csFileCount ++;
+                        }
+                    }
+                    foreach(var invalidateFile in invalidateFiles)
+                    {
+                        invalidateFile.Remove();
+                    }
+
+                    if(csFileCount==0)
+                    {
+                        if (!File.Exists(csFilePath))
+                        {
+                            var writer = File.CreateText(csFilePath);
+                            writer.WriteLine("class " + fileName.Substring(0, fileName.Length - Constants.FBSExtName.Length) + " \n{\n}");
+                            writer.Flush();
+                            writer.Close();
+                        }
+                        first.ProjectItems.AddFromFile(csFilePath);
+                    }
+
+                    paths.Add(filePath);
                 }
-                for(short i=0;i<first.FileCount;i++)
+                else if (first.FileCount >1)
                 {
-                    paths.Add(first.FileNames[i]);
+                    for (int i = 1; i <= first.ProjectItems.Count; i++)
+                    {
+                        folder.Add(first.ProjectItems.Item(i));
+                    }
                 }
 
                 files.Add(first);
-                names.Add(first.Name);
+                folder.RemoveAt(0);
             }
 
             ErrorList.Tasks.Clear();
 
             var builder = new Build.FBSBuilder(this, project.FileName, paths.ToArray());
-            builder.Build();
+            var trees = builder.Build();
 
-            ErrorList.Show();
+            if (ErrorList.Tasks.Count > 0)
+            {
+                ErrorList.Show();
+            }
+            else
+            {
+                CSGenerator.Generate(this, trees);
+            }
         }
     }
 }

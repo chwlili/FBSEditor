@@ -6,12 +6,17 @@ using System.Threading.Tasks;
 
 namespace FBSEditor.Build
 {
-    class Table
+    public class Table
     {
         /// <summary>
         /// 名称
         /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// 注释
+        /// </summary>
+        public string Comment { get; set; }
 
         /// <summary>
         /// 元数据列表

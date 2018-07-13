@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FBSEditor.Build
 {
-    class Meta
+    public class Meta
     {
         /// <summary>
         /// 名称

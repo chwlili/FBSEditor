@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FBSEditor.Build
 {
-    class EnumField
+    public class EnumField
     {
         /// <summary>
         /// 名称
@@ -17,5 +17,10 @@ namespace FBSEditor.Build
         /// 值
         /// </summary>
         public string Value { get; set; }
+
+        /// <summary>
+        /// 注释
+        /// </summary>
+        public string Comment { get; set; }
     }
 }

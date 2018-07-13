@@ -2,12 +2,17 @@
 
 namespace FBSEditor.Build
 {
-    class Enum
+    public class Enum
     {
         /// <summary>
         /// 名称
         /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// 注释
+        /// </summary>
+        public string Comment { get; set; }
 
         /// <summary>
         /// 元数据列表

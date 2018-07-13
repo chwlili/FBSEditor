@@ -18,7 +18,7 @@ namespace FBSEditor.Build
             this.paths = paths;
         }
 
-        public void Build()
+        public FBSFile[] Build()
         {
             var files = new List<FBSFile>();
 
@@ -30,7 +30,7 @@ namespace FBSEditor.Build
 
                     var lexer = new FlatbufferLexer(new AntlrInputStream(text));
                     var parser = new FlatbufferParser(new CommonTokenStream(lexer));
-                    var visitor = new Visitor(this, path);
+                    var visitor = new Visitor(this, path, GetComments(lexer));
 
                     parser.schema().Accept<int>(visitor);
 
@@ -39,18 +39,49 @@ namespace FBSEditor.Build
                     files.Add(file);
                 }
             }
+
+            return files.ToArray();
+        }
+
+        private Dictionary<int, string> GetComments(FlatbufferLexer lexer)
+        {
+            var commentTable = new Dictionary<int, string>();
+
+            foreach (var token in lexer.GetAllTokens())
+            {
+                if (token.Type != FlatbufferLexer.COMMENT) { continue; }
+                var txt = token.Text;
+                if (txt.StartsWith("//"))
+                {
+                    txt = txt.Substring(2).Trim();
+                }
+                else if (txt.StartsWith("/*"))
+                {
+                    txt = txt.Substring(2, txt.Length - 4).Trim().Trim('*').Trim();
+                }
+                var lines = txt.Split('\n');
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    commentTable.Add(token.Line + i, txt);
+                }
+            }
+            lexer.Reset();
+
+            return commentTable;
         }
 
         class Visitor : FlatbufferBaseVisitor<int>
         {
             public FBSBuilder builder;
             public FBSFile file;
+            public Dictionary<int, string> commentTable;
 
-            public Visitor(FBSBuilder builder, string path)
+            public Visitor(FBSBuilder builder, string path, Dictionary<int, string> commentTable)
             {
                 this.builder = builder;
                 this.file = new FBSFile();
                 this.file.Path = path;
+                this.commentTable = commentTable;
             }
 
             public override int VisitNamespace([NotNull] FlatbufferParser.NamespaceContext context)
@@ -69,6 +100,7 @@ namespace FBSEditor.Build
                 var data = new Table();
                 data.Name = context.name.Text;
                 data.Metas = GetMetas(context.metas(), "Bind", "Index");
+                data.Comment = GetComment(context, context.name);
 
                 var fieldsContext = context.tableField();
                 if (fieldsContext != null)
@@ -82,6 +114,7 @@ namespace FBSEditor.Build
                         field.DefaultValue = fieldContext.fieldValue != null ? fieldContext.fieldValue.GetText() : "";
                         field.LinkFieldName = fieldContext.fieldMap != null ? fieldContext.fieldMap.Text : field.Name;
                         field.Metas = GetMetas(fieldContext.metas(), "Nullable");
+                        field.Comment = GetComment(fieldContext, fieldContext.fieldName);
 
                         data.Fields.Add(field);
                     }
@@ -104,6 +137,7 @@ namespace FBSEditor.Build
                 var data = new Struct();
                 data.Name = context.name.Text;
                 data.Metas = GetMetas(context.metas(), "Bind", "Index");
+                data.Comment = GetComment(context, context.name);
 
                 var fieldsContext = context.structField();
                 if (fieldsContext != null)
@@ -117,6 +151,7 @@ namespace FBSEditor.Build
                         field.DefaultValue = fieldContext.fieldValue != null ? fieldContext.fieldValue.GetText() : "";
                         //field.LinkFieldName = fieldContext.fieldMap != null ? fieldContext.fieldMap.Text : field.Name;
                         field.Metas = GetMetas(fieldContext.metas(), "Nullable");
+                        field.Comment = GetComment(fieldContext, fieldContext.fieldName);
 
                         data.Fields.Add(field);
                     }
@@ -139,6 +174,7 @@ namespace FBSEditor.Build
                 var data = new Enum();
                 data.Name = context.name.Text;
                 data.Metas = GetMetas(context.metas());
+                data.Comment = GetComment(context, context.name);
 
                 var fieldsContext = context.enumField();
                 if (fieldsContext != null)
@@ -147,7 +183,8 @@ namespace FBSEditor.Build
                     {
                         var field = new EnumField();
                         field.Name = fieldContext.fieldName != null ? fieldContext.fieldName.Text : "";
-                        field.Value = fieldContext.fieldValue != null ? fieldContext.fieldName.Text : "";
+                        field.Value = fieldContext.fieldValue != null ? fieldContext.fieldValue.Text : "";
+                        field.Comment = GetComment(fieldContext, fieldContext.fieldName);
 
                         data.Fields.Add(field);
                     }
@@ -164,6 +201,24 @@ namespace FBSEditor.Build
 
                 return 0;
             }
+            private string GetComment(ParserRuleContext context, IToken token)
+            {
+                if (token == null) { return null; }
+
+                var startLine = token.Line;
+                var stopLine = context.Start.Line - 1;
+
+                while (startLine > 0)
+                {
+                    if (commentTable.ContainsKey(startLine))
+                    {
+                        return commentTable[startLine];
+                    }
+                    startLine--;
+                    if (startLine < stopLine) { break; }
+                }
+                return null;
+            }
 
             private List<Meta> GetMetas(FlatbufferParser.MetasContext metaContext, params string[] metaNames)
             {
@@ -176,10 +231,20 @@ namespace FBSEditor.Build
                     {
                         if (names.Count==0 || (bindMeta.key!=null && names.Contains(bindMeta.key.Text)))
                         {
-                            var meta = new Meta();
-                            meta.Name = bindMeta.key.Text;
-                            meta.Value = bindMeta.path != null ? bindMeta.path.GetText().Trim('"') : "";
-                            metas.Add(meta);
+                            var value = bindMeta.path != null ? bindMeta.path.GetText().Trim('"') : "";
+
+                            if (!string.IsNullOrEmpty(value))
+                            {
+
+                                var meta = new Meta();
+                                meta.Name = bindMeta.key.Text;
+                                meta.Value = value;
+                                metas.Add(meta);
+                            }
+                            else
+                            {
+                                builder.pack.AddError(builder.projectFileName, file.Path, "绑定内容不能为空", bindMeta.Start.Line, bindMeta.Start.Column);
+                            }
                         }
                         else
                         {

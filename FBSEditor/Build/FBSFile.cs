@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FBSEditor.Build
 {
-    class FBSFile
+    public class FBSFile
     {
         /// <summary>
         /// 路径
