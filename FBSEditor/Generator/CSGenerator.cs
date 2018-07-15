@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using FBSEditor.Editor;
 using FBSEditor.Build;
 using System.IO;
-using System.Text;
 
 namespace FBSEditor.Generator
 {

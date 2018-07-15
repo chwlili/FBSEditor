@@ -16,6 +16,9 @@ using System.Collections.Generic;
 using System.IO;
 using FBSEditor;
 using FBSEditor.Generator;
+using System.Text;
+using Antlr4.Runtime;
+using Antlr4.Runtime.Misc;
 
 namespace FBSEditor
 {
@@ -46,6 +49,11 @@ namespace FBSEditor
             ErrorList = new ErrorListProvider(this);
 
             outputWindow = ServiceProvider.GlobalProvider.GetService(typeof(IVsOutputWindow)) as IVsOutputWindow;
+
+            var text = "fejwiofe<%jkljkl %>tewfewc feiwfo ewof${ } fejwofewa";
+            var lexer = new TemplateLexer(new AntlrInputStream(text));
+            var parser = new Template(new CommonTokenStream(lexer));
+            var value = parser.document();
 
             base.Initialize();
         }

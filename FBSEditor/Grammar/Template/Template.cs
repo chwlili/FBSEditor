@@ -36,18 +36,20 @@ public partial class Template : Parser {
 	protected static DFA[] decisionToDFA;
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
 	public const int
-		OPEN1=1, OPEN2=2, CLOSE1=3, CLOSE2=4;
+		OPEN1=1, OPEN2=2, TEXT=3, CLOSE1=4, TEXT1=5, WS1=6, CLOSE2=7, TEXT2=8, 
+		WS2=9;
 	public const int
-		RULE_document = 0;
+		RULE_document = 0, RULE_range1 = 1, RULE_range2 = 2;
 	public static readonly string[] ruleNames = {
-		"document"
+		"document", "range1", "range2"
 	};
 
 	private static readonly string[] _LiteralNames = {
-		null, "'<%'", "'${'", "'%>'", "'}'"
+		null, "'<%'", "'${'", null, "'%>'", null, null, "'}'"
 	};
 	private static readonly string[] _SymbolicNames = {
-		null, "OPEN1", "OPEN2", "CLOSE1", "CLOSE2"
+		null, "OPEN1", "OPEN2", "TEXT", "CLOSE1", "TEXT1", "WS1", "CLOSE2", "TEXT2", 
+		"WS2"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
@@ -81,8 +83,22 @@ public partial class Template : Parser {
 		Interpreter = new ParserATNSimulator(this, _ATN, decisionToDFA, sharedContextCache);
 	}
 	public partial class DocumentContext : ParserRuleContext {
-		public ITerminalNode OPEN1() { return GetToken(Template.OPEN1, 0); }
-		public ITerminalNode CLOSE1() { return GetToken(Template.CLOSE1, 0); }
+		public ITerminalNode[] TEXT() { return GetTokens(Template.TEXT); }
+		public ITerminalNode TEXT(int i) {
+			return GetToken(Template.TEXT, i);
+		}
+		public Range1Context[] range1() {
+			return GetRuleContexts<Range1Context>();
+		}
+		public Range1Context range1(int i) {
+			return GetRuleContext<Range1Context>(i);
+		}
+		public Range2Context[] range2() {
+			return GetRuleContexts<Range2Context>();
+		}
+		public Range2Context range2(int i) {
+			return GetRuleContext<Range2Context>(i);
+		}
 		public DocumentContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
@@ -111,15 +127,131 @@ public partial class Template : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 2;
+			State = 11;
+			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ( !(_la==OPEN1 || _la==CLOSE1) ) {
-			ErrorHandler.RecoverInline(this);
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << OPEN1) | (1L << OPEN2) | (1L << TEXT))) != 0)) {
+				{
+				State = 9;
+				ErrorHandler.Sync(this);
+				switch (TokenStream.LA(1)) {
+				case TEXT:
+					{
+					State = 6; Match(TEXT);
+					}
+					break;
+				case OPEN1:
+					{
+					State = 7; range1();
+					}
+					break;
+				case OPEN2:
+					{
+					State = 8; range2();
+					}
+					break;
+				default:
+					throw new NoViableAltException(this);
+				}
+				}
+				State = 13;
+				ErrorHandler.Sync(this);
+				_la = TokenStream.LA(1);
 			}
-			else {
-				ErrorHandler.ReportMatch(this);
-			    Consume();
 			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class Range1Context : ParserRuleContext {
+		public ITerminalNode OPEN1() { return GetToken(Template.OPEN1, 0); }
+		public ITerminalNode TEXT1() { return GetToken(Template.TEXT1, 0); }
+		public ITerminalNode CLOSE1() { return GetToken(Template.CLOSE1, 0); }
+		public Range1Context(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_range1; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			ITemplateListener typedListener = listener as ITemplateListener;
+			if (typedListener != null) typedListener.EnterRange1(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			ITemplateListener typedListener = listener as ITemplateListener;
+			if (typedListener != null) typedListener.ExitRange1(this);
+		}
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ITemplateVisitor<TResult> typedVisitor = visitor as ITemplateVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRange1(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public Range1Context range1() {
+		Range1Context _localctx = new Range1Context(Context, State);
+		EnterRule(_localctx, 2, RULE_range1);
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 14; Match(OPEN1);
+			State = 15; Match(TEXT1);
+			State = 16; Match(CLOSE1);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class Range2Context : ParserRuleContext {
+		public ITerminalNode OPEN2() { return GetToken(Template.OPEN2, 0); }
+		public ITerminalNode TEXT2() { return GetToken(Template.TEXT2, 0); }
+		public ITerminalNode CLOSE2() { return GetToken(Template.CLOSE2, 0); }
+		public Range2Context(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_range2; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			ITemplateListener typedListener = listener as ITemplateListener;
+			if (typedListener != null) typedListener.EnterRange2(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			ITemplateListener typedListener = listener as ITemplateListener;
+			if (typedListener != null) typedListener.ExitRange2(this);
+		}
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ITemplateVisitor<TResult> typedVisitor = visitor as ITemplateVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitRange2(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public Range2Context range2() {
+		Range2Context _localctx = new Range2Context(Context, State);
+		EnterRule(_localctx, 4, RULE_range2);
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 18; Match(OPEN2);
+			State = 19; Match(TEXT2);
+			State = 20; Match(CLOSE2);
 			}
 		}
 		catch (RecognitionException re) {
@@ -135,11 +267,25 @@ public partial class Template : Parser {
 
 	private static char[] _serializedATN = {
 		'\x3', '\x608B', '\xA72A', '\x8133', '\xB9ED', '\x417C', '\x3BE7', '\x7786', 
-		'\x5964', '\x3', '\x6', '\a', '\x4', '\x2', '\t', '\x2', '\x3', '\x2', 
-		'\x3', '\x2', '\x3', '\x2', '\x2', '\x2', '\x3', '\x2', '\x2', '\x3', 
-		'\x4', '\x2', '\x3', '\x3', '\x5', '\x5', '\x2', '\x5', '\x2', '\x4', 
-		'\x3', '\x2', '\x2', '\x2', '\x4', '\x5', '\t', '\x2', '\x2', '\x2', '\x5', 
-		'\x3', '\x3', '\x2', '\x2', '\x2', '\x2',
+		'\x5964', '\x3', '\v', '\x19', '\x4', '\x2', '\t', '\x2', '\x4', '\x3', 
+		'\t', '\x3', '\x4', '\x4', '\t', '\x4', '\x3', '\x2', '\x3', '\x2', '\x3', 
+		'\x2', '\a', '\x2', '\f', '\n', '\x2', '\f', '\x2', '\xE', '\x2', '\xF', 
+		'\v', '\x2', '\x3', '\x3', '\x3', '\x3', '\x3', '\x3', '\x3', '\x3', '\x3', 
+		'\x4', '\x3', '\x4', '\x3', '\x4', '\x3', '\x4', '\x3', '\x4', '\x2', 
+		'\x2', '\x5', '\x2', '\x4', '\x6', '\x2', '\x2', '\x2', '\x18', '\x2', 
+		'\r', '\x3', '\x2', '\x2', '\x2', '\x4', '\x10', '\x3', '\x2', '\x2', 
+		'\x2', '\x6', '\x14', '\x3', '\x2', '\x2', '\x2', '\b', '\f', '\a', '\x5', 
+		'\x2', '\x2', '\t', '\f', '\x5', '\x4', '\x3', '\x2', '\n', '\f', '\x5', 
+		'\x6', '\x4', '\x2', '\v', '\b', '\x3', '\x2', '\x2', '\x2', '\v', '\t', 
+		'\x3', '\x2', '\x2', '\x2', '\v', '\n', '\x3', '\x2', '\x2', '\x2', '\f', 
+		'\xF', '\x3', '\x2', '\x2', '\x2', '\r', '\v', '\x3', '\x2', '\x2', '\x2', 
+		'\r', '\xE', '\x3', '\x2', '\x2', '\x2', '\xE', '\x3', '\x3', '\x2', '\x2', 
+		'\x2', '\xF', '\r', '\x3', '\x2', '\x2', '\x2', '\x10', '\x11', '\a', 
+		'\x3', '\x2', '\x2', '\x11', '\x12', '\a', '\a', '\x2', '\x2', '\x12', 
+		'\x13', '\a', '\x6', '\x2', '\x2', '\x13', '\x5', '\x3', '\x2', '\x2', 
+		'\x2', '\x14', '\x15', '\a', '\x4', '\x2', '\x2', '\x15', '\x16', '\a', 
+		'\n', '\x2', '\x2', '\x16', '\x17', '\a', '\t', '\x2', '\x2', '\x17', 
+		'\a', '\x3', '\x2', '\x2', '\x2', '\x4', '\v', '\r',
 	};
 
 	public static readonly ATN _ATN =

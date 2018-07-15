@@ -40,4 +40,24 @@ public interface ITemplateListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitDocument([NotNull] Template.DocumentContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="Template.range1"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterRange1([NotNull] Template.Range1Context context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="Template.range1"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitRange1([NotNull] Template.Range1Context context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="Template.range2"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterRange2([NotNull] Template.Range2Context context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="Template.range2"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitRange2([NotNull] Template.Range2Context context);
 }

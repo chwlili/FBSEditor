@@ -46,6 +46,30 @@ public partial class TemplateBaseListener : ITemplateListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitDocument([NotNull] Template.DocumentContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="Template.range1"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterRange1([NotNull] Template.Range1Context context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="Template.range1"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitRange1([NotNull] Template.Range1Context context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="Template.range2"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterRange2([NotNull] Template.Range2Context context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="Template.range2"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitRange2([NotNull] Template.Range2Context context) { }
 
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>

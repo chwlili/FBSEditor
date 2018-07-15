@@ -1,8 +1,13 @@
 OPEN1=1
 OPEN2=2
-CLOSE1=3
-CLOSE2=4
+TEXT=3
+CLOSE1=4
+TEXT1=5
+WS1=6
+CLOSE2=7
+TEXT2=8
+WS2=9
 '<%'=1
 '${'=2
-'%>'=3
-'}'=4
+'%>'=4
+'}'=7

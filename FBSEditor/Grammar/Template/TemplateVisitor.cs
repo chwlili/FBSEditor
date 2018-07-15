@@ -37,4 +37,16 @@ public interface ITemplateVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitDocument([NotNull] Template.DocumentContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="Template.range1"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitRange1([NotNull] Template.Range1Context context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="Template.range2"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitRange2([NotNull] Template.Range2Context context);
 }
