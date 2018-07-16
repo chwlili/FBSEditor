@@ -1,0 +1,7 @@
+D:\projects\FBSEditor\ConsoleApp1\obj\Debug\ConsoleApp1.csproj.CoreCompileInputs.cache
+D:\projects\FBSEditor\ConsoleApp1\bin\Debug\ConsoleApp1.exe.config
+D:\projects\FBSEditor\ConsoleApp1\bin\Debug\ConsoleApp1.exe
+D:\projects\FBSEditor\ConsoleApp1\bin\Debug\ConsoleApp1.pdb
+D:\projects\FBSEditor\ConsoleApp1\obj\Debug\ConsoleApp1.exe
+D:\projects\FBSEditor\ConsoleApp1\obj\Debug\ConsoleApp1.pdb
+D:\projects\FBSEditor\ConsoleApp1\obj\Debug\ConsoleApp1.csprojResolveAssemblyReference.cache
