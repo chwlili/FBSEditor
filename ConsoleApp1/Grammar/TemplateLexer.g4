@@ -25,12 +25,12 @@ BOOL : ('true' | 'false') ;
 
 STRING : '"' .*? '"' ;
 
+INCREMENT:'++';
+DECREMENT:'--';
 MUL:'*';
 DIV:'/';
 MOD:'%';
-ADD2:'++';
 ADD:'+';
-SUB2:'--';
 SUB:'-';
 BRACEL:'(';
 BRACER:')';
@@ -38,6 +38,11 @@ IF:'if';
 THEN:'then';
 END:'end';
 DOT:'.';
+COMMA:',';
+NOT:'!';
+INVERT:'~';
+SHIFTL:'<<';
+SHIFTR:'>>';
 
 IDENT : [a-zA-Z_][a-zA-Z0-9_]*;
 
