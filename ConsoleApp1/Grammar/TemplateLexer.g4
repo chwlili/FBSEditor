@@ -39,10 +39,22 @@ THEN:'then';
 END:'end';
 DOT:'.';
 COMMA:',';
+NOTEQUAL : '!=';
 NOT:'!';
 INVERT:'~';
 SHIFTL:'<<';
 SHIFTR:'>>';
+LESS : '<';
+LESSEQUAL : '<=';
+GREATER : '>';
+GREATEREQUAL : '>=';
+EQUAL : '==';
+AND2 : '&&';
+OR2 : '||';
+AND : '&';
+OR : '|';
+XOR : '^';
+
 
 IDENT : [a-zA-Z_][a-zA-Z0-9_]*;
 
