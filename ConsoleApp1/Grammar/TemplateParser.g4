@@ -3,62 +3,58 @@ options { tokenVocab = TemplateLexer;}
 
 document : (TEXT | expr | if)*;
 
-expr : exprCall | exprProp
-	   | exprMinus | exprConvert | exprIncrement | exprDecrement | exprLogicNot | exprBitInvert
-	   | exprMul |exprDiv | exprMod 
-	   | exprAdd | exprSub
-	   | exprBitShiftL | exprBitShiftR 
-	   | exprLess | exprLessEqual | exprGreater | exprGreaterEqual 
-	   | exprEqual | exprNotEqual
-	   | exprBitAnd 
-	   | exprBitXor
-	   | exprBitOr
-	   | exprLogicAnd
-	   | exprLogicOr
-	   | v=value;
+if : id=IF l=BRACEL exp = expr r=BRACER THEN (expr|TEXT)* END;
 
-//属性与函数
+expr : 
+		 BRACEL r = expr BRACER
+		 //属性和函数
+		 | call = exprCall | prop = exprProp
+		 //一元运算
+		 | op = SUB r = expr
+	     | BRACEL t = IDENT BRACER r = expr
+		 | op = INCREMENT  r = expr | r = expr op = INCREMENT
+		 | op = DECREMENT  r = expr | r = expr op = DECREMENT
+		 | op = NOT r = expr
+		 | op = INVERT r = expr
+		 //乘除
+		 | l = expr op = MUL r = expr
+		 | l = expr op = DIV r = expr
+		 | l = expr op = MOD r = expr
+		 //加、减
+		 | l = expr op = ADD r = expr
+		 | l = expr op = SUB r = expr
+		 //左移、右移
+		 | l = expr op = SHIFTL r = expr
+		 | l = expr op = SHIFTR r = expr
+		 //小于、小于等于、大于、大于等于
+		 | l = expr op = LESS r = expr
+		 | l = expr op = LESSEQUAL r = expr
+		 | l = expr op = GREATER r = expr
+		 | l = expr op = GREATEREQUAL r = expr
+		 //等于、不等于
+		 | l = expr op = EQUAL r = expr
+		 | l = expr op = NOTEQUAL r = expr
+		 //按位与
+		 | l = expr op = AND r = expr
+		 //按位异或
+		 | l = expr op = XOR r = expr
+		 //按位或
+		 | l = expr op = OR r = expr
+		 //逻辑与
+		 | l = expr op = AND2 r = expr
+		 //逻辑或
+		 | l = expr op = OR2 r = expr
+		 //字面值
+		 | v = exprValue
+		 ;
+
+
 exprCall : names+=IDENT (op = DOT names+=IDENT)* BRACEL (args+=expr (COMMA args+=expr)*) BRACER;
 exprProp : names+=IDENT (op = DOT names+=IDENT)*;
+exprValue : integerValue = INTEGER | floatValue = FLOAT | boolValue = BOOL | stringValue = STRING;
 
-//
-exprMinus : op = SUB v = expr;
-exprConvert : BRACEL type = IDENT BRACER v = expr;
+//exprComma : values+=expr (COMMA values+=expr)+;
 
-//算术运算
-exprMul : l = expr op = MUL r = expr;
-exprDiv : l = expr op = DIV r = expr;
-exprMod : l = expr op = MOD r = expr;
-exprAdd : l = expr op = ADD r = expr;
-exprSub : l = expr op = SUB r = expr;
-exprIncrement : op = INCREMENT  v = expr | v = expr op = INCREMENT;
-exprDecrement : op = DECREMENT  v = expr | v = expr op = DECREMENT;
 
-//位运算
-exprBitShiftL : l = expr op = SHIFTL r = expr;
-exprBitShiftR : l = expr op = SHIFTR r = expr;
-exprBitInvert : op = INVERT v = expr;
-exprBitAnd : l = expr op = AND r = expr;
-exprBitOr : l = expr op = OR r = expr;
-exprBitXor : l = expr op = XOR r = expr;
-
-//比较运算
-exprLess : l = expr op = LESS r = expr;
-exprGreater : l = expr op = GREATER r = expr;
-exprLessEqual : l = expr op = LESSEQUAL r = expr;
-exprGreaterEqual : l = expr op = GREATER r = expr;
-exprEqual : l = expr op = EQUAL r = expr;
-exprNotEqual : l = expr op = NOTEQUAL r = expr;
-
-//逻辑运算
-exprLogicAnd : l = expr op = AND2 r = expr;
-exprLogicOr : l = expr op = OR2 r = expr;
-exprLogicNot : op = NOT v = expr;
-
-exprComma : values+=expr (COMMA values+=expr)+;
-
-value : integerValue = INTEGER | floatValue = FLOAT | boolValue = BOOL | stringValue = STRING;
-
-if : id=IF l=BRACEL exp = expr r=BRACER THEN (expr|TEXT)* END;
 
 
