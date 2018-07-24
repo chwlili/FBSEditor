@@ -7,12 +7,12 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
-            var text = "fejwiofe<%(3+3)*4/3*0.51  if(i+1) then 1+2 %>tewfewc feiwfofej<%end%>wofewa";
+            var text = "fe<%5-9*(Nome.a.w(1,2,3)+3)+5%4%>tewf";
             var lexer = new TemplateLexer(new AntlrInputStream(text));
             var parser = new TemplateParser(new CommonTokenStream(lexer));
             var value = parser.document();
 
-            var alst = MeasureExpr(value.expr()[0]);
+            //var alst = MeasureExpr(value.expr()[0]);
 
             for (int i=0;i<value.ChildCount;i++)
             {
@@ -22,8 +22,12 @@ namespace ConsoleApp1
             }
 
             Console.WriteLine("press any key ");
-        }
 
+            Console.WriteLine(1 << 1);
+            Console.WriteLine(2 + 1 << 1);
+            Console.Read();
+        }
+        /*
         private static Atom MeasureExpr(TemplateParser.ExprContext context)
         {
             double a = 20;
@@ -320,6 +324,6 @@ namespace ConsoleApp1
             BOOL,
             STRING,
             NULL
-        }
+        }*/
     }   
 }
