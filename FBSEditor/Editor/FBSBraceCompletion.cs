@@ -61,9 +61,20 @@ namespace FBSEditor
             if (session.OpeningBrace == '{')
             {
                 var beginPos = session.OpeningPoint.GetPosition(session.SubjectBuffer.CurrentSnapshot);
-                session.SubjectBuffer.Insert(beginPos, "\n");
-                session.SubjectBuffer.Insert(beginPos + 2, "\n\t\n");
-                session.TextView.Caret.MoveTo(new SnapshotPoint(session.SubjectBuffer.CurrentSnapshot, beginPos + 4));
+                var line = session.SubjectBuffer.CurrentSnapshot.GetLineFromPosition(beginPos).GetText();
+
+                var indent = line.Substring(0, line.Length - line.TrimStart().Length);
+                if (line.Equals(indent + "{}"))
+                {
+                    session.SubjectBuffer.Insert(beginPos + 1, "\n" + indent + "\t\n" + indent);
+                    session.TextView.Caret.MoveTo(new SnapshotPoint(session.SubjectBuffer.CurrentSnapshot, beginPos + 3 + indent.Length * 1));
+                }
+                else
+                {
+                    session.SubjectBuffer.Insert(beginPos, "\n" + indent);
+                    session.SubjectBuffer.Insert(beginPos + indent.Length + 2, "\n" + indent + "\t\n" + indent);
+                    session.TextView.Caret.MoveTo(new SnapshotPoint(session.SubjectBuffer.CurrentSnapshot, beginPos + 4 + indent.Length * 2));
+                }
             }
         }
     }
