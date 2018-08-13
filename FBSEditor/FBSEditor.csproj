@@ -286,6 +286,12 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Tempalte\BraceMatching.cs" />
+    <Compile Include="Tempalte\BraceCompletion.cs" />
+    <Compile Include="Tempalte\OutlineProvider.cs" />
+    <Compile Include="Tempalte\ClassificationProvider.cs" />
+    <Compile Include="Tempalte\Constants.cs" />
+    <Compile Include="Tempalte\FormatProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <Antlr4 Include="Antlr4\Tree\Xpath\XPathLexer.g4">

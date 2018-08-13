@@ -50,11 +50,6 @@ namespace FBSEditor
 
             outputWindow = ServiceProvider.GlobalProvider.GetService(typeof(IVsOutputWindow)) as IVsOutputWindow;
 
-            var text = "fejwiofe<%jkljkl %>tewfewc feiwfo ewof${ } fejwofewa";
-            var lexer = new TemplateLexer(new AntlrInputStream(text));
-            var parser = new Template(new CommonTokenStream(lexer));
-            var value = parser.document();
-
             base.Initialize();
         }
 
