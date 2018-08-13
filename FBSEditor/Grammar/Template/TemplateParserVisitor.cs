@@ -38,21 +38,51 @@ public interface ITemplateParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitDocument([NotNull] TemplateParser.DocumentContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="TemplateParser.expr"/>.
+	/// Visit a parse tree produced by <see cref="TemplateParser.textRegion"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitExpr([NotNull] TemplateParser.ExprContext context);
+	Result VisitTextRegion([NotNull] TemplateParser.TextRegionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="TemplateParser.prop"/>.
+	/// Visit a parse tree produced by <see cref="TemplateParser.codeRegion"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitProp([NotNull] TemplateParser.PropContext context);
+	Result VisitCodeRegion([NotNull] TemplateParser.CodeRegionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.code"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCode([NotNull] TemplateParser.CodeContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="TemplateParser.if"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitIf([NotNull] TemplateParser.IfContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpr([NotNull] TemplateParser.ExprContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.exprCall"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExprCall([NotNull] TemplateParser.ExprCallContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.exprProp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExprProp([NotNull] TemplateParser.ExprPropContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.exprValue"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExprValue([NotNull] TemplateParser.ExprValueContext context);
 }

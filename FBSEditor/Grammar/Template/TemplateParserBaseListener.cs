@@ -47,29 +47,41 @@ public partial class TemplateParserBaseListener : ITemplateParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitDocument([NotNull] TemplateParser.DocumentContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="TemplateParser.expr"/>.
+	/// Enter a parse tree produced by <see cref="TemplateParser.textRegion"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterExpr([NotNull] TemplateParser.ExprContext context) { }
+	public virtual void EnterTextRegion([NotNull] TemplateParser.TextRegionContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="TemplateParser.expr"/>.
+	/// Exit a parse tree produced by <see cref="TemplateParser.textRegion"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitExpr([NotNull] TemplateParser.ExprContext context) { }
+	public virtual void ExitTextRegion([NotNull] TemplateParser.TextRegionContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="TemplateParser.prop"/>.
+	/// Enter a parse tree produced by <see cref="TemplateParser.codeRegion"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterProp([NotNull] TemplateParser.PropContext context) { }
+	public virtual void EnterCodeRegion([NotNull] TemplateParser.CodeRegionContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="TemplateParser.prop"/>.
+	/// Exit a parse tree produced by <see cref="TemplateParser.codeRegion"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitProp([NotNull] TemplateParser.PropContext context) { }
+	public virtual void ExitCodeRegion([NotNull] TemplateParser.CodeRegionContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.code"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterCode([NotNull] TemplateParser.CodeContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.code"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitCode([NotNull] TemplateParser.CodeContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="TemplateParser.if"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -82,6 +94,54 @@ public partial class TemplateParserBaseListener : ITemplateParserListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitIf([NotNull] TemplateParser.IfContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.expr"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpr([NotNull] TemplateParser.ExprContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.expr"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpr([NotNull] TemplateParser.ExprContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.exprCall"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExprCall([NotNull] TemplateParser.ExprCallContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.exprCall"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExprCall([NotNull] TemplateParser.ExprCallContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.exprProp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExprProp([NotNull] TemplateParser.ExprPropContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.exprProp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExprProp([NotNull] TemplateParser.ExprPropContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.exprValue"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExprValue([NotNull] TemplateParser.ExprValueContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.exprValue"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExprValue([NotNull] TemplateParser.ExprValueContext context) { }
 
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>

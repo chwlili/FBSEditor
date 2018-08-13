@@ -9,13 +9,13 @@ protected bool IsBeginTag()
 }
 
 
-OPEN : '<%' -> mode(CODE_MODE),skip;
+OPEN : '<%' -> mode(CODE_MODE);//,skip;
 
 TEXT  : ({!IsBeginTag()}? .)+;
 
 mode CODE_MODE;
 
-CLOSE : '%>' -> mode(DEFAULT_MODE),skip;
+CLOSE : '%>' -> mode(DEFAULT_MODE);//,skip;
 
 INTEGER : [0-9]+ ;
 

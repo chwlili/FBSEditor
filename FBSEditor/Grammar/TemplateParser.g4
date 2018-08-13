@@ -1,7 +1,13 @@
 parser grammar TemplateParser;
 options { tokenVocab = TemplateLexer;}
 
-document : (TEXT | expr | if)*;
+document : (textRegion | codeRegion)*;
+
+textRegion : TEXT;
+
+codeRegion : begin = OPEN  code* end = CLOSE;
+
+code : if | expr;
 
 if : id=IF l=PARENTHESES_L exp = expr r=PARENTHESES_R BRACE_L (expr|TEXT)* BRACE_R;
 
