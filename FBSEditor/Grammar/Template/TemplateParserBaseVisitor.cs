@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from Template.g4 by ANTLR 4.7.1
+// Generated from TemplateParser.g4 by ANTLR 4.7.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -25,16 +25,16 @@ using IToken = Antlr4.Runtime.IToken;
 using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 
 /// <summary>
-/// This class provides an empty implementation of <see cref="ITemplateVisitor{Result}"/>,
+/// This class provides an empty implementation of <see cref="ITemplateParserVisitor{Result}"/>,
 /// which can be extended to create a visitor which only needs to handle a subset
 /// of the available methods.
 /// </summary>
 /// <typeparam name="Result">The return type of the visit operation.</typeparam>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.7.1")]
 [System.CLSCompliant(false)]
-public partial class TemplateBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, ITemplateVisitor<Result> {
+public partial class TemplateParserBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, ITemplateParserVisitor<Result> {
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="Template.document"/>.
+	/// Visit a parse tree produced by <see cref="TemplateParser.document"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -42,9 +42,9 @@ public partial class TemplateBaseVisitor<Result> : AbstractParseTreeVisitor<Resu
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitDocument([NotNull] Template.DocumentContext context) { return VisitChildren(context); }
+	public virtual Result VisitDocument([NotNull] TemplateParser.DocumentContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="Template.range1"/>.
+	/// Visit a parse tree produced by <see cref="TemplateParser.expr"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -52,9 +52,9 @@ public partial class TemplateBaseVisitor<Result> : AbstractParseTreeVisitor<Resu
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitRange1([NotNull] Template.Range1Context context) { return VisitChildren(context); }
+	public virtual Result VisitExpr([NotNull] TemplateParser.ExprContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="Template.range2"/>.
+	/// Visit a parse tree produced by <see cref="TemplateParser.prop"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -62,5 +62,15 @@ public partial class TemplateBaseVisitor<Result> : AbstractParseTreeVisitor<Resu
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitRange2([NotNull] Template.Range2Context context) { return VisitChildren(context); }
+	public virtual Result VisitProp([NotNull] TemplateParser.PropContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.if"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitIf([NotNull] TemplateParser.IfContext context) { return VisitChildren(context); }
 }

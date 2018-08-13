@@ -1,17 +1,63 @@
 lexer grammar TemplateLexer;
 
-OPEN1 : '<%' -> mode(CODE_MODE);
-OPEN2 : '${' -> mode(PROP_MODE);
-TEXT  : ({(InputStream.LA(1)!='<' && InputStream.LA(2)!='%') && (InputStream.LA(1)!='$' && InputStream.LA(2)!='{')}? .)+;
+@members
+{
+protected bool IsBeginTag()
+{
+	return (InputStream.LA(1)=='<' && InputStream.LA(2)=='%');
+}
+}
+
+
+OPEN : '<%' -> mode(CODE_MODE),skip;
+
+TEXT  : ({!IsBeginTag()}? .)+;
 
 mode CODE_MODE;
 
-CLOSE1 : '%>' -> mode(DEFAULT_MODE);
-TEXT1  : ({InputStream.LA(1)!='%' && InputStream.LA(2)!='>'}? .)+;
-WS1 : [ \t\r\n]+ -> skip ;
+CLOSE : '%>' -> mode(DEFAULT_MODE),skip;
 
-mode PROP_MODE;
+INTEGER : [0-9]+ ;
 
-CLOSE2 : '}' -> mode(DEFAULT_MODE);
-TEXT2  : ({InputStream.LA(1)!='}'}? .)+;
-WS2 : [ \t\r\n]+ -> skip ; 
+FLOAT : [0-9]+ '.' [0-9]+ (('e'|'E') ('+'|'-')? [0-9]+)? ;
+
+BOOL : ('true' | 'false') ;
+
+STRING : '"' .*? '"' ;
+BRACE_L : '{';
+BRACE_R : '}';
+INCREMENT:'++';
+DECREMENT:'--';
+MUL:'*';
+DIV:'/';
+MOD:'%';
+ADD:'+';
+SUB:'-';
+PARENTHESES_L:'(';
+PARENTHESES_R:')';
+IF:'if';
+DOT:'.';
+COMMA:',';
+NOTEQUAL : '!=';
+LOGIC_NOT:'!';
+BIT_INVERT:'~';
+SHIFTL:'<<';
+SHIFTR:'>>';
+LESS : '<';
+LESSEQUAL : '<=';
+GREATER : '>';
+GREATEREQUAL : '>=';
+EQUAL : '==';
+LOGIC_AND : '&&';
+LOGIC_OR : '||';
+BIT_AND : '&';
+BIT_OR : '|';
+BIT_XOR : '^';
+
+
+IDENT : [a-zA-Z_][a-zA-Z0-9_]*;
+
+COMMENT : (('//' ~[\r\n]* '\r'? '\n')|('/*' .*? '*/')) -> channel(HIDDEN) ;
+
+
+WS : [ \t\r\n]+ -> skip ;

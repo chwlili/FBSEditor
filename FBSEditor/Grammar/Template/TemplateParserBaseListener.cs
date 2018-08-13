@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from Template.g4 by ANTLR 4.7.1
+// Generated from TemplateParser.g4 by ANTLR 4.7.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -27,49 +27,61 @@ using IToken = Antlr4.Runtime.IToken;
 using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 
 /// <summary>
-/// This class provides an empty implementation of <see cref="ITemplateListener"/>,
+/// This class provides an empty implementation of <see cref="ITemplateParserListener"/>,
 /// which can be extended to create a listener which only needs to handle a subset
 /// of the available methods.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.7.1")]
 [System.CLSCompliant(false)]
-public partial class TemplateBaseListener : ITemplateListener {
+public partial class TemplateParserBaseListener : ITemplateParserListener {
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="Template.document"/>.
+	/// Enter a parse tree produced by <see cref="TemplateParser.document"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterDocument([NotNull] Template.DocumentContext context) { }
+	public virtual void EnterDocument([NotNull] TemplateParser.DocumentContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="Template.document"/>.
+	/// Exit a parse tree produced by <see cref="TemplateParser.document"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitDocument([NotNull] Template.DocumentContext context) { }
+	public virtual void ExitDocument([NotNull] TemplateParser.DocumentContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="Template.range1"/>.
+	/// Enter a parse tree produced by <see cref="TemplateParser.expr"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterRange1([NotNull] Template.Range1Context context) { }
+	public virtual void EnterExpr([NotNull] TemplateParser.ExprContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="Template.range1"/>.
+	/// Exit a parse tree produced by <see cref="TemplateParser.expr"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitRange1([NotNull] Template.Range1Context context) { }
+	public virtual void ExitExpr([NotNull] TemplateParser.ExprContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="Template.range2"/>.
+	/// Enter a parse tree produced by <see cref="TemplateParser.prop"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterRange2([NotNull] Template.Range2Context context) { }
+	public virtual void EnterProp([NotNull] TemplateParser.PropContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="Template.range2"/>.
+	/// Exit a parse tree produced by <see cref="TemplateParser.prop"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitRange2([NotNull] Template.Range2Context context) { }
+	public virtual void ExitProp([NotNull] TemplateParser.PropContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.if"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterIf([NotNull] TemplateParser.IfContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.if"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitIf([NotNull] TemplateParser.IfContext context) { }
 
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>

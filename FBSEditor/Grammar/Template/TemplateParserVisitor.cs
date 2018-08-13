@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from Template.g4 by ANTLR 4.7.1
+// Generated from TemplateParser.g4 by ANTLR 4.7.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -25,28 +25,34 @@ using IToken = Antlr4.Runtime.IToken;
 
 /// <summary>
 /// This interface defines a complete generic visitor for a parse tree produced
-/// by <see cref="Template"/>.
+/// by <see cref="TemplateParser"/>.
 /// </summary>
 /// <typeparam name="Result">The return type of the visit operation.</typeparam>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.7.1")]
 [System.CLSCompliant(false)]
-public interface ITemplateVisitor<Result> : IParseTreeVisitor<Result> {
+public interface ITemplateParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="Template.document"/>.
+	/// Visit a parse tree produced by <see cref="TemplateParser.document"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitDocument([NotNull] Template.DocumentContext context);
+	Result VisitDocument([NotNull] TemplateParser.DocumentContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="Template.range1"/>.
+	/// Visit a parse tree produced by <see cref="TemplateParser.expr"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitRange1([NotNull] Template.Range1Context context);
+	Result VisitExpr([NotNull] TemplateParser.ExprContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="Template.range2"/>.
+	/// Visit a parse tree produced by <see cref="TemplateParser.prop"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitRange2([NotNull] Template.Range2Context context);
+	Result VisitProp([NotNull] TemplateParser.PropContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.if"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIf([NotNull] TemplateParser.IfContext context);
 }

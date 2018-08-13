@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from Template.g4 by ANTLR 4.7.1
+// Generated from TemplateParser.g4 by ANTLR 4.7.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -25,39 +25,49 @@ using IToken = Antlr4.Runtime.IToken;
 
 /// <summary>
 /// This interface defines a complete listener for a parse tree produced by
-/// <see cref="Template"/>.
+/// <see cref="TemplateParser"/>.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.7.1")]
 [System.CLSCompliant(false)]
-public interface ITemplateListener : IParseTreeListener {
+public interface ITemplateParserListener : IParseTreeListener {
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="Template.document"/>.
+	/// Enter a parse tree produced by <see cref="TemplateParser.document"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterDocument([NotNull] Template.DocumentContext context);
+	void EnterDocument([NotNull] TemplateParser.DocumentContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="Template.document"/>.
+	/// Exit a parse tree produced by <see cref="TemplateParser.document"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitDocument([NotNull] Template.DocumentContext context);
+	void ExitDocument([NotNull] TemplateParser.DocumentContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="Template.range1"/>.
+	/// Enter a parse tree produced by <see cref="TemplateParser.expr"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterRange1([NotNull] Template.Range1Context context);
+	void EnterExpr([NotNull] TemplateParser.ExprContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="Template.range1"/>.
+	/// Exit a parse tree produced by <see cref="TemplateParser.expr"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitRange1([NotNull] Template.Range1Context context);
+	void ExitExpr([NotNull] TemplateParser.ExprContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="Template.range2"/>.
+	/// Enter a parse tree produced by <see cref="TemplateParser.prop"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterRange2([NotNull] Template.Range2Context context);
+	void EnterProp([NotNull] TemplateParser.PropContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="Template.range2"/>.
+	/// Exit a parse tree produced by <see cref="TemplateParser.prop"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitRange2([NotNull] Template.Range2Context context);
+	void ExitProp([NotNull] TemplateParser.PropContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.if"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterIf([NotNull] TemplateParser.IfContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.if"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitIf([NotNull] TemplateParser.IfContext context);
 }
