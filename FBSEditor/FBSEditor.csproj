@@ -275,12 +275,12 @@
     <Compile Include="Grammar\FlatBuffer\FlatbufferListener.cs" />
     <Compile Include="Grammar\FlatBuffer\FlatbufferParser.cs" />
     <Compile Include="Grammar\FlatBuffer\FlatbufferVisitor.cs" />
-    <Compile Include="Grammar\TemplateLexer\TemplateLexer.cs" />
-    <Compile Include="Grammar\Template\Template.cs" />
-    <Compile Include="Grammar\Template\TemplateBaseListener.cs" />
-    <Compile Include="Grammar\Template\TemplateBaseVisitor.cs" />
-    <Compile Include="Grammar\Template\TemplateListener.cs" />
-    <Compile Include="Grammar\Template\TemplateVisitor.cs" />
+    <Compile Include="Grammar\Template\TemplateLexer.cs" />
+    <Compile Include="Grammar\Template\TemplateParser.cs" />
+    <Compile Include="Grammar\Template\TemplateParserBaseListener.cs" />
+    <Compile Include="Grammar\Template\TemplateParserBaseVisitor.cs" />
+    <Compile Include="Grammar\Template\TemplateParserListener.cs" />
+    <Compile Include="Grammar\Template\TemplateParserVisitor.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -297,7 +297,7 @@
       <CustomToolNamespace>FBSEditor.Antlr4.Tree.Xpath</CustomToolNamespace>
     </AntlrTokens>
     <None Include="app.config" />
-    <None Include="Grammar\Flatbuffer.bat" />
+    <None Include="Grammar\Build.bat" />
     <Antlr4 Include="Grammar\Flatbuffer.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
@@ -312,12 +312,10 @@
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
     </AntlrTokens>
-    <None Include="Grammar\Template.bat" />
-    <Antlr4 Include="Grammar\Template.g4">
+    <Antlr4 Include="Grammar\TemplateParser.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
     </Antlr4>
-    <None Include="Grammar\TemplateLexer.bat" />
     <Antlr4 Include="Grammar\TemplateLexer.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
@@ -326,13 +324,13 @@
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
     </AntlrTokens>
-    <None Include="Grammar\TemplateLexer\TemplateLexer.interp" />
-    <AntlrTokens Include="Grammar\TemplateLexer\TemplateLexer.tokens">
+    <None Include="Grammar\Template\TemplateLexer.interp" />
+    <AntlrTokens Include="Grammar\Template\TemplateLexer.tokens">
       <Generator>MSBuild:Compile</Generator>
-      <CustomToolNamespace>FBSEditor.Grammar.TemplateLexer</CustomToolNamespace>
+      <CustomToolNamespace>FBSEditor.Grammar.Template</CustomToolNamespace>
     </AntlrTokens>
-    <None Include="Grammar\Template\Template.interp" />
-    <AntlrTokens Include="Grammar\Template\Template.tokens">
+    <None Include="Grammar\Template\TemplateParser.interp" />
+    <AntlrTokens Include="Grammar\Template\TemplateParser.tokens">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar.Template</CustomToolNamespace>
     </AntlrTokens>
