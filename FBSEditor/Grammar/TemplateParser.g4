@@ -1,22 +1,20 @@
 parser grammar TemplateParser;
 options { tokenVocab = TemplateLexer;}
 
-document : (TEXT | code)*;
+document : code*;
 
-code : var | if | switch | while | dowhile | for | foreach | expr;
+code : var | if | switch | while | dowhile | for | foreach | expr | TEXT | BREAK | CONTINUE | RETURN;
 
-var : keyword = VAR key = IDENT (EQUAL expr)? SEMICOLON?;
-if : keyword = IF PARENTHESES_L condition = expr PARENTHESES_R BRACE_L (code | TEXT)* BRACE_R;
-switch : keywordA = SWITCH PARENTHESES_L condition = expr PARENTHESES_R BRACE_L (keywordB += CASE expr COLON expr BREACK? )* BRACE_R;
-while : keyword = WHILE PARENTHESES_L condition = expr PARENTHESES_R BRACE_L (code | TEXT)* BRACE_R;
-dowhile : keywordA = DO BRACE_L (code | TEXT)* BRACE_R keywordB = WHILE PARENTHESES_L condition = expr PARENTHESES_R;
-for : keyword = FOR PARENTHESES_L code? SEMICOLON code? SEMICOLON code? PARENTHESES_R BRACE_L (code | TEXT)* BRACE_R;
-foreach : keywordA = FOREACH PARENTHESES_L code keywordB = IN code PARENTHESES_R BRACE_L (code | TEXT)* BRACE_R;
+var : keyword = VAR key = IDENT (EQUAL expr)? SEMICOLON;
+if : keyword = IF PARENTHESES_L condition = expr PARENTHESES_R BRACE_L code* BRACE_R;
+switch : keywordA = SWITCH PARENTHESES_L condition = expr PARENTHESES_R BRACE_L (keywordB += CASE expr COLON expr BREAK? )* BRACE_R;
+while : keyword = WHILE PARENTHESES_L condition = expr PARENTHESES_R BRACE_L code* BRACE_R;
+dowhile : keywordA = DO BRACE_L code* BRACE_R keywordB = WHILE PARENTHESES_L condition = expr PARENTHESES_R;
+for : keyword = FOR PARENTHESES_L code? SEMICOLON code? SEMICOLON code? PARENTHESES_R BRACE_L code* BRACE_R;
+foreach : keywordA = FOREACH PARENTHESES_L code keywordB = IN code PARENTHESES_R BRACE_L code* BRACE_R;
 
 expr : 
-		 BREACK | CONTINUE
-		 //
-		 | PARENTHESES_L r = expr PARENTHESES_R
+		 PARENTHESES_L r = expr PARENTHESES_R
 		 //属性和函数
 		 | call = exprCall | prop = exprProp
 		 //一元运算

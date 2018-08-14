@@ -76,8 +76,9 @@ DO:'do';
 FOR:'for';
 FOREACH:'foreach';
 IN:'in';
-BREACK:'break';
+BREAK:'break';
 CONTINUE:'continue';
+RETURN:'return';
 IDENT : [a-zA-Z_][a-zA-Z0-9_]*;
 
 COMMENT : (('//' ~[\r\n]* '\r'? '\n')|('/*' .*? '*/')) -> channel(HIDDEN) ;

@@ -113,7 +113,7 @@ namespace Tempalte
                     if (open == null) { open = token; }
                     ClassfificationList.Add(new ClassificationSpan(new SnapshotSpan(snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), ClassificationTag));
                 }
-                else if(token.Type==TemplateLexer.CLOSE)
+                else if (token.Type == TemplateLexer.CLOSE)
                 {
                     ClassfificationList.Add(new ClassificationSpan(new SnapshotSpan(snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), ClassificationTag));
                     if (open != null)
@@ -123,9 +123,13 @@ namespace Tempalte
                     }
                     open = null;
                 }
-                else if(token.Type == TemplateLexer.TEXT)
+                else if (token.Type == TemplateLexer.TEXT)
                 {
                     ClassfificationList.Add(new ClassificationSpan(new SnapshotSpan(snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), ClassificationText));
+                }
+                else if (token.Type == TemplateLexer.BREAK || token.Type == TemplateLexer.CONTINUE || token.Type == TemplateLexer.RETURN)
+                {
+                    ClassfificationList.Add(new ClassificationSpan(new SnapshotSpan(snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), ClassificationKeyword));
                 }
             }
             lexer.Reset();
