@@ -41,26 +41,6 @@ public interface ITemplateParserListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitDocument([NotNull] TemplateParser.DocumentContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="TemplateParser.textRegion"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterTextRegion([NotNull] TemplateParser.TextRegionContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="TemplateParser.textRegion"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitTextRegion([NotNull] TemplateParser.TextRegionContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="TemplateParser.codeRegion"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterCodeRegion([NotNull] TemplateParser.CodeRegionContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="TemplateParser.codeRegion"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitCodeRegion([NotNull] TemplateParser.CodeRegionContext context);
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="TemplateParser.code"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -71,6 +51,16 @@ public interface ITemplateParserListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitCode([NotNull] TemplateParser.CodeContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.var"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterVar([NotNull] TemplateParser.VarContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.var"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitVar([NotNull] TemplateParser.VarContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="TemplateParser.if"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -80,6 +70,56 @@ public interface ITemplateParserListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitIf([NotNull] TemplateParser.IfContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.switch"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterSwitch([NotNull] TemplateParser.SwitchContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.switch"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitSwitch([NotNull] TemplateParser.SwitchContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.while"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterWhile([NotNull] TemplateParser.WhileContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.while"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitWhile([NotNull] TemplateParser.WhileContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.dowhile"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterDowhile([NotNull] TemplateParser.DowhileContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.dowhile"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitDowhile([NotNull] TemplateParser.DowhileContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.for"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterFor([NotNull] TemplateParser.ForContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.for"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitFor([NotNull] TemplateParser.ForContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.foreach"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterForeach([NotNull] TemplateParser.ForeachContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.foreach"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitForeach([NotNull] TemplateParser.ForeachContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="TemplateParser.expr"/>.
 	/// </summary>

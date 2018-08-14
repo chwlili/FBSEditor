@@ -9,10 +9,11 @@ namespace Tempalte
         public const string ContentType = "fbstemplate";
         public const string ExtName = ".fbstemplate";
 
-        public const string ClassificationKey = "ClassificationKey";
+        public const string ClassificationKeyword = "ClassificationKeyword";
         public const string ClassificationText = "ClassificationText";
         public const string ClassificationCode = "ClassificationCode";
         public const string ClassificationTag = "ClassificationTag";
+        public const string ClassificationComment = "ClassificationComment";
         public const string ClassificationBraceMatching = "ClassificationBraceMatching";
 
 #pragma warning disable 649, 169
@@ -27,9 +28,9 @@ namespace Tempalte
         [ContentType(Constants.ContentType)]
         private static FileExtensionToContentTypeDefinition extensionContentType;
 
-        [Name(ClassificationKey)]
+        [Name(ClassificationKeyword)]
         [Export(typeof(ClassificationTypeDefinition))]
-        private static ClassificationTypeDefinition Key;
+        private static ClassificationTypeDefinition Keyword;
 
         [Name(ClassificationText)]
         [Export(typeof(ClassificationTypeDefinition))]
@@ -42,6 +43,10 @@ namespace Tempalte
         [Name(ClassificationTag)]
         [Export(typeof(ClassificationTypeDefinition))]
         private static ClassificationTypeDefinition Tag;
+
+        [Name(ClassificationComment)]
+        [Export(typeof(ClassificationTypeDefinition))]
+        private static ClassificationTypeDefinition Comment;
 
         [Name(ClassificationBraceMatching)]
         [Export(typeof(ClassificationTypeDefinition))]

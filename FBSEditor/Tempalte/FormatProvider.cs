@@ -8,8 +8,8 @@ namespace Tempalte
     class FormatProvider
     {
         [Export(typeof(EditorFormatDefinition))]
-        [ClassificationType(ClassificationTypeNames = Constants.ClassificationKey)]
-        [Name(Constants.ClassificationKey)]
+        [ClassificationType(ClassificationTypeNames = Constants.ClassificationKeyword)]
+        [Name(Constants.ClassificationKeyword)]
         [UserVisible(true)]
         [Order(Before = Priority.Default)]
         internal sealed class KeyFormat : ClassificationFormatDefinition
@@ -60,6 +60,20 @@ namespace Tempalte
             {
                 this.DisplayName = "Temaplte标记";
                 this.ForegroundColor = Color.FromRgb(255, 0, 0);
+            }
+        }
+
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = Constants.ClassificationComment)]
+        [Name(Constants.ClassificationComment)]
+        [UserVisible(true)]
+        [Order(Before = Priority.Default)]
+        internal sealed class CommentFormat : ClassificationFormatDefinition
+        {
+            public CommentFormat()
+            {
+                this.DisplayName = "Temaplte注释";
+                this.ForegroundColor = Color.FromRgb(153, 153, 153);
             }
         }
 

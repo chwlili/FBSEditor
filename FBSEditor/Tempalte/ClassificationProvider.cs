@@ -27,10 +27,11 @@ namespace Tempalte
 
     internal class Classification : IClassifier
     {
-        public readonly IClassificationType ClassificationKey;
+        public readonly IClassificationType ClassificationKeyword;
         public readonly IClassificationType ClassificationText;
         public readonly IClassificationType ClassificationCode;
         public readonly IClassificationType ClassificationTag;
+        public readonly IClassificationType ClassificationComment;
 
         private ClassificationVisitor classificationVisitor;
 
@@ -50,14 +51,15 @@ namespace Tempalte
             //this.classificationErrorHandler = new ClassificationErrorHandler(this);
             //this.classificationErrorListener = new ClassificationErrorListener(this);
 
-            this.ClassificationKey = registry.GetClassificationType(Constants.ClassificationKey);
+            this.ClassificationKeyword = registry.GetClassificationType(Constants.ClassificationKeyword);
             this.ClassificationText = registry.GetClassificationType(Constants.ClassificationText);
             this.ClassificationCode = registry.GetClassificationType(Constants.ClassificationCode);
             this.ClassificationTag = registry.GetClassificationType(Constants.ClassificationTag);
+            this.ClassificationComment = registry.GetClassificationType(Constants.ClassificationComment);
 
             this.Buffer = buffer;
             this.Buffer.ChangedHighPriority += OnTextBufferChanged;
-
+            
             RebuidTokens();
         }
 
@@ -90,7 +92,43 @@ namespace Tempalte
 
             parser.document().Accept<int>(classificationVisitor);
 
+            FlagAllHiddenToken(snapshot,lexer);
+
             //ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(snapshot, 0, snapshot.Length)));
+        }
+
+        private void FlagAllHiddenToken(ITextSnapshot snapshot, TemplateLexer lexer)
+        {
+            IToken open = null;
+
+            lexer.Reset();
+            foreach (var token in lexer.GetAllTokens())
+            {
+                if (token.Type == TemplateLexer.COMMENT)
+                {
+                    ClassfificationList.Add(new ClassificationSpan(new SnapshotSpan(snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), ClassificationComment));
+                }
+                else if (token.Type == TemplateLexer.OPEN)
+                {
+                    if (open == null) { open = token; }
+                    ClassfificationList.Add(new ClassificationSpan(new SnapshotSpan(snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), ClassificationTag));
+                }
+                else if(token.Type==TemplateLexer.CLOSE)
+                {
+                    ClassfificationList.Add(new ClassificationSpan(new SnapshotSpan(snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), ClassificationTag));
+                    if (open != null)
+                    {
+                        OutlineList.Add(open.StopIndex + 1);
+                        OutlineList.Add(token.StartIndex - open.StopIndex - 1);
+                    }
+                    open = null;
+                }
+                else if(token.Type == TemplateLexer.TEXT)
+                {
+                    ClassfificationList.Add(new ClassificationSpan(new SnapshotSpan(snapshot, new Span(token.StartIndex, token.StopIndex - token.StartIndex + 1)), ClassificationText));
+                }
+            }
+            lexer.Reset();
         }
     }
     
@@ -103,31 +141,60 @@ namespace Tempalte
         {
             this.classificater = classificater;
         }
-
-        public override int VisitTextRegion([NotNull] TemplateParser.TextRegionContext context)
+        public override int VisitVar([NotNull] TemplateParser.VarContext context)
         {
-            MakeClassificationSpan(context, classificater.ClassificationText);
-            return base.VisitTextRegion(context);
-        }
-        public override int VisitCodeRegion([NotNull] TemplateParser.CodeRegionContext context)
-        {
-            MakeClassificationSpan(context.begin, classificater.ClassificationTag);
-            MakeClassificationSpan(context.end, classificater.ClassificationTag);
-            MakeOutline(context.begin, context.end);
-            return base.VisitCodeRegion(context);
-        }
-        public override int VisitExpr([NotNull] TemplateParser.ExprContext context)
-        {
-            //MakeClassificationSpan(context, classificater.ClassificationCode);
-            return base.VisitExpr(context);
+            MakeClassificationSpan(context.keyword, classificater.ClassificationKeyword);
+            return base.VisitVar(context);
         }
         public override int VisitIf([NotNull] TemplateParser.IfContext context)
         {
-            MakeClassificationSpan(context.id, classificater.ClassificationKey);
+            MakeClassificationSpan(context.keyword, classificater.ClassificationKeyword);
             MakeBracePair(context.PARENTHESES_L(), context.PARENTHESES_R());
             MakeBracePair(context.BRACE_L(), context.BRACE_R());
             return base.VisitIf(context);
         }
+        public override int VisitSwitch([NotNull] TemplateParser.SwitchContext context)
+        {
+            MakeClassificationSpan(context.keywordA, classificater.ClassificationKeyword);
+            foreach(var keyword in context._keywordB)
+            {
+                MakeClassificationSpan(keyword, classificater.ClassificationKeyword);
+            }
+            MakeBracePair(context.PARENTHESES_L(), context.PARENTHESES_R());
+            MakeBracePair(context.BRACE_L(), context.BRACE_R());
+            return base.VisitSwitch(context);
+        }
+        public override int VisitWhile([NotNull] TemplateParser.WhileContext context)
+        {
+            MakeClassificationSpan(context.keyword, classificater.ClassificationKeyword);
+            MakeBracePair(context.PARENTHESES_L(), context.PARENTHESES_R());
+            MakeBracePair(context.BRACE_L(), context.BRACE_R());
+            return base.VisitWhile(context);
+        }
+        public override int VisitDowhile([NotNull] TemplateParser.DowhileContext context)
+        {
+            MakeClassificationSpan(context.keywordA, classificater.ClassificationKeyword);
+            MakeClassificationSpan(context.keywordB, classificater.ClassificationKeyword);
+            MakeBracePair(context.PARENTHESES_L(), context.PARENTHESES_R());
+            MakeBracePair(context.BRACE_L(), context.BRACE_R());
+            return base.VisitDowhile(context);
+        }
+        public override int VisitFor([NotNull] TemplateParser.ForContext context)
+        {
+            MakeClassificationSpan(context.keyword, classificater.ClassificationKeyword);
+            MakeBracePair(context.PARENTHESES_L(), context.PARENTHESES_R());
+            MakeBracePair(context.BRACE_L(), context.BRACE_R());
+            return base.VisitFor(context);
+        }
+        public override int VisitForeach([NotNull] TemplateParser.ForeachContext context)
+        {
+            MakeClassificationSpan(context.keywordA, classificater.ClassificationKeyword);
+            MakeClassificationSpan(context.keywordB, classificater.ClassificationKeyword);
+            MakeBracePair(context.PARENTHESES_L(), context.PARENTHESES_R());
+            MakeBracePair(context.BRACE_L(), context.BRACE_R());
+            return base.VisitForeach(context);
+        }
+
 
 
         private void MakeClassificationSpan(IToken token, IClassificationType classification)
@@ -148,14 +215,6 @@ namespace Tempalte
                 var classificationSpan = new ClassificationSpan(snapshotSpan, classification);
 
                 classificater.ClassfificationList.Add(classificationSpan);
-            }
-        }
-        private void MakeOutline(IToken l, IToken r)
-        {
-            if (l != null && r != null)
-            {
-                classificater.OutlineList.Add(l.StopIndex + 1);
-                classificater.OutlineList.Add(r.StartIndex - l.StopIndex - 1);
             }
         }
         private void MakeBracePair(ITerminalNode l, ITerminalNode r)

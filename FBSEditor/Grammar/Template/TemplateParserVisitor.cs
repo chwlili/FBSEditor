@@ -38,29 +38,53 @@ public interface ITemplateParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitDocument([NotNull] TemplateParser.DocumentContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="TemplateParser.textRegion"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitTextRegion([NotNull] TemplateParser.TextRegionContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="TemplateParser.codeRegion"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitCodeRegion([NotNull] TemplateParser.CodeRegionContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="TemplateParser.code"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitCode([NotNull] TemplateParser.CodeContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.var"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVar([NotNull] TemplateParser.VarContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="TemplateParser.if"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitIf([NotNull] TemplateParser.IfContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.switch"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSwitch([NotNull] TemplateParser.SwitchContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.while"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitWhile([NotNull] TemplateParser.WhileContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.dowhile"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDowhile([NotNull] TemplateParser.DowhileContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.for"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFor([NotNull] TemplateParser.ForContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.foreach"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitForeach([NotNull] TemplateParser.ForeachContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="TemplateParser.expr"/>.
 	/// </summary>

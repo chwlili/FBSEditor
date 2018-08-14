@@ -47,30 +47,6 @@ public partial class TemplateParserBaseListener : ITemplateParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitDocument([NotNull] TemplateParser.DocumentContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="TemplateParser.textRegion"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterTextRegion([NotNull] TemplateParser.TextRegionContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="TemplateParser.textRegion"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitTextRegion([NotNull] TemplateParser.TextRegionContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="TemplateParser.codeRegion"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterCodeRegion([NotNull] TemplateParser.CodeRegionContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="TemplateParser.codeRegion"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitCodeRegion([NotNull] TemplateParser.CodeRegionContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="TemplateParser.code"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -83,6 +59,18 @@ public partial class TemplateParserBaseListener : ITemplateParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitCode([NotNull] TemplateParser.CodeContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.var"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterVar([NotNull] TemplateParser.VarContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.var"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitVar([NotNull] TemplateParser.VarContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="TemplateParser.if"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -94,6 +82,66 @@ public partial class TemplateParserBaseListener : ITemplateParserListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitIf([NotNull] TemplateParser.IfContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.switch"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterSwitch([NotNull] TemplateParser.SwitchContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.switch"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitSwitch([NotNull] TemplateParser.SwitchContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.while"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterWhile([NotNull] TemplateParser.WhileContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.while"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitWhile([NotNull] TemplateParser.WhileContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.dowhile"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterDowhile([NotNull] TemplateParser.DowhileContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.dowhile"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitDowhile([NotNull] TemplateParser.DowhileContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.for"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterFor([NotNull] TemplateParser.ForContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.for"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitFor([NotNull] TemplateParser.ForContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.foreach"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterForeach([NotNull] TemplateParser.ForeachContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.foreach"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitForeach([NotNull] TemplateParser.ForeachContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="TemplateParser.expr"/>.
 	/// <para>The default implementation does nothing.</para>

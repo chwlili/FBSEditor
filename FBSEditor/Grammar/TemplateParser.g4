@@ -1,18 +1,22 @@
 parser grammar TemplateParser;
 options { tokenVocab = TemplateLexer;}
 
-document : (textRegion | codeRegion)*;
+document : (TEXT | code)*;
 
-textRegion : TEXT;
+code : var | if | switch | while | dowhile | for | foreach | expr;
 
-codeRegion : begin = OPEN  code* end = CLOSE;
-
-code : if | expr;
-
-if : id=IF l=PARENTHESES_L exp = expr r=PARENTHESES_R BRACE_L (expr|TEXT)* BRACE_R;
+var : keyword = VAR key = IDENT (EQUAL expr)? SEMICOLON?;
+if : keyword = IF PARENTHESES_L condition = expr PARENTHESES_R BRACE_L (code | TEXT)* BRACE_R;
+switch : keywordA = SWITCH PARENTHESES_L condition = expr PARENTHESES_R BRACE_L (keywordB += CASE expr COLON expr BREACK? )* BRACE_R;
+while : keyword = WHILE PARENTHESES_L condition = expr PARENTHESES_R BRACE_L (code | TEXT)* BRACE_R;
+dowhile : keywordA = DO BRACE_L (code | TEXT)* BRACE_R keywordB = WHILE PARENTHESES_L condition = expr PARENTHESES_R;
+for : keyword = FOR PARENTHESES_L code? SEMICOLON code? SEMICOLON code? PARENTHESES_R BRACE_L (code | TEXT)* BRACE_R;
+foreach : keywordA = FOREACH PARENTHESES_L code keywordB = IN code PARENTHESES_R BRACE_L (code | TEXT)* BRACE_R;
 
 expr : 
-		 PARENTHESES_L r = expr PARENTHESES_R
+		 BREACK | CONTINUE
+		 //
+		 | PARENTHESES_L r = expr PARENTHESES_R
 		 //属性和函数
 		 | call = exprCall | prop = exprProp
 		 //一元运算
