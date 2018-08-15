@@ -15,9 +15,11 @@
     <Buttons>
       <Button guid="guidBuildCommandPackageCmdSet" id="FBS_ITEM_BUILD" priority="0x0000" type="Button">
         <Parent guid="guidBuildCommandPackageCmdSet" id="IDG_FBS_CTXT_ITEM_BUILD"/>
-        <Icon guid="guidImages" id="bmpPic2" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Icon guid="guidImages" id="bmpPicArrows" />
         <Strings>
-          <ButtonText>Invoke Build Item</ButtonText>
+          <ButtonText>生成代码...</ButtonText>
         </Strings>
       </Button>
 
@@ -33,7 +35,7 @@
 
     <GuidSymbol name="guidBuildCommandPackageCmdSet" value="{04f51c64-0c0a-412c-818c-57880c441058}">
       <IDSymbol name="IDG_FBS_CTXT_ITEM_BUILD" value="0x1021" />
-      <IDSymbol name="FBS_ITEM_BUILD" value="0x0101" />
+      <IDSymbol name="FBS_ITEM_BUILD" value="0x0100" />
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{f5f8e590-d6ab-4e9a-86c4-a974c2d9ab12}" >

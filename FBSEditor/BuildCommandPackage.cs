@@ -19,7 +19,8 @@ using FBSEditor.Generator;
 using System.Text;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
-
+using Tempalte;
+     
 namespace FBSEditor
 {
     [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
@@ -44,7 +45,7 @@ namespace FBSEditor
             BuildCommand.Initialize(this);
 
             dte = ServiceProvider.GlobalProvider.GetService(typeof(DTE)) as DTE;
-            dte.Events.BuildEvents.OnBuildBegin += BuildEvents_OnBuildBegin;
+            //dte.Events.BuildEvents.OnBuildBegin += BuildEvents_OnBuildBegin;
 
             ErrorList = new ErrorListProvider(this);
 

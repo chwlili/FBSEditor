@@ -247,7 +247,7 @@
     <Compile Include="Antlr4\UnbufferedCharStream.cs" />
     <Compile Include="Antlr4\UnbufferedTokenStream.cs" />
     <Compile Include="Antlr4\Vocabulary.cs" />
-    <Compile Include="BuildCommand.cs" />
+    <Compile Include="Tempalte\BuildCommand.cs" />
     <Compile Include="BuildCommandPackage.cs" />
     <Compile Include="Build\Enum.cs" />
     <Compile Include="Build\EnumField.cs" />
