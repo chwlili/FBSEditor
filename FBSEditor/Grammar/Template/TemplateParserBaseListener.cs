@@ -59,6 +59,18 @@ public partial class TemplateParserBaseListener : ITemplateParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitCode([NotNull] TemplateParser.CodeContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.text"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterText([NotNull] TemplateParser.TextContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.text"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitText([NotNull] TemplateParser.TextContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="TemplateParser.var"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

@@ -51,6 +51,16 @@ public interface ITemplateParserListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitCode([NotNull] TemplateParser.CodeContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.text"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterText([NotNull] TemplateParser.TextContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.text"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitText([NotNull] TemplateParser.TextContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="TemplateParser.var"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

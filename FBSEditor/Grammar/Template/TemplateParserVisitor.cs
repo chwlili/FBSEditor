@@ -44,6 +44,12 @@ public interface ITemplateParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitCode([NotNull] TemplateParser.CodeContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="TemplateParser.text"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitText([NotNull] TemplateParser.TextContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="TemplateParser.var"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.ComponentModel.Design;
+using Tempalte.Build;
 
 namespace Tempalte
 {
@@ -47,23 +48,25 @@ namespace Tempalte
             if (null != command)
             {
                 var dte = ServiceProvider.GetService(typeof(DTE)) as DTE;
-                command.Visible = dte.SelectedItems.Count == 1 && dte.SelectedItems.Item(1).Name.EndsWith(Tempalte.Constants.ExtName);
+                command.Visible = dte != null && dte.SelectedItems.Count == 1 && dte.SelectedItems.Item(1).Name.EndsWith(Tempalte.Constants.ExtName);
             }
         }
 
         private void OnMenuClick(object sender, EventArgs e)
         {
-            string message = "build the template file.";// string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.GetType().FullName);
-            string title = "build";
-            VsShellUtilities.ShowMessageBox(this.ServiceProvider, message, title, OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-
             var dte = ServiceProvider.GetService(typeof(DTE)) as DTE;
-            if (dte == null)
-                return;
+            if(dte != null && dte.SelectedItems.Count == 1 && dte.SelectedItems.Item(1).Name.EndsWith(Tempalte.Constants.ExtName))
+            {
+                var filePath = dte.SelectedItems.Item(1).ProjectItem.FileNames[0];
 
-            var solution = dte.Solution;
-            var projects = dte.Solution.Projects;
-            var select = dte.SelectedItems;
+                //VsShellUtilities.ShowMessageBox(this.ServiceProvider, filePath, "build", OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+
+                var task = new BuildTask(filePath);
+            }
+
+            //var solution = dte.Solution;
+            //var projects = dte.Solution.Projects;
+            //var select = dte.SelectedItems;
 
             //var txt = select.Item(0);
 

@@ -3,14 +3,15 @@ options { tokenVocab = TemplateLexer;}
 
 document : code*;
 
-code : var | if | switch | while | dowhile | for | foreach | expr | TEXT | BREAK | CONTINUE | RETURN;
+code : var | if | switch | while | dowhile | for | foreach | expr | text | BREAK | CONTINUE | RETURN;
+text : TEXT;
 
-var : keyword = VAR key = IDENT (EQUAL expr)? SEMICOLON;
+var : keyword = VAR key = IDENT (EQUAL expr)? ;
 if : keyword = IF PARENTHESES_L condition = expr PARENTHESES_R BRACE_L code* BRACE_R;
 switch : keywordA = SWITCH PARENTHESES_L condition = expr PARENTHESES_R BRACE_L (keywordB += CASE expr COLON expr BREAK? )* BRACE_R;
 while : keyword = WHILE PARENTHESES_L condition = expr PARENTHESES_R BRACE_L code* BRACE_R;
 dowhile : keywordA = DO BRACE_L code* BRACE_R keywordB = WHILE PARENTHESES_L condition = expr PARENTHESES_R;
-for : keyword = FOR PARENTHESES_L code? SEMICOLON code? SEMICOLON code? PARENTHESES_R BRACE_L code* BRACE_R;
+for : keyword = FOR PARENTHESES_L expr1 = expr? SEMICOLON expr2 = expr? SEMICOLON expr3=expr? PARENTHESES_R BRACE_L code* BRACE_R;
 foreach : keywordA = FOREACH PARENTHESES_L code keywordB = IN code PARENTHESES_R BRACE_L code* BRACE_R;
 
 expr : 
