@@ -61,6 +61,36 @@ public interface ITemplateParserListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitText([NotNull] TemplateParser.TextContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.break"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterBreak([NotNull] TemplateParser.BreakContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.break"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitBreak([NotNull] TemplateParser.BreakContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.continue"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterContinue([NotNull] TemplateParser.ContinueContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.continue"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitContinue([NotNull] TemplateParser.ContinueContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.return"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterReturn([NotNull] TemplateParser.ReturnContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.return"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitReturn([NotNull] TemplateParser.ReturnContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="TemplateParser.var"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

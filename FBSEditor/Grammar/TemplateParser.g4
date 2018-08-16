@@ -3,26 +3,30 @@ options { tokenVocab = TemplateLexer;}
 
 document : code*;
 
-code : var | if | switch | while | dowhile | for | foreach | expr | text | BREAK | CONTINUE | RETURN;
-text : TEXT;
+code : var SEMICOLON? | if | switch | while | dowhile | for | foreach | expr SEMICOLON? | text | break | continue | return;
 
-var : keyword = VAR key = IDENT (EQUAL expr)? ;
+text : TEXT;
+break : BREAK SEMICOLON?;
+continue : CONTINUE SEMICOLON?;
+return : RETURN SEMICOLON?;
+
+var : keyword = VAR key = IDENT (SET value = expr)? ;
 if : keyword = IF PARENTHESES_L condition = expr PARENTHESES_R BRACE_L code* BRACE_R;
 switch : keywordA = SWITCH PARENTHESES_L condition = expr PARENTHESES_R BRACE_L (keywordB += CASE expr COLON expr BREAK? )* BRACE_R;
 while : keyword = WHILE PARENTHESES_L condition = expr PARENTHESES_R BRACE_L code* BRACE_R;
 dowhile : keywordA = DO BRACE_L code* BRACE_R keywordB = WHILE PARENTHESES_L condition = expr PARENTHESES_R;
-for : keyword = FOR PARENTHESES_L expr1 = expr? SEMICOLON expr2 = expr? SEMICOLON expr3=expr? PARENTHESES_R BRACE_L code* BRACE_R;
+for : keyword = FOR PARENTHESES_L (expr0 = var | expr1 = expr)? SEMICOLON expr2 = expr? SEMICOLON expr3=expr? PARENTHESES_R BRACE_L code* BRACE_R;
 foreach : keywordA = FOREACH PARENTHESES_L code keywordB = IN code PARENTHESES_R BRACE_L code* BRACE_R;
 
 expr : 
-		 PARENTHESES_L r = expr PARENTHESES_R
+		 op = PARENTHESES_L r = expr PARENTHESES_R
 		 //属性和函数
 		 | call = exprCall | prop = exprProp
 		 //一元运算
 		 | op = SUB r = expr
-	     | PARENTHESES_L t = IDENT PARENTHESES_R r = expr
-		 | op = INCREMENT  r = expr | r = expr op = INCREMENT
-		 | op = DECREMENT  r = expr | r = expr op = DECREMENT
+	     //| PARENTHESES_L t = IDENT PARENTHESES_R r = expr
+		 | op = INCREMENT  varName = exprProp | varName = exprProp op = INCREMENT
+		 | op = DECREMENT  varName = exprProp | varName = exprProp op = DECREMENT
 		 | op = LOGIC_NOT r = expr
 		 | op = BIT_INVERT r = expr
 		 //乘除
@@ -53,10 +57,11 @@ expr :
 		 | l = expr op = LOGIC_AND r = expr
 		 //逻辑或
 		 | l = expr op = LOGIC_OR r = expr
+		 //赋值
+		 | l = expr op = (SET|SET_DIV|SET_MUL|SET_MOD|SET_ADD|SET_SUB|SET_SHIFTL|SET_SHIFTR|SET_BIT_AND|SET_BIT_XOR|SET_BIT_OR) r = expr
 		 //字面值
 		 | v = exprValue
 		 ;
-
 
 exprCall : names+=IDENT (op = DOT names+=IDENT)* PARENTHESES_L (args+=expr (COMMA args+=expr)*) PARENTHESES_R;
 exprProp : names+=IDENT (op = DOT names+=IDENT)*;

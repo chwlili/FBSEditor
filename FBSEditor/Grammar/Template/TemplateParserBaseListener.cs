@@ -71,6 +71,42 @@ public partial class TemplateParserBaseListener : ITemplateParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitText([NotNull] TemplateParser.TextContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.break"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterBreak([NotNull] TemplateParser.BreakContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.break"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitBreak([NotNull] TemplateParser.BreakContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.continue"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterContinue([NotNull] TemplateParser.ContinueContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.continue"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitContinue([NotNull] TemplateParser.ContinueContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="TemplateParser.return"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterReturn([NotNull] TemplateParser.ReturnContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="TemplateParser.return"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitReturn([NotNull] TemplateParser.ReturnContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="TemplateParser.var"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
