@@ -99,7 +99,7 @@ namespace Tempalte.Build
             {
                 if (context.value != null)
                 {
-                    Set(varName, ExecExpr(context.value));
+                    Value(varName, ExecExpr(context.value));
                 }
             }
         }
@@ -108,7 +108,7 @@ namespace Tempalte.Build
         {
             if(context.v!=null)
             {
-                return GetValue(context.v);
+                return ParseLiteral(context.v);
             }
             if (context.op != null)
             {
@@ -131,49 +131,36 @@ namespace Tempalte.Build
                     case TemplateLexer.LOGIC_AND: return LogicAnd(context.l, context.r);
                     case TemplateLexer.LOGIC_OR: return LogicOr(context.l, context.r);
                     case TemplateLexer.LOGIC_NOT: return LogicNot(context.r);
+                    case TemplateLexer.SHIFTL:return BitShiftL(context.l, context.r);
+                    case TemplateLexer.SHIFTR:return BitShiftR(context.l, context.r);
+                    case TemplateLexer.BIT_AND:return BitAnd(context.l, context.r);
+                    case TemplateLexer.BIT_OR:return BitOr(context.l, context.r);
+                    case TemplateLexer.BIT_XOR:return BitXor(context.l, context.r);
+                    case TemplateLexer.BIT_INVERT:return BitInvert(context.r);
                 }
             }
             if (context.prop != null)
             {
-                return GetRefValue(context.prop);
+                return RefValue(context.prop);
             }
             return Atom.NULL;
         }
 
-        private Atom GetRefValue(TemplateParser.ExprPropContext prop)
-        {
-            var names = prop.IDENT();
-            if(names.Length==1)
-            {
-                return Get(names[0].GetText());
-            }
-            return Atom.NULL;
-        }
-        private Atom SetRefValue(TemplateParser.ExprPropContext prop, Atom value)
-        {
-            var names = prop.IDENT();
-            if(names.Length==1)
-            {
-                Set(names[0].GetText(), value);
-            }
-
-            return value;
-        }
 
         #region 自增自减
         private Atom Increment(TemplateParser.ExprContext right)
         {
-            var oldValue = GetRefValue(right.varName);
-            if (oldValue.type == AtomType.INT)   { return SetRefValue(right.varName, new Atom(oldValue.type, (long)oldValue.value + 1)); }
-            if (oldValue.type == AtomType.FLOAT) { return SetRefValue(right.varName, new Atom(oldValue.type, (float)oldValue.value + 1)); }
+            var oldValue = RefValue(right.varName);
+            if (oldValue.type == AtomType.INT)   { return RefValue(right.varName, new Atom(oldValue.type, (long)oldValue.value + 1)); }
+            if (oldValue.type == AtomType.FLOAT) { return RefValue(right.varName, new Atom(oldValue.type, (float)oldValue.value + 1)); }
 
             return Atom.NULL;
         }
         private Atom Decrement(TemplateParser.ExprContext right)
         {
-            var oldValue = GetRefValue(right.varName);
-            if (oldValue.type == AtomType.INT) { return SetRefValue(right.varName, new Atom(oldValue.type, (long)oldValue.value - 1)); }
-            if (oldValue.type == AtomType.FLOAT) { return SetRefValue(right.varName, new Atom(oldValue.type, (float)oldValue.value - 1)); }
+            var oldValue = RefValue(right.varName);
+            if (oldValue.type == AtomType.INT) { return RefValue(right.varName, new Atom(oldValue.type, (long)oldValue.value - 1)); }
+            if (oldValue.type == AtomType.FLOAT) { return RefValue(right.varName, new Atom(oldValue.type, (float)oldValue.value - 1)); }
 
             return Atom.NULL;
         }
@@ -182,8 +169,8 @@ namespace Tempalte.Build
         #region 逻辑运算
         private Atom LogicAnd(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
         {
-            var l = left.v != null ? GetValue(left.v) : ExecExpr(left);
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
             
             if (l.type == AtomType.BOOL && r.type == AtomType.BOOL) { return new Atom(AtomType.BOOL, (bool)l.value && (bool)r.value); }
 
@@ -191,8 +178,8 @@ namespace Tempalte.Build
         }
         private Atom LogicOr(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
         {
-            var l = left.v != null ? GetValue(left.v) : ExecExpr(left);
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
 
             if (l.type == AtomType.BOOL && r.type == AtomType.BOOL) { return new Atom(AtomType.BOOL, (bool)l.value || (bool)r.value); }
 
@@ -200,7 +187,7 @@ namespace Tempalte.Build
         }
         private Atom LogicNot(TemplateParser.ExprContext right)
         {
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
 
             if (r.type == AtomType.BOOL) { return new Atom(AtomType.BOOL, !(bool)r.value); }
 
@@ -211,8 +198,8 @@ namespace Tempalte.Build
         #region 比较运算
         private Atom CompareLess(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
         {
-            var l = left.v != null ? GetValue(left.v) : ExecExpr(left);
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
 
             if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.BOOL, (long)l.value < (long)r.value); }
             if (l.type == r.type && l.type == AtomType.FLOAT) { return new Atom(AtomType.BOOL, (float)l.value < (float)r.value); }
@@ -223,8 +210,8 @@ namespace Tempalte.Build
         }
         private Atom CompareLessEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
         {
-            var l = left.v != null ? GetValue(left.v) : ExecExpr(left);
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
 
             if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.BOOL, (long)l.value <= (long)r.value); }
             if (l.type == r.type && l.type == AtomType.FLOAT) { return new Atom(AtomType.BOOL, (float)l.value <= (float)r.value); }
@@ -235,8 +222,8 @@ namespace Tempalte.Build
         }
         private Atom CompareGreater(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
         {
-            var l = left.v != null ? GetValue(left.v) : ExecExpr(left);
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
 
             if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.BOOL, (long)l.value > (long)r.value); }
             if (l.type == r.type && l.type == AtomType.FLOAT) { return new Atom(AtomType.BOOL, (float)l.value > (float)r.value); }
@@ -247,8 +234,8 @@ namespace Tempalte.Build
         }
         private Atom CompareGreaterEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
         {
-            var l = left.v != null ? GetValue(left.v) : ExecExpr(left);
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
 
             if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.BOOL, (long)l.value >= (long)r.value); }
             if (l.type == r.type && l.type == AtomType.FLOAT) { return new Atom(AtomType.BOOL, (float)l.value >= (float)r.value); }
@@ -259,8 +246,8 @@ namespace Tempalte.Build
         }
         private Atom CompareEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
         {
-            var l = left.v != null ? GetValue(left.v) : ExecExpr(left);
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
 
             if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.BOOL, (long)l.value == (long)r.value); }
             if (l.type == r.type && l.type == AtomType.FLOAT) { return new Atom(AtomType.BOOL, (float)l.value == (float)r.value); }
@@ -271,8 +258,8 @@ namespace Tempalte.Build
         }
         private Atom CompareNotEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
         {
-            var l = left.v != null ? GetValue(left.v) : ExecExpr(left);
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
 
             if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.BOOL, (long)l.value != (long)r.value); }
             if (l.type == r.type && l.type == AtomType.FLOAT) { return new Atom(AtomType.BOOL, (float)l.value != (float)r.value); }
@@ -283,11 +270,55 @@ namespace Tempalte.Build
         }
         #endregion
 
+        #region 位运算
+        private Atom BitShiftL(TemplateParser.ExprContext left,TemplateParser.ExprContext right)
+        {
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
+            if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.INT, (long)l.value << (int)r.value); }
+            return Atom.NULL;
+        }
+        private Atom BitShiftR(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
+            if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.INT, (long)l.value >> (int)r.value); }
+            return Atom.NULL;
+        }
+        private Atom BitAnd(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
+            if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.INT, (long)l.value & (long)r.value); }
+            return Atom.NULL;
+        }
+        private Atom BitOr(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
+            if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.INT, (long)l.value | (long)r.value); }
+            return Atom.NULL;
+        }
+        private Atom BitXor(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
+            if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.INT, (long)l.value ^ (long)r.value); }
+            return Atom.NULL;
+        }
+        private Atom BitInvert(TemplateParser.ExprContext right)
+        {
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
+            if (r.type == AtomType.INT) { return new Atom(AtomType.INT, ~(long)r.value); }
+            return Atom.NULL;
+        }
+        #endregion
+
         #region 四则运算
         private Atom Add(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
         {
-            var l = left.v != null ? GetValue(left.v) : ExecExpr(left);
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
 
             if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.INT, (long)l.value + (long)r.value); }
             if (l.type == r.type && l.type == AtomType.FLOAT) { return new Atom(AtomType.FLOAT, (float)l.value + (float)r.value); }
@@ -299,8 +330,10 @@ namespace Tempalte.Build
         }
         private Atom Sub(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
         {
-            var l = left.v != null ? GetValue(left.v) : ExecExpr(left);
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            if (left == null) { return Minus(right); }
+
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
 
             if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.INT, (long)l.value - (long)r.value); }
             if (l.type == r.type && l.type == AtomType.FLOAT) { return new Atom(AtomType.FLOAT, (float)l.value - (float)r.value); }
@@ -311,8 +344,8 @@ namespace Tempalte.Build
         }
         private Atom Mul(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
         {
-            var l = left.v != null ? GetValue(left.v) : ExecExpr(left);
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
 
             if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.INT, (long)l.value * (long)r.value); }
             if (l.type == r.type && l.type == AtomType.FLOAT) { return new Atom(AtomType.FLOAT, (float)l.value * (float)r.value); }
@@ -323,8 +356,8 @@ namespace Tempalte.Build
         }
         private Atom Div(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
         {
-            var l = left.v != null ? GetValue(left.v) : ExecExpr(left);
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
 
             if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.INT, (long)l.value / (long)r.value); }
             if (l.type == r.type && l.type == AtomType.FLOAT) { return new Atom(AtomType.FLOAT, (float)l.value / (float)r.value); }
@@ -335,8 +368,8 @@ namespace Tempalte.Build
         }
         private Atom Mod(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
         {
-            var l = left.v != null ? GetValue(left.v) : ExecExpr(left);
-            var r = right.v != null ? GetValue(right.v) : ExecExpr(right);
+            var l = left.v != null ? ParseLiteral(left.v) : ExecExpr(left);
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
 
             if (l.type == r.type && l.type == AtomType.INT) { return new Atom(AtomType.INT, (long)l.value % (long)r.value); }
             if (l.type == r.type && l.type == AtomType.FLOAT) { return new Atom(AtomType.FLOAT, (float)l.value % (float)r.value); }
@@ -345,13 +378,23 @@ namespace Tempalte.Build
 
             return Atom.NULL;
         }
+        private Atom Minus(TemplateParser.ExprContext right)
+        {
+            var r = right.v != null ? ParseLiteral(right.v) : ExecExpr(right);
+
+            if (r.type == AtomType.INT) { return new Atom(AtomType.INT, -(long)r.value); }
+            if (r.type == AtomType.FLOAT) { return new Atom(AtomType.FLOAT, -(float)r.value); }
+
+            return Atom.NULL;
+        }
         #endregion
 
-        private Atom GetValue(TemplateParser.ExprValueContext value)
+        #region 字面量
+        private Atom ParseLiteral(TemplateParser.ExprValueContext value)
         {
             if (value.integerValue != null)
             {
-                long t = 0l;
+                long t = 0L;
                 if (long.TryParse(value.integerValue.Text, out t))
                 {
                     return new Atom(AtomType.INT, t);
@@ -391,8 +434,9 @@ namespace Tempalte.Build
             }
             return new Atom(AtomType.NULL, 0);
         }
+        #endregion
 
-        #region 名称域
+        #region 作用域
 
         private void PushStack()
         {
@@ -404,7 +448,7 @@ namespace Tempalte.Build
             stack.RemoveAt(stack.Count - 1);
         }
 
-        private Atom Get(string name)
+        private Atom Value(string name)
         {
             for (int i = stack.Count - 1; i >= 0; i--)
             {
@@ -417,13 +461,34 @@ namespace Tempalte.Build
             return Atom.NULL;
         }
 
-        private Atom Set(string name, Atom obj)
+        private Atom Value(string name, Atom obj)
         {
             stack[stack.Count - 1][name] = obj;
             return obj;
         }
 
+        private Atom RefValue(TemplateParser.ExprPropContext prop)
+        {
+            var names = prop.IDENT();
+            if (names.Length == 1)
+            {
+                return Value(names[0].GetText());
+            }
+            return Atom.NULL;
+        }
+        private Atom RefValue(TemplateParser.ExprPropContext prop, Atom value)
+        {
+            var names = prop.IDENT();
+            if (names.Length == 1)
+            {
+                Value(names[0].GetText(), value);
+            }
+
+            return value;
+        }
+
         #endregion
+
 
         enum AtomType { VOID, NULL, BOOL, INT, FLOAT, STRING, OBJECT, REF }
 
