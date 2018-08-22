@@ -106,10 +106,8 @@ namespace Tempalte.Build
 
         private Atom ExecExpr([NotNull] TemplateParser.ExprContext context)
         {
-            if(context.v!=null)
-            {
-                return ParseLiteral(context.v);
-            }
+            if (context.v != null) { return ParseLiteral(context.v); }
+            if (context.prop != null) { return RefValue(context.prop); }
             if (context.op != null)
             {
                 switch (context.op.Type)
@@ -137,15 +135,208 @@ namespace Tempalte.Build
                     case TemplateLexer.BIT_OR:return BitOr(context.l, context.r);
                     case TemplateLexer.BIT_XOR:return BitXor(context.l, context.r);
                     case TemplateLexer.BIT_INVERT:return BitInvert(context.r);
+                    case TemplateLexer.SET:return Equal(context.l, context.r);
+                    case TemplateLexer.SET_ADD:return PlusEqual(context.l, context.r);
+                    case TemplateLexer.SET_SUB:return MinusEqual(context.l, context.r);
+                    case TemplateLexer.SET_MUL:return MulEqual(context.l, context.r);
+                    case TemplateLexer.SET_DIV:return DivEqual(context.l, context.r);
+                    case TemplateLexer.SET_MOD:return ModEqual(context.l, context.r);
+                    case TemplateLexer.SET_SHIFTL:return ShiftLeftEqual(context.l, context.r);
+                    case TemplateLexer.SET_SHIFTR: return ShiftRightEqual(context.l, context.r);
+                    case TemplateLexer.SET_BIT_AND:return BitAndEqual(context.l, context.r);
+                    case TemplateLexer.SET_BIT_OR: return BitOrEqual(context.l, context.r);
+                    case TemplateLexer.SET_BIT_XOR: return BitXorEqual(context.l, context.r);
                 }
-            }
-            if (context.prop != null)
-            {
-                return RefValue(context.prop);
             }
             return Atom.NULL;
         }
 
+        #region 赋值运算
+        private Atom Equal(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            if (left.prop != null)
+            {
+                return RefValue(left.prop, ExecExpr(right));
+            }
+            return Atom.NULL;
+        }
+        private Atom PlusEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            if (left.prop != null)
+            {
+                var l = RefValue(left.prop);
+                var r = ExecExpr(right);
+                var v = Atom.NULL;
+
+                if (l.type == r.type && l.type == AtomType.INT) { v = new Atom(AtomType.INT, (long)l.value + (long)r.value); }
+                else if (l.type == r.type && l.type == AtomType.FLOAT) { v = new Atom(AtomType.FLOAT, (float)l.value + (float)r.value); }
+                else if (l.type == AtomType.INT && r.type == AtomType.FLOAT) { v = new Atom(AtomType.FLOAT, (long)l.value + (float)r.value); }
+                else if (l.type == AtomType.FLOAT && r.type == AtomType.INT) { v = new Atom(AtomType.FLOAT, (float)l.value + (long)r.value); }
+                else if (l.type != r.type && l.type == AtomType.STRING || r.type == AtomType.STRING) { v = new Atom(AtomType.STRING, l.ToString() + r.ToString()); }
+                else { }
+
+                RefValue(left.prop, v);
+                return v;
+            }
+            return Atom.NULL;
+        }
+        private Atom MinusEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            if (left.prop != null)
+            {
+                var l = RefValue(left.prop);
+                var r = ExecExpr(right);
+                var v = Atom.NULL;
+
+                if (l.type == r.type && l.type == AtomType.INT) { v = new Atom(AtomType.INT, (long)l.value - (long)r.value); }
+                else if (l.type == r.type && l.type == AtomType.FLOAT) { v = new Atom(AtomType.FLOAT, (float)l.value - (float)r.value); }
+                else if (l.type == AtomType.INT && r.type == AtomType.FLOAT) { v = new Atom(AtomType.FLOAT, (long)l.value - (float)r.value); }
+                else if (l.type == AtomType.FLOAT && r.type == AtomType.INT) { v = new Atom(AtomType.FLOAT, (float)l.value - (long)r.value); }
+                else { }
+
+                RefValue(left.prop, v);
+                return v;
+            }
+            return Atom.NULL;
+        }
+        private Atom MulEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            if (left.prop != null)
+            {
+                var l = RefValue(left.prop);
+                var r = ExecExpr(right);
+                var v = Atom.NULL;
+
+                if (l.type == r.type && l.type == AtomType.INT) { v = new Atom(AtomType.INT, (long)l.value * (long)r.value); }
+                else if (l.type == r.type && l.type == AtomType.FLOAT) { v = new Atom(AtomType.FLOAT, (float)l.value * (float)r.value); }
+                else if (l.type == AtomType.INT && r.type == AtomType.FLOAT) { v = new Atom(AtomType.FLOAT, (long)l.value * (float)r.value); }
+                else if (l.type == AtomType.FLOAT && r.type == AtomType.INT) { v = new Atom(AtomType.FLOAT, (float)l.value * (long)r.value); }
+                else { }
+
+                RefValue(left.prop, v);
+                return v;
+            }
+            return Atom.NULL;
+        }
+        private Atom DivEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            if (left.prop != null)
+            {
+                var l = RefValue(left.prop);
+                var r = ExecExpr(right);
+                var v = Atom.NULL;
+
+                if (l.type == r.type && l.type == AtomType.INT) { v = new Atom(AtomType.INT, (long)l.value / (long)r.value); }
+                else if (l.type == r.type && l.type == AtomType.FLOAT) { v = new Atom(AtomType.FLOAT, (float)l.value / (float)r.value); }
+                else if (l.type == AtomType.INT && r.type == AtomType.FLOAT) { v = new Atom(AtomType.FLOAT, (long)l.value / (float)r.value); }
+                else if (l.type == AtomType.FLOAT && r.type == AtomType.INT) { v = new Atom(AtomType.FLOAT, (float)l.value / (long)r.value); }
+                else { }
+
+                RefValue(left.prop, v);
+                return v;
+            }
+            return Atom.NULL;
+        }
+        private Atom ModEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            if (left.prop != null)
+            {
+                var l = RefValue(left.prop);
+                var r = ExecExpr(right);
+                var v = Atom.NULL;
+
+                if (l.type == r.type && l.type == AtomType.INT) { v = new Atom(AtomType.INT, (long)l.value % (long)r.value); }
+                else if (l.type == r.type && l.type == AtomType.FLOAT) { v = new Atom(AtomType.FLOAT, (float)l.value % (float)r.value); }
+                else if (l.type == AtomType.INT && r.type == AtomType.FLOAT) { v = new Atom(AtomType.FLOAT, (long)l.value % (float)r.value); }
+                else if (l.type == AtomType.FLOAT && r.type == AtomType.INT) { v = new Atom(AtomType.FLOAT, (float)l.value % (long)r.value); }
+                else { }
+
+                RefValue(left.prop, v);
+                return v;
+            }
+            return Atom.NULL;
+        }
+        private Atom ShiftLeftEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            if (left.prop != null)
+            {
+                var l = RefValue(left.prop);
+                var r = ExecExpr(right);
+                var v = Atom.NULL;
+
+                if (l.type == r.type && l.type == AtomType.INT) { v = new Atom(AtomType.INT, (long)l.value << (int)r.value); }
+                else { }
+
+                RefValue(left.prop, v);
+                return v;
+            }
+            return Atom.NULL;
+        }
+        private Atom ShiftRightEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            if (left.prop != null)
+            {
+                var l = RefValue(left.prop);
+                var r = ExecExpr(right);
+                var v = Atom.NULL;
+
+                if (l.type == r.type && l.type == AtomType.INT) { v = new Atom(AtomType.INT, (long)l.value >> (int)r.value); }
+                else { }
+
+                RefValue(left.prop, v);
+                return v;
+            }
+            return Atom.NULL;
+        }
+        private Atom BitAndEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            if (left.prop != null)
+            {
+                var l = RefValue(left.prop);
+                var r = ExecExpr(right);
+                var v = Atom.NULL;
+
+                if (l.type == r.type && l.type == AtomType.INT) { v = new Atom(AtomType.INT, (long)l.value & (long)r.value); }
+                else { }
+
+                RefValue(left.prop, v);
+                return v;
+            }
+            return Atom.NULL;
+        }
+        private Atom BitOrEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            if (left.prop != null)
+            {
+                var l = RefValue(left.prop);
+                var r = ExecExpr(right);
+                var v = Atom.NULL;
+
+                if (l.type == r.type && l.type == AtomType.INT) { v = new Atom(AtomType.INT, (long)l.value | (long)r.value); }
+                else { }
+
+                RefValue(left.prop, v);
+                return v;
+            }
+            return Atom.NULL;
+        }
+        private Atom BitXorEqual(TemplateParser.ExprContext left, TemplateParser.ExprContext right)
+        {
+            if (left.prop != null)
+            {
+                var l = RefValue(left.prop);
+                var r = ExecExpr(right);
+                var v = Atom.NULL;
+
+                if (l.type == r.type && l.type == AtomType.INT) { v = new Atom(AtomType.INT, (long)l.value ^ (long)r.value); }
+                else { }
+
+                RefValue(left.prop, v);
+                return v;
+            }
+            return Atom.NULL;
+        }
+        #endregion
 
         #region 自增自减
         private Atom Increment(TemplateParser.ExprContext right)
@@ -488,7 +679,6 @@ namespace Tempalte.Build
         }
 
         #endregion
-
 
         enum AtomType { VOID, NULL, BOOL, INT, FLOAT, STRING, OBJECT, REF }
 
