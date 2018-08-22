@@ -2,7 +2,9 @@
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.IO;
 using Tempalte.Build;
 
 namespace Tempalte
@@ -57,11 +59,36 @@ namespace Tempalte
             var dte = ServiceProvider.GetService(typeof(DTE)) as DTE;
             if(dte != null && dte.SelectedItems.Count == 1 && dte.SelectedItems.Item(1).Name.EndsWith(Tempalte.Constants.ExtName))
             {
-                var filePath = dte.SelectedItems.Item(1).ProjectItem.FileNames[0];
-
-                //VsShellUtilities.ShowMessageBox(this.ServiceProvider, filePath, "build", OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-
-                var task = new BuildTask(filePath);
+                var selected = dte.SelectedItems.Item(1);
+                var selectedPath = selected.ProjectItem.FileNames[0];
+                var outputPath = selectedPath + ".txt";
+                
+                var task = new BuildTask(selectedPath);
+                var text = task.Build();
+                if (text != null)
+                {
+                    var list = new List<string>();
+                    for (int i = 2; i < selected.ProjectItem.ProjectItems.Count; i++)
+                    {
+                        list.Add(selected.ProjectItem.ProjectItems.Item(i).FileNames[0]);
+                    }
+                    for(int i=0;i<list.Count;i++)
+                    {
+                        File.Delete(list[i]);
+                    }
+                    if (!File.Exists(outputPath))
+                    {
+                        var writer = File.CreateText(outputPath);
+                        writer.WriteLine(text);
+                        writer.Flush();
+                        writer.Close();
+                    }
+                    else
+                    {
+                        File.WriteAllText(outputPath, text);
+                    }
+                    selected.ProjectItem.ProjectItems.AddFromFile(outputPath);
+                }
             }
 
             //var solution = dte.Solution;

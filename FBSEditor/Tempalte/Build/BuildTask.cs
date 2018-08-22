@@ -12,11 +12,17 @@ namespace Tempalte.Build
 {
     class BuildTask : TemplateParserBaseVisitor<int>
     {
+        private string path = "";
         private StringBuilder output = new StringBuilder();
         private List<Dictionary<string, Atom>> stack = new List<Dictionary<string, Atom>>();
 
         public BuildTask(string path)
         {
+            this.path = path;
+        }
+
+        public string Build()
+        { 
             var lexer = new TemplateLexer(new AntlrInputStream(File.ReadAllText(path)));
             var parser = new TemplateParser(new CommonTokenStream(lexer));
 
@@ -25,6 +31,7 @@ namespace Tempalte.Build
 
             var txt = output.ToString();
             Console.WriteLine(txt);
+            return txt;
         }
 
 
@@ -38,6 +45,18 @@ namespace Tempalte.Build
             PushStack();
             output.Append(context.GetText());
             return base.VisitText(context);
+        }
+
+        private void ExecVar([NotNull] TemplateParser.VarContext context)
+        {
+            var varName = context.key.Text;
+            if (!string.IsNullOrEmpty(varName))
+            {
+                if (context.value != null)
+                {
+                    Value(varName, ExecExpr(context.value));
+                }
+            }
         }
 
         public override int VisitIf([NotNull] TemplateParser.IfContext context)
@@ -90,18 +109,6 @@ namespace Tempalte.Build
             }
 
             return 0;
-        }
-
-        private void ExecVar([NotNull] TemplateParser.VarContext context)
-        {
-            var varName = context.key.Text;
-            if (!string.IsNullOrEmpty(varName))
-            {
-                if (context.value != null)
-                {
-                    Value(varName, ExecExpr(context.value));
-                }
-            }
         }
 
         private Atom ExecExpr([NotNull] TemplateParser.ExprContext context)
