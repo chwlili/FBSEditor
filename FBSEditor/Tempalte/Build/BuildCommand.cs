@@ -1,6 +1,5 @@
 ﻿using EnvDTE;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
@@ -90,34 +89,6 @@ namespace Tempalte
                     selected.ProjectItem.ProjectItems.AddFromFile(outputPath);
                 }
             }
-
-            //var solution = dte.Solution;
-            //var projects = dte.Solution.Projects;
-            //var select = dte.SelectedItems;
-
-            //var txt = select.Item(0);
-
-            //TextSelection ts = dte.ActiveDocument.Selection as TextSelection;
-            //防止用户在</mappings>结束符后进行操作，在结束符后操作的的FindText方法返回的结果为false
-            //ts.MoveToLineAndOffset(1, 1);
-            /*
-            bool result = ts.FindText("</mappings>", (int)vsFindOptions.vsFindOptionsMatchWholeWord);
-            if (!result)
-            {
-                if (ts.ActivePoint.Line == 1)
-                {
-                    ts.EndOfLine();
-                    ts.NewLine();
-                }
-                string str = "<mappings>\r\n" + sb.ToString();
-                ts.Insert(str);
-            }
-            else
-            {
-                //需要添加此操作，否则不会替换成功
-                ts.SelectAll();
-                ts.ReplacePattern("</mappings>", sb.ToString(), (int)vsFindOptions.vsFindOptionsMatchWholeWord);
-            }*/
         }
     }
 }

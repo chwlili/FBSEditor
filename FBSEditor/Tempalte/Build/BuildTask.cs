@@ -42,12 +42,11 @@ namespace Tempalte.Build
 
         public override int VisitText([NotNull] TemplateParser.TextContext context)
         {
-            PushStack();
             output.Append(context.GetText());
             return base.VisitText(context);
         }
 
-        private void ExecVar([NotNull] TemplateParser.VarContext context)
+        public override int VisitVar([NotNull] TemplateParser.VarContext context)
         {
             var varName = context.key.Text;
             if (!string.IsNullOrEmpty(varName))
@@ -57,6 +56,7 @@ namespace Tempalte.Build
                     Value(varName, ExecExpr(context.value));
                 }
             }
+            return base.VisitVar(context);
         }
 
         public override int VisitIf([NotNull] TemplateParser.IfContext context)
@@ -88,12 +88,15 @@ namespace Tempalte.Build
             try
             {
                 var codes = context.code();
-                if (context.expr0 != null) { ExecVar(context.expr0); }
+                if (context.expr0 != null) { VisitVar(context.expr0); }
                 else if (context.expr1 != null) { ExecExpr(context.expr1); }
 
                 while (true)
                 {
-                    for (int i = 0; i < codes.Length; i++) { codes[i].Accept(this); }
+                    for (int i = 0; i < codes.Length; i++)
+                    {
+                        codes[i].Accept(this);
+                    }
 
                     if (context.expr3 != null) { ExecExpr(context.expr3); }
                     if (context.expr2 != null)
@@ -108,6 +111,41 @@ namespace Tempalte.Build
                 PopStack();
             }
 
+            return 0;
+        }
+
+        public override int VisitWhile([NotNull] TemplateParser.WhileContext context)
+        {
+            PushStack();
+            try
+            {
+                while (true)
+                {
+                    var codes = context.code();
+                    var exprValue = ExecExpr(context.condition);
+                    if (exprValue.type == AtomType.BOOL && (bool)exprValue.value)
+                    {
+                        for (int i = 0; i < codes.Length; i++)
+                        {
+                            codes[i].Accept(this);
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            finally
+            {
+                PopStack();
+            }
+            return 0;
+        }
+
+        public override int VisitExpr([NotNull] TemplateParser.ExprContext context)
+        {
+            ExecExpr(context);
             return 0;
         }
 
@@ -661,6 +699,15 @@ namespace Tempalte.Build
 
         private Atom Value(string name, Atom obj)
         {
+            for (int i = stack.Count - 1; i >= 0; i--)
+            {
+                var dictionary = stack[i];
+                if (dictionary.ContainsKey(name))
+                {
+                    dictionary[name] = obj;
+                    return obj;
+                }
+            }
             stack[stack.Count - 1][name] = obj;
             return obj;
         }
