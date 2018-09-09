@@ -247,52 +247,51 @@
     <Compile Include="Antlr4\UnbufferedCharStream.cs" />
     <Compile Include="Antlr4\UnbufferedTokenStream.cs" />
     <Compile Include="Antlr4\Vocabulary.cs" />
-    <Compile Include="Tempalte\Build\BuildCommand.cs" />
+    <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferBaseListener.cs" />
+    <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferBaseVisitor.cs" />
+    <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferLexer.cs" />
+    <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferListener.cs" />
+    <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferParser.cs" />
+    <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferVisitor.cs" />
+    <Compile Include="FlatBufferData\Editor\BuildCommand.cs" />
+    <Compile Include="FlatBufferCode\Editor\BuildCommand.cs" />
     <Compile Include="BuildCommandPackage.cs" />
-    <Compile Include="Build\Enum.cs" />
-    <Compile Include="Build\EnumField.cs" />
-    <Compile Include="Build\FBSBuilder.cs" />
-    <Compile Include="Build\FBSFile.cs" />
-    <Compile Include="Build\Meta.cs" />
-    <Compile Include="Build\Struct.cs" />
-    <Compile Include="Build\StructField.cs" />
-    <Compile Include="Build\Table.cs" />
-    <Compile Include="Build\TableField.cs" />
-    <Compile Include="Editor\Constants.cs" />
-    <Compile Include="Editor\FBSBraceCompletion.cs" />
-    <Compile Include="Editor\FBSBraceMatching.cs" />
-    <Compile Include="Editor\FBSClassification.cs" />
-    <Compile Include="Editor\FBSClassificationDefinition.cs" />
-    <Compile Include="Editor\FBSCompletion.cs" />
-    <Compile Include="Editor\FBSEditorFormat.cs" />
-    <Compile Include="Editor\FBSQuickInfo.cs" />
-    <Compile Include="Editor\FBSTextAdornment.cs" />
-    <Compile Include="Editor\FBSOutline.cs" />
-    <Compile Include="Generator\CSGenerator.cs" />
-    <Compile Include="Grammar\FlatBuffer\FlatbufferBaseListener.cs" />
-    <Compile Include="Grammar\FlatBuffer\FlatbufferBaseVisitor.cs" />
-    <Compile Include="Grammar\FlatBuffer\FlatbufferLexer.cs" />
-    <Compile Include="Grammar\FlatBuffer\FlatbufferListener.cs" />
-    <Compile Include="Grammar\FlatBuffer\FlatbufferParser.cs" />
-    <Compile Include="Grammar\FlatBuffer\FlatbufferVisitor.cs" />
-    <Compile Include="Grammar\Template\TemplateLexer.cs" />
-    <Compile Include="Grammar\Template\TemplateParser.cs" />
-    <Compile Include="Grammar\Template\TemplateParserBaseListener.cs" />
-    <Compile Include="Grammar\Template\TemplateParserBaseVisitor.cs" />
-    <Compile Include="Grammar\Template\TemplateParserListener.cs" />
-    <Compile Include="Grammar\Template\TemplateParserVisitor.cs" />
+    <Compile Include="FlatBufferData\Model\Enum.cs" />
+    <Compile Include="FlatBufferData\Model\EnumField.cs" />
+    <Compile Include="FlatBufferData\Build\FBSBuilder.cs" />
+    <Compile Include="FlatBufferData\Model\FBSFile.cs" />
+    <Compile Include="FlatBufferData\Model\Meta.cs" />
+    <Compile Include="FlatBufferData\Model\Struct.cs" />
+    <Compile Include="FlatBufferData\Model\StructField.cs" />
+    <Compile Include="FlatBufferData\Model\Table.cs" />
+    <Compile Include="FlatBufferData\Model\TableField.cs" />
+    <Compile Include="FlatBufferData\Editor\Constants.cs" />
+    <Compile Include="FlatBufferData\Editor\BraceCompletion.cs" />
+    <Compile Include="FlatBufferData\Editor\BraceMatching.cs" />
+    <Compile Include="FlatBufferData\Editor\Classification.cs" />
+    <Compile Include="FlatBufferData\Editor\Completion.cs" />
+    <Compile Include="FlatBufferData\Editor\FormatProvider.cs" />
+    <Compile Include="FlatBufferData\Editor\QuickInfo.cs" />
+    <Compile Include="FlatBufferData\Editor\TextAdornment.cs" />
+    <Compile Include="FlatBufferData\Editor\Outline.cs" />
+    <Compile Include="FlatBufferCode\Grammar\Template\TemplateLexer.cs" />
+    <Compile Include="FlatBufferCode\Grammar\Template\TemplateParser.cs" />
+    <Compile Include="FlatBufferCode\Grammar\Template\TemplateParserBaseListener.cs" />
+    <Compile Include="FlatBufferCode\Grammar\Template\TemplateParserBaseVisitor.cs" />
+    <Compile Include="FlatBufferCode\Grammar\Template\TemplateParserListener.cs" />
+    <Compile Include="FlatBufferCode\Grammar\Template\TemplateParserVisitor.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Tempalte\BraceMatching.cs" />
-    <Compile Include="Tempalte\BraceCompletion.cs" />
-    <Compile Include="Tempalte\Build\BuildTask.cs" />
-    <Compile Include="Tempalte\OutlineProvider.cs" />
-    <Compile Include="Tempalte\ClassificationProvider.cs" />
-    <Compile Include="Tempalte\Constants.cs" />
-    <Compile Include="Tempalte\FormatProvider.cs" />
+    <Compile Include="FlatBufferCode\Editor\BraceMatching.cs" />
+    <Compile Include="FlatBufferCode\Editor\BraceCompletion.cs" />
+    <Compile Include="FlatBufferCode\Build\BuildCodeTask.cs" />
+    <Compile Include="FlatBufferCode\Editor\OutlineProvider.cs" />
+    <Compile Include="FlatBufferCode\Editor\ClassificationProvider.cs" />
+    <Compile Include="FlatBufferCode\Editor\Constants.cs" />
+    <Compile Include="FlatBufferCode\Editor\FormatProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <Antlr4 Include="Antlr4\Tree\Xpath\XPathLexer.g4">
@@ -304,40 +303,41 @@
       <CustomToolNamespace>FBSEditor.Antlr4.Tree.Xpath</CustomToolNamespace>
     </AntlrTokens>
     <None Include="app.config" />
-    <None Include="Grammar\Build.bat" />
-    <Antlr4 Include="Grammar\Flatbuffer.g4">
+    <None Include="FlatBufferData\Grammar\Build.bat" />
+    <Antlr4 Include="FlatBufferData\Grammar\Flatbuffer.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
     </Antlr4>
-    <None Include="Grammar\FlatBuffer\Flatbuffer.interp" />
-    <AntlrTokens Include="Grammar\FlatBuffer\Flatbuffer.tokens">
+    <None Include="FlatBufferData\Grammar\Flatbuffer\Flatbuffer.interp" />
+    <AntlrTokens Include="FlatBufferData\Grammar\Flatbuffer\Flatbuffer.tokens">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
     </AntlrTokens>
-    <None Include="Grammar\FlatBuffer\FlatbufferLexer.interp" />
-    <AntlrTokens Include="Grammar\FlatBuffer\FlatbufferLexer.tokens">
+    <None Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferLexer.interp" />
+    <AntlrTokens Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferLexer.tokens">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
     </AntlrTokens>
-    <Antlr4 Include="Grammar\TemplateParser.g4">
+    <None Include="FlatBufferCode\Grammar\Build.bat" />
+    <Antlr4 Include="FlatBufferCode\Grammar\TemplateParser.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
     </Antlr4>
-    <Antlr4 Include="Grammar\TemplateLexer.g4">
+    <Antlr4 Include="FlatBufferCode\Grammar\TemplateLexer.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
     </Antlr4>
-    <AntlrTokens Include="Grammar\TemplateLexer.tokens">
+    <AntlrTokens Include="FlatBufferCode\Grammar\TemplateLexer.tokens">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
     </AntlrTokens>
-    <None Include="Grammar\Template\TemplateLexer.interp" />
-    <AntlrTokens Include="Grammar\Template\TemplateLexer.tokens">
+    <None Include="FlatBufferCode\Grammar\Template\TemplateLexer.interp" />
+    <AntlrTokens Include="FlatBufferCode\Grammar\Template\TemplateLexer.tokens">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar.Template</CustomToolNamespace>
     </AntlrTokens>
-    <None Include="Grammar\Template\TemplateParser.interp" />
-    <AntlrTokens Include="Grammar\Template\TemplateParser.tokens">
+    <None Include="FlatBufferCode\Grammar\Template\TemplateParser.interp" />
+    <AntlrTokens Include="FlatBufferCode\Grammar\Template\TemplateParser.tokens">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar.Template</CustomToolNamespace>
     </AntlrTokens>
@@ -352,7 +352,8 @@
       <ResourceName>Menus.ctmenu</ResourceName>
       <SubType>Designer</SubType>
     </VSCTCompile>
-    <Content Include="Grammar\antlr-4.7.1-complete.jar" />
+    <Content Include="FlatBufferData\Grammar\antlr-4.7.1-complete.jar" />
+    <Content Include="FlatBufferCode\Grammar\antlr-4.7.1-complete.jar" />
     <Content Include="index.html" />
     <None Include="Resources\Inner.png" />
     <None Include="Resources\CustomIcon.png" />

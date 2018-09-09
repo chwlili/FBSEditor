@@ -1,26 +1,11 @@
-﻿using System;
-using System.ComponentModel.Design;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Runtime.InteropServices;
-using EnvDTE;
-using EnvDTE80;
+﻿using EnvDTE;
 using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.Win32;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using FBSEditor;
-using FBSEditor.Generator;
-using System.Text;
-using Antlr4.Runtime;
-using Antlr4.Runtime.Misc;
-using Tempalte;
-     
+using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
+
 namespace FBSEditor
 {
     [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
@@ -42,7 +27,8 @@ namespace FBSEditor
 
         protected override void Initialize()
         {
-            BuildCommand.Initialize(this);
+            FlatBufferData.Editor.BuildCommand.Initialize(this);
+            FlatBufferCode.Editor.BuildCommand.Initialize(this);
 
             dte = ServiceProvider.GlobalProvider.GetService(typeof(DTE)) as DTE;
             //dte.Events.BuildEvents.OnBuildBegin += BuildEvents_OnBuildBegin;
@@ -103,6 +89,7 @@ namespace FBSEditor
 
         #endregion
 
+        /*
         private void BuildEvents_OnBuildBegin(vsBuildScope Scope, vsBuildAction Action)
         {
             var projectList = new List<Project>();
@@ -222,6 +209,6 @@ namespace FBSEditor
             {
                 CSGenerator.Generate(this, trees);
             }
-        }
+        }*/
     }
 }
