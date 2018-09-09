@@ -1,13 +1,7 @@
 ﻿namespace FlatBufferData.Model
 {
-    public class Meta
+    public class UnionField
     {
-        public Meta(string name,string value)
-        {
-            this.Name = name;
-            this.Value = value;
-        }
-
         /// <summary>
         /// 名称
         /// </summary>
@@ -17,5 +11,10 @@
         /// 值
         /// </summary>
         public string Value { get; set; }
+
+        /// <summary>
+        /// 注释
+        /// </summary>
+        public string Comment { get; set; }
     }
 }

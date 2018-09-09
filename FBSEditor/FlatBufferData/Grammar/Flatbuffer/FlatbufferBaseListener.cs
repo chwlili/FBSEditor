@@ -335,17 +335,29 @@ public partial class FlatbufferBaseListener : IFlatbufferListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitMetadataField([NotNull] FlatbufferParser.MetadataFieldContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="FlatbufferParser.type"/>.
+	/// Enter a parse tree produced by <see cref="FlatbufferParser.singleType"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterType([NotNull] FlatbufferParser.TypeContext context) { }
+	public virtual void EnterSingleType([NotNull] FlatbufferParser.SingleTypeContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="FlatbufferParser.type"/>.
+	/// Exit a parse tree produced by <see cref="FlatbufferParser.singleType"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitType([NotNull] FlatbufferParser.TypeContext context) { }
+	public virtual void ExitSingleType([NotNull] FlatbufferParser.SingleTypeContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="FlatbufferParser.listType"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterListType([NotNull] FlatbufferParser.ListTypeContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="FlatbufferParser.listType"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitListType([NotNull] FlatbufferParser.ListTypeContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="FlatbufferParser.objectValue"/>.
 	/// <para>The default implementation does nothing.</para>

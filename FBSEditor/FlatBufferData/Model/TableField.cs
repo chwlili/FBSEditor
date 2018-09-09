@@ -34,7 +34,7 @@ namespace FlatBufferData.Model
 
 
 
-        public string LinkFieldName { get; set; }
+        public string LinkField { get; set; }
 
         /// <summary>
         /// 注释

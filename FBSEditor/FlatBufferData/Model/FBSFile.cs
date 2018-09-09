@@ -29,11 +29,20 @@ namespace FlatBufferData.Model
         /// </summary>
         public List<Enum> Enums { get; } = new List<Enum>();
 
+        /// <summary>
+        /// 联合表
+        /// </summary>
+        public List<Union> Unions { get; } = new List<Union>();
+
+        public List<Rpc> Rpcs { get; } = new List<Rpc>();
+
         public bool HasDefine(string name)
         {
             foreach (var item in Tables) { if (name.Equals(item.Name)) { return true; } }
             foreach (var item in Structs) { if (name.Equals(item.Name)) { return true; } }
             foreach (var item in Enums) { if (name.Equals(item.Name)) { return true; } }
+            foreach (var item in Unions) { if (name.Equals(item.Name)) { return true; } }
+            foreach (var item in Rpcs) { if (name.Equals(item.Name)) { return true; } }
             return false;
         }
     }
