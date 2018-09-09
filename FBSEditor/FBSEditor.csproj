@@ -261,6 +261,8 @@
     <Compile Include="FlatBufferData\Build\FBSBuilder.cs" />
     <Compile Include="FlatBufferData\Model\FBSFile.cs" />
     <Compile Include="FlatBufferData\Model\Meta.cs" />
+    <Compile Include="FlatBufferData\Model\Rpc.cs" />
+    <Compile Include="FlatBufferData\Model\RpcMethod.cs" />
     <Compile Include="FlatBufferData\Model\Struct.cs" />
     <Compile Include="FlatBufferData\Model\StructField.cs" />
     <Compile Include="FlatBufferData\Model\Table.cs" />
@@ -280,6 +282,8 @@
     <Compile Include="FlatBufferCode\Grammar\Template\TemplateParserBaseVisitor.cs" />
     <Compile Include="FlatBufferCode\Grammar\Template\TemplateParserListener.cs" />
     <Compile Include="FlatBufferCode\Grammar\Template\TemplateParserVisitor.cs" />
+    <Compile Include="FlatBufferData\Model\Union.cs" />
+    <Compile Include="FlatBufferData\Model\UnionField.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
