@@ -21,6 +21,11 @@ namespace FlatBufferData.Model
         /// <summary>
         /// 字段列表
         /// </summary>
-        public List<RpcMethod> Fields { get; } = new List<RpcMethod>();
+        public List<RpcMethod> Fields { get; set; } = new List<RpcMethod>();
+
+        /// <summary>
+        /// 特性列表
+        /// </summary>
+        public List<Attribute> Attributes { get; set; } = new List<Attribute>();
     }
 }

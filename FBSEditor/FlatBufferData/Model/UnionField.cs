@@ -16,5 +16,10 @@
         /// 注释
         /// </summary>
         public string Comment { get; set; }
+
+        /// <summary>
+        /// 特性列表
+        /// </summary>
+        public List<Attribute> Attributes { get; set; } = new List<Attribute>();
     }
 }

@@ -24,7 +24,14 @@ namespace FlatBufferData.Model
         /// </summary>
         public string Comment { get; set; }
 
-
+        /// <summary>
+        /// 元数据列表
+        /// </summary>
         public List<Meta> Metas { get; set; } = new List<Meta>();
+
+        /// <summary>
+        /// 特性列表
+        /// </summary>
+        public List<Attribute> Attributes { get; set; } = new List<Attribute>();
     }
 }

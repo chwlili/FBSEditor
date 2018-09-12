@@ -23,23 +23,26 @@ indexMeta : BRACKET_L key='Index' PARENTHESES_L (fields += IDENT (',' fields += 
 nullableMeta : BRACKET_L key='Nullable' (PARENTHESES_L val = BOOL? PARENTHESES_R)? BRACKET_R  ;
 referenceMeta : BRACKET_L key='Reference' PARENTHESES_L path = string PARENTHESES_R BRACKET_R  ;
 
-table : attributes = metas key = 'table' name = IDENT metaList = metadata? BRACE_L tableField* BRACE_R ;
-tableField : attributes = metas fieldName = IDENT ':' (fieldType = singleType | arrayType = listType) ('=' fieldValue = scalarValue)? metaList = metadata? (fieldArrow = '=>' fieldMap = IDENT)? ';'? ;
+table : attr* key = 'table' name = IDENT metaList = metadata? BRACE_L tableField* BRACE_R ;
+tableField : attr* fieldName = IDENT ':' (fieldType = singleType | arrayType = listType) ('=' fieldValue = scalarValue)? metaList = metadata? (fieldArrow = '=>' fieldMap = IDENT)? ';'? ;
 
-struct : attributes = metas key = 'struct' name = IDENT metaList = metadata? BRACE_L structField* BRACE_R ;
-structField : attributes = metas fieldName = IDENT ':' (fieldType = singleType | arrayType = listType) ('=' fieldValue = scalarValue)? metaList = metadata? (fieldArrow = '=>' fieldMap = IDENT)? ';'? ;
+struct : attr* key = 'struct' name = IDENT metaList = metadata? BRACE_L structField* BRACE_R ;
+structField : attr* fieldName = IDENT ':' (fieldType = singleType | arrayType = listType) ('=' fieldValue = scalarValue)? metaList = metadata? (fieldArrow = '=>' fieldMap = IDENT)? ';'? ;
 
-rpc : attributes = metas key = 'rpc_service' name = IDENT BRACE_L rpcField* BRACE_R ;
-rpcField : attributes = metas fieldName = IDENT PARENTHESES_L fieldParam = IDENT PARENTHESES_R ':' fieldReturn = IDENT metaList = metadata? ';'? ;
+rpc : attr* key = 'rpc_service' name = IDENT BRACE_L rpcField* BRACE_R ;
+rpcField : attr* fieldName = IDENT PARENTHESES_L fieldParam = IDENT PARENTHESES_R ':' fieldReturn = IDENT metaList = metadata? ';'? ;
 
-enum : attributes = metas key = 'enum' name = IDENT (':' (singleType|listType))?  metaList = metadata? BRACE_L enumField* BRACE_R ;
-enumField : attributes = metas fieldName = IDENT ('=' fieldValue = INTEGER)? ','?;
+enum : attr* key = 'enum' name = IDENT (':' (singleType|listType))?  metaList = metadata? BRACE_L enumField* BRACE_R ;
+enumField : attr* fieldName = IDENT ('=' fieldValue = INTEGER)? ','?;
 
-union : attributes = metas key = 'union' name = IDENT metaList = metadata? BRACE_L unionField* BRACE_R ;
-unionField : attributes = metas fieldName = IDENT ('=' fieldValue = INTEGER)? ','?;
+union : attr* key = 'union' name = IDENT metaList = metadata? BRACE_L unionField* BRACE_R ;
+unionField : attr* fieldName = IDENT ('=' fieldValue = INTEGER)? ','?;
 
 metadata : PARENTHESES_L (metadataField (',' metadataField)*)? PARENTHESES_R ;
 metadataField : metaName = IDENT (':' metaValue = singleValue)? ;
+
+attr : BRACKET_L key = IDENT (attrField (',' attrField)*)?;
+attrField : IDENT | singleValue;
 
 singleType : 'bool' | 'byte' | 'ubyte' | 'short' | 'ushort' | 'int' | 'uint' | 'float' | 'long' | 'ulong' | 'double' | 'int8' | 'uint8' | 'int16' | 'uint16' | 'int32' | 'uint32'| 'int64' | 'uint64' | 'float32' | 'float64' | 'string' | IDENT ;
 listType : BRACKET_L type = singleType BRACKET_R;

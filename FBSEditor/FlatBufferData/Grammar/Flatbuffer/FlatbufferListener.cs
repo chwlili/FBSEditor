@@ -281,6 +281,26 @@ public interface IFlatbufferListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitMetadataField([NotNull] FlatbufferParser.MetadataFieldContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="FlatbufferParser.attr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAttr([NotNull] FlatbufferParser.AttrContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="FlatbufferParser.attr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAttr([NotNull] FlatbufferParser.AttrContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="FlatbufferParser.attrField"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAttrField([NotNull] FlatbufferParser.AttrFieldContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="FlatbufferParser.attrField"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAttrField([NotNull] FlatbufferParser.AttrFieldContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="FlatbufferParser.singleType"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

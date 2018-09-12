@@ -20,6 +20,11 @@ namespace FlatBufferData.Model
         public List<Meta> Metas { get; set; } = new List<Meta>();
 
         /// <summary>
+        /// 特性列表
+        /// </summary>
+        public List<Attribute> Attributes { get; set; } = new List<Attribute>();
+
+        /// <summary>
         /// 字段列表
         /// </summary>
         public List<StructField> Fields { get; } = new List<StructField>();

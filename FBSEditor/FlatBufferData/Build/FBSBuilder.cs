@@ -1,10 +1,9 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
+using FlatBufferData.Editor;
+using FlatBufferData.Model;
 using System.Collections.Generic;
 using System.IO;
-using FBSEditor;
-using FlatBufferData.Model;
-using FlatBufferData.Editor;
 
 namespace FlatBufferData.Build
 {
@@ -106,9 +105,9 @@ namespace FlatBufferData.Build
             {
                 var data = new Table();
                 data.Name = context.name.Text;
-                //data.Metas = GetMetas(context.metas(), "Bind", "Index");
-                data.Metas = GetFlatBufferMetas(context.metaList);
                 data.Comment = GetComment(context, context.name);
+                data.Metas = GetMetaDatas(context.metaList);
+                data.Attributes = GetAttributes(context.attr());
 
                 var fieldsContext = context.tableField();
                 if (fieldsContext != null)
@@ -121,10 +120,11 @@ namespace FlatBufferData.Build
                         var fieldType = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : "";
                         var arrayType = fieldContext.arrayType != null && fieldContext.arrayType.type != null ? fieldContext.arrayType.type.GetText() : "";
                         var fieldValue = fieldContext.fieldValue != null ? fieldContext.fieldValue.GetText() : "";
-                        var fieldMetas = GetFlatBufferMetas(fieldContext.metaList);
                         var fieldLink = fieldContext.fieldMap != null ? fieldContext.fieldMap.Text : "";
+                        var fieldMetas = GetMetaDatas(fieldContext.metaList);
+                        var fieldAttrs = GetAttributes(fieldContext.attr());
 
-                        if(string.IsNullOrEmpty(fieldName))
+                        if (string.IsNullOrEmpty(fieldName))
                         {
                             ReportError("字段名不能为空", fieldContext.Start.Line, fieldContext.Start.Column);
                             continue;
@@ -146,10 +146,9 @@ namespace FlatBufferData.Build
                         field.Type = !string.IsNullOrEmpty(fieldType) ? fieldType : arrayType;
                         field.IsArray = !string.IsNullOrEmpty(arrayType);
                         field.DefaultValue = fieldValue;
-                        field.Metas = fieldMetas;
                         field.LinkField = !string.IsNullOrEmpty(fieldLink) ? fieldLink : fieldName;
-
-                        field.Metas = GetMetas(fieldContext.metas(), "Nullable");
+                        field.Metas = fieldMetas;
+                        field.Attributes = fieldAttrs;
 
                         data.Fields.Add(field);
                         nameTable.Add(fieldName);
@@ -173,9 +172,10 @@ namespace FlatBufferData.Build
             {
                 var data = new Struct();
                 data.Name = context.name.Text;
-                //data.Metas = GetMetas(context.metas(), "Bind", "Index");
                 data.Comment = GetComment(context, context.name);
-                data.Metas = GetFlatBufferMetas(context.metaList);
+                data.Metas = GetMetaDatas(context.metaList);
+                data.Attributes = GetAttributes(context.attr());
+
                 var fieldsContext = context.structField();
                 if (fieldsContext != null)
                 {
@@ -187,8 +187,9 @@ namespace FlatBufferData.Build
                         var fieldType = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : "";
                         var arrayType = fieldContext.arrayType != null && fieldContext.arrayType.type != null ? fieldContext.arrayType.type.GetText() : "";
                         var fieldValue = fieldContext.fieldValue != null ? fieldContext.fieldValue.GetText() : "";
-                        var fieldMetas = GetFlatBufferMetas(fieldContext.metaList);
                         var fieldLink = fieldContext.fieldMap != null ? fieldContext.fieldMap.Text : "";
+                        var fieldMetas = GetMetaDatas(fieldContext.metaList);
+                        var fieldAttrs = GetAttributes(fieldContext.attr());
 
                         if (string.IsNullOrEmpty(fieldName))
                         {
@@ -214,8 +215,7 @@ namespace FlatBufferData.Build
                         field.DefaultValue = fieldValue;
                         field.Metas = fieldMetas;
                         field.LinkField = !string.IsNullOrEmpty(fieldLink) ? fieldLink : fieldName;
-
-                        field.Metas = GetMetas(fieldContext.metas(), "Nullable");
+                        field.Attributes = fieldAttrs;
 
                         data.Fields.Add(field);
                         nameTable.Add(fieldName);
@@ -238,8 +238,8 @@ namespace FlatBufferData.Build
             {
                 var data = new Enum();
                 data.Name = context.name.Text;
-                //data.Metas = GetMetas(context.metas());
-                data.Metas = GetFlatBufferMetas(context.metaList);
+                data.Metas = GetMetaDatas(context.metaList);
+                data.Attributes = GetAttributes(context.attr());
                 data.Comment = GetComment(context, context.name);
 
                 var fieldsContext = context.enumField();
@@ -251,6 +251,7 @@ namespace FlatBufferData.Build
                         var fieldName = fieldContext.fieldName != null ? fieldContext.fieldName.Text : "";
                         var fieldValue = fieldContext.fieldValue != null ? fieldContext.fieldValue.Text : "";
                         var fieldComm = GetComment(fieldContext, fieldContext.fieldName);
+                        var fieldAttrs = GetAttributes(fieldContext.attr());
 
                         if (string.IsNullOrEmpty(fieldName))
                         {
@@ -267,6 +268,7 @@ namespace FlatBufferData.Build
                         field.Name = fieldName;
                         field.Value = fieldValue;
                         field.Comment = fieldComm;
+                        field.Attributes = fieldAttrs;
 
                         data.Fields.Add(field);
                         nameTable.Add(fieldName);
@@ -289,8 +291,8 @@ namespace FlatBufferData.Build
             {
                 var data = new Union();
                 data.Name = context.name.Text;
-                //data.Metas = GetMetas(context.metas());
-                data.Metas = GetFlatBufferMetas(context.metaList);
+                data.Metas = GetMetaDatas(context.metaList);
+                data.Attributes = GetAttributes(context.attr());
                 data.Comment = GetComment(context, context.name);
 
                 var fieldsContext = context.unionField();
@@ -302,6 +304,7 @@ namespace FlatBufferData.Build
                         var fieldName = fieldContext.fieldName != null ? fieldContext.fieldName.Text : "";
                         var fieldValue = fieldContext.fieldValue != null ? fieldContext.fieldValue.Text : "";
                         var fieldComm = GetComment(fieldContext, fieldContext.fieldName);
+                        var fieldAttrs = GetAttributes(fieldContext.attr());
 
                         if (string.IsNullOrEmpty(fieldName))
                         {
@@ -318,6 +321,7 @@ namespace FlatBufferData.Build
                         field.Name = fieldName;
                         field.Value = fieldValue;
                         field.Comment = fieldComm;
+                        field.Attributes = fieldAttrs;
 
                         data.Fields.Add(field);
                         nameTable.Add(fieldName);
@@ -340,7 +344,7 @@ namespace FlatBufferData.Build
             {
                 var data = new Rpc();
                 data.Name = context.name.Text;
-                //data.Metas = GetMetas(context.metas());
+                data.Attributes = GetAttributes(context.attr());
                 data.Comment = GetComment(context, context.name);
 
                 var fieldsContext = context.rpcField();
@@ -353,7 +357,8 @@ namespace FlatBufferData.Build
                         var fieldParam = fieldContext.fieldParam != null ? fieldContext.fieldParam.Text : "";
                         var fieldReturn = fieldContext.fieldReturn != null ? fieldContext.fieldReturn.Text : "";
                         var fieldComm = GetComment(fieldContext, fieldContext.fieldName);
-                        var fieldMetas = GetFlatBufferMetas(fieldContext.metaList);
+                        var fieldMetas = GetMetaDatas(fieldContext.metaList);
+                        var fieldAttrs = GetAttributes(fieldContext.attr());
 
                         if (string.IsNullOrEmpty(fieldName))
                         {
@@ -372,6 +377,7 @@ namespace FlatBufferData.Build
                         field.Return = fieldReturn;
                         field.Comment = fieldComm;
                         field.Metas = fieldMetas;
+                        field.Attributes = fieldAttrs;
 
                         data.Fields.Add(field);
                         nameTable.Add(fieldName);
@@ -389,7 +395,7 @@ namespace FlatBufferData.Build
                 return 0;
             }
 
-            private List<Meta> GetFlatBufferMetas(FlatbufferParser.MetadataContext metaList)
+            private List<Meta> GetMetaDatas(FlatbufferParser.MetadataContext metaList)
             {
                 var fieldMetas = new List<Meta>();
                 if (metaList != null)
@@ -409,6 +415,31 @@ namespace FlatBufferData.Build
                 return fieldMetas;
             }
 
+            private List<Attribute> GetAttributes(FlatbufferParser.AttrContext[] context)
+            {
+                var attributes = new List<Attribute>();
+                foreach (var item in context)
+                {
+                    var name = item.key != null ? item.key.Text : null;
+                    var values = new List<string>();
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        ReportError("特性名称不能为空", item.Start.Line, item.Start.Column);
+                        continue;
+                    }
+                    foreach (var value in item.attrField())
+                    {
+                        values.Add(value.GetText());
+                    }
+
+                    var attribute = new Attribute();
+                    attribute.Name = name;
+                    attribute.Values = values;
+                    attributes.Add(attribute);
+                }
+                return attributes;
+            }
+
             private string GetComment(ParserRuleContext context, IToken token)
             {
                 if (token == null) { return null; }
@@ -426,81 +457,6 @@ namespace FlatBufferData.Build
                     if (startLine < stopLine) { break; }
                 }
                 return null;
-            }
-
-            private List<Meta> GetMetas(FlatbufferParser.MetasContext metaContext, params string[] metaNames)
-            {
-                var metas = new List<Meta>();
-                if (metaContext != null)
-                {
-                    var names = new HashSet<string>(metaNames);
-
-                    foreach (var bindMeta in metaContext.bindMeta())
-                    {
-                        if (names.Count==0 || (bindMeta.key!=null && names.Contains(bindMeta.key.Text)))
-                        {
-                            var value = bindMeta.path != null ? bindMeta.path.GetText().Trim('"') : "";
-
-                            if (!string.IsNullOrEmpty(value))
-                            {
-
-                                var meta = new Meta();
-                                meta.Name = bindMeta.key.Text;
-                                meta.Value = value;
-                                metas.Add(meta);
-                            }
-                            else
-                            {
-                                report?.Invoke(projectName, file.Path, "绑定内容不能为空", bindMeta.Start.Line, bindMeta.Start.Column);
-                            }
-                        }
-                        else
-                        {
-                            report?.Invoke(projectName, file.Path, "无效的元数据标记", bindMeta.Start.Line, bindMeta.Start.Column);
-                        }
-                    }
-                    foreach (var indexMeta in metaContext.indexMeta())
-                    {
-                        if (names.Count == 0 || (indexMeta.key != null && names.Contains(indexMeta.key.Text)))
-                        {
-                            var fieldNames = new string[indexMeta._fields.Count];
-                            for (int i = 0; i < fieldNames.Length; i++)
-                            {
-                                fieldNames[i] = indexMeta._fields[i].Text;
-                            }
-                            if (fieldNames.Length > 0)
-                            {
-                                var meta = new Meta();
-                                meta.Name = indexMeta.key.Text;
-                                meta.Value = string.Join(",", fieldNames);
-                                metas.Add(meta);
-                            }
-                            else
-                            {
-                                report?.Invoke(projectName, file.Path, "无效的元数据标记", indexMeta.key.Line, indexMeta.key.Column);
-                            }
-                        }
-                        else
-                        {
-                            report?.Invoke(projectName, file.Path, "无效的元数据标记", indexMeta.Start.Line, indexMeta.Start.Column);
-                        }
-                    }
-                    foreach (var nullableMeta in metaContext.nullableMeta())
-                    {
-                        if (names.Count == 0 || (nullableMeta.key != null && names.Contains(nullableMeta.key.Text)))
-                        {
-                            var meta = new Meta();
-                            meta.Name = nullableMeta.key.Text;
-                            meta.Value = nullableMeta.val != null ? nullableMeta.val.Text : "true";
-                            metas.Add(meta);
-                        }
-                        else
-                        {
-                            report?.Invoke(projectName, file.Path, "无效的元数据标记", nullableMeta.Start.Line, nullableMeta.Start.Column);
-                        }
-                    }
-                }
-                return metas;
             }
         }
     }

@@ -182,6 +182,18 @@ public interface IFlatbufferVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitMetadataField([NotNull] FlatbufferParser.MetadataFieldContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="FlatbufferParser.attr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAttr([NotNull] FlatbufferParser.AttrContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="FlatbufferParser.attrField"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAttrField([NotNull] FlatbufferParser.AttrFieldContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="FlatbufferParser.singleType"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

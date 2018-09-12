@@ -335,6 +335,30 @@ public partial class FlatbufferBaseListener : IFlatbufferListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitMetadataField([NotNull] FlatbufferParser.MetadataFieldContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="FlatbufferParser.attr"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAttr([NotNull] FlatbufferParser.AttrContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="FlatbufferParser.attr"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAttr([NotNull] FlatbufferParser.AttrContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="FlatbufferParser.attrField"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAttrField([NotNull] FlatbufferParser.AttrFieldContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="FlatbufferParser.attrField"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAttrField([NotNull] FlatbufferParser.AttrFieldContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="FlatbufferParser.singleType"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

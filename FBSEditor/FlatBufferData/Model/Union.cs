@@ -15,13 +15,18 @@ namespace FlatBufferData.Model
         public string Comment { get; set; }
 
         /// <summary>
+        /// 字段列表
+        /// </summary>
+        public List<UnionField> Fields { get; } = new List<UnionField>();
+
+        /// <summary>
         /// 元数据列表
         /// </summary>
         public List<Meta> Metas { get; set; } = new List<Meta>();
 
         /// <summary>
-        /// 字段列表
+        /// 特性列表
         /// </summary>
-        public List<UnionField> Fields { get; } = new List<UnionField>();
+        public List<Attribute> Attributes { get; set; } = new List<Attribute>();
     }
 }
