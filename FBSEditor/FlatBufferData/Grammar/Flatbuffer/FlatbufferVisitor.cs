@@ -80,36 +80,6 @@ public interface IFlatbufferVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitString([NotNull] FlatbufferParser.StringContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FlatbufferParser.metas"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitMetas([NotNull] FlatbufferParser.MetasContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="FlatbufferParser.bindMeta"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitBindMeta([NotNull] FlatbufferParser.BindMetaContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="FlatbufferParser.indexMeta"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitIndexMeta([NotNull] FlatbufferParser.IndexMetaContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="FlatbufferParser.nullableMeta"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitNullableMeta([NotNull] FlatbufferParser.NullableMetaContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="FlatbufferParser.referenceMeta"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitReferenceMeta([NotNull] FlatbufferParser.ReferenceMetaContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="FlatbufferParser.table"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

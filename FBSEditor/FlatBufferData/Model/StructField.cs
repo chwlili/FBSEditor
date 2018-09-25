@@ -44,6 +44,6 @@ namespace FlatBufferData.Model
         /// <summary>
         /// 特性列表
         /// </summary>
-        public List<Attribute> Attributes { get; set; } = new List<Attribute>();
+        public AttributeInfo Attributes { get; set; }
     }
 }

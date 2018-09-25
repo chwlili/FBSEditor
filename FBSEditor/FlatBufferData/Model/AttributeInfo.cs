@@ -6,26 +6,26 @@ using System.Threading.Tasks;
 
 namespace FlatBufferData.Model
 {
-    public class Rpc
+    public class AttributeInfo
     {
-        /// <summary>
-        /// 名称
-        /// </summary>
-        public string Name { get; set; }
-
-        /// <summary>
-        /// 注释
-        /// </summary>
-        public string Comment { get; set; }
-
-        /// <summary>
-        /// 字段列表
-        /// </summary>
-        public List<RpcMethod> Fields { get; set; } = new List<RpcMethod>();
-
         /// <summary>
         /// 特性列表
         /// </summary>
-        public AttributeInfo Attributes { get; set; }
+        public List<Attribute> Attributes { get; set; } = new List<Attribute>();
+
+        /// <summary>
+        /// 绑定信息
+        /// </summary>
+        public string BindInfo;
+
+        /// <summary>
+        /// 索引表
+        /// </summary>
+        public List<string[]> IndexTable = new List<string[]>();
+
+        /// <summary>
+        /// 可以为空
+        /// </summary>
+        public bool Nullable;
     }
 }

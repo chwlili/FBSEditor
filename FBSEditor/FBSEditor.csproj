@@ -262,6 +262,7 @@
     <Compile Include="FlatBufferData\Build\FBSBuilder.cs" />
     <Compile Include="FlatBufferData\Model\FBSFile.cs" />
     <Compile Include="FlatBufferData\Model\Meta.cs" />
+    <Compile Include="FlatBufferData\Model\AttributeInfo.cs" />
     <Compile Include="FlatBufferData\Model\Rpc.cs" />
     <Compile Include="FlatBufferData\Model\RpcMethod.cs" />
     <Compile Include="FlatBufferData\Model\Struct.cs" />

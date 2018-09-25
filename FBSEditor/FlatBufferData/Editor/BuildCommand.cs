@@ -133,10 +133,22 @@ namespace FlatBufferData.Editor
 
             errorCount = 0;
             package.ClearError();
-            Build.FBSBuilder.Build(project.Name, paths.ToArray(), ErrorHandler);
+            var trees = Build.FBSBuilder.Build(project.Name, paths.ToArray(), ErrorHandler);
             if(errorCount>0)
             {
                 package.ShowError();
+            }
+
+            foreach(var tree in trees)
+            {
+                if(tree.RootTable!=null)
+                {
+                    var bind = tree.RootTable.AttributeInfo.BindInfo;
+                    if(!string.IsNullOrEmpty(bind))
+                    {
+                        ErrorHandler(".....", tree.Path, bind.Trim('"'), 0, 0);
+                    }
+                }
             }
         }
 

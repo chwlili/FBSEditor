@@ -2,26 +2,19 @@ grammar Flatbuffer;
 
 schema : ( include | namespace | attribute | rootType | fileExtension | fileIdentifier | table | struct | enum | union | rpc | objectValue)* ;
 
-include : key = 'include' STRING ';'? ;
+include : key = 'include' val = STRING ';'? ;
 
 namespace : key = 'namespace' (IDENT ( '.' IDENT )*) ';'? ;
 
 attribute : key = 'attribute' STRING ';'? ;
 
-rootType : key = 'root_type' IDENT ';'? ;
+rootType : key = 'root_type' val = IDENT ';'? ;
 
-fileExtension : key = 'file_extension' STRING  ';'? ;
+fileExtension : key = 'file_extension' val = STRING  ';'? ;
 
-fileIdentifier : key = 'file_identifier' STRING ';'? ;
-
+fileIdentifier : key = 'file_identifier' val = STRING ';'? ;
 
 string : text = STRING;
-
-metas : (bindMeta | indexMeta | nullableMeta | referenceMeta)*;
-bindMeta : BRACKET_L key='Bind' PARENTHESES_L path = string PARENTHESES_R BRACKET_R ;
-indexMeta : BRACKET_L key='Index' PARENTHESES_L (fields += IDENT (',' fields += IDENT)*)? PARENTHESES_R BRACKET_R  ;
-nullableMeta : BRACKET_L key='Nullable' (PARENTHESES_L val = BOOL? PARENTHESES_R)? BRACKET_R  ;
-referenceMeta : BRACKET_L key='Reference' PARENTHESES_L path = string PARENTHESES_R BRACKET_R  ;
 
 table : attr* key = 'table' name = IDENT metaList = metadata? BRACE_L tableField* BRACE_R ;
 tableField : attr* fieldName = IDENT ':' (fieldType = singleType | arrayType = listType) ('=' fieldValue = scalarValue)? metaList = metadata? (fieldArrow = '=>' fieldMap = IDENT)? ';'? ;
@@ -32,7 +25,7 @@ structField : attr* fieldName = IDENT ':' (fieldType = singleType | arrayType = 
 rpc : attr* key = 'rpc_service' name = IDENT BRACE_L rpcField* BRACE_R ;
 rpcField : attr* fieldName = IDENT PARENTHESES_L fieldParam = IDENT PARENTHESES_R ':' fieldReturn = IDENT metaList = metadata? ';'? ;
 
-enum : attr* key = 'enum' name = IDENT (':' (singleType|listType))?  metaList = metadata? BRACE_L enumField* BRACE_R ;
+enum : attr* key = 'enum' name = IDENT (':' baseType = singleType)?  metaList = metadata? BRACE_L enumField* BRACE_R ;
 enumField : attr* fieldName = IDENT ('=' fieldValue = INTEGER)? ','?;
 
 union : attr* key = 'union' name = IDENT metaList = metadata? BRACE_L unionField* BRACE_R ;
@@ -41,8 +34,8 @@ unionField : attr* fieldName = IDENT ('=' fieldValue = INTEGER)? ','?;
 metadata : PARENTHESES_L (metadataField (',' metadataField)*)? PARENTHESES_R ;
 metadataField : metaName = IDENT (':' metaValue = singleValue)? ;
 
-attr : BRACKET_L key = IDENT (attrField (',' attrField)*)?;
-attrField : IDENT | singleValue;
+attr : BRACKET_L key = IDENT (PARENTHESES_L attrField (',' attrField)* PARENTHESES_R)? BRACKET_R;
+attrField : vid = IDENT | vstr = STRING | vint = INTEGER | vfloat = FLOAT | vbool = BOOL;
 
 singleType : 'bool' | 'byte' | 'ubyte' | 'short' | 'ushort' | 'int' | 'uint' | 'float' | 'long' | 'ulong' | 'double' | 'int8' | 'uint8' | 'int16' | 'uint16' | 'int32' | 'uint32'| 'int64' | 'uint64' | 'float32' | 'float64' | 'string' | IDENT ;
 listType : BRACKET_L type = singleType BRACKET_R;

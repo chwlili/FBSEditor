@@ -131,66 +131,6 @@ public partial class FlatbufferBaseListener : IFlatbufferListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitString([NotNull] FlatbufferParser.StringContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="FlatbufferParser.metas"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterMetas([NotNull] FlatbufferParser.MetasContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="FlatbufferParser.metas"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitMetas([NotNull] FlatbufferParser.MetasContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="FlatbufferParser.bindMeta"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterBindMeta([NotNull] FlatbufferParser.BindMetaContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="FlatbufferParser.bindMeta"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitBindMeta([NotNull] FlatbufferParser.BindMetaContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="FlatbufferParser.indexMeta"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterIndexMeta([NotNull] FlatbufferParser.IndexMetaContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="FlatbufferParser.indexMeta"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitIndexMeta([NotNull] FlatbufferParser.IndexMetaContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="FlatbufferParser.nullableMeta"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterNullableMeta([NotNull] FlatbufferParser.NullableMetaContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="FlatbufferParser.nullableMeta"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitNullableMeta([NotNull] FlatbufferParser.NullableMetaContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="FlatbufferParser.referenceMeta"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterReferenceMeta([NotNull] FlatbufferParser.ReferenceMetaContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="FlatbufferParser.referenceMeta"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitReferenceMeta([NotNull] FlatbufferParser.ReferenceMetaContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="FlatbufferParser.table"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

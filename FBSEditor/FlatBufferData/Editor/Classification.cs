@@ -379,37 +379,6 @@ namespace FlatBufferData.Editor
             return base.VisitFileIdentifier(context);
         }
 
-        public override int VisitBindMeta([NotNull] FlatbufferParser.BindMetaContext context)
-        {
-            MakeBracePair(context.BRACKET_L(), context.BRACKET_R());
-            MakeBracePair(context.PARENTHESES_L(), context.PARENTHESES_R());
-            MakeClassificationSpan(context.key, classificater.FBSKey);
-            return base.VisitBindMeta(context);
-        }
-
-        public override int VisitIndexMeta([NotNull] FlatbufferParser.IndexMetaContext context)
-        {
-            MakeBracePair(context.BRACKET_L(), context.BRACKET_R());
-            MakeBracePair(context.PARENTHESES_L(), context.PARENTHESES_R());
-            MakeClassificationSpan(context.key, classificater.FBSKey);
-            return base.VisitIndexMeta(context);
-        }
-
-        public override int VisitNullableMeta([NotNull] FlatbufferParser.NullableMetaContext context)
-        {
-            MakeBracePair(context.BRACKET_L(), context.BRACKET_R());
-            MakeBracePair(context.PARENTHESES_L(), context.PARENTHESES_R());
-            MakeClassificationSpan(context.key, classificater.FBSKey);
-            return base.VisitNullableMeta(context);
-        }
-
-        public override int VisitReferenceMeta([NotNull] FlatbufferParser.ReferenceMetaContext context)
-        {
-            MakeBracePair(context.BRACKET_L(), context.BRACKET_R());
-            MakeBracePair(context.PARENTHESES_L(), context.PARENTHESES_R());
-            MakeClassificationSpan(context.key, classificater.FBSKey);
-            return base.VisitReferenceMeta(context);
-        }
         public override int VisitMetadata([NotNull] FlatbufferParser.MetadataContext context)
         {
             MakeBracePair(context.PARENTHESES_L(), context.PARENTHESES_R());
@@ -430,6 +399,14 @@ namespace FlatBufferData.Editor
         {
             MakeClassificationSpan(context.text, classificater.FBSString);
             return base.VisitString(context);
+        }
+
+        public override int VisitAttr([NotNull] FlatbufferParser.AttrContext context)
+        {
+            MakeClassificationSpan(context.key, classificater.FBSKey);
+            MakeBracePair(context.PARENTHESES_L(), context.PARENTHESES_R());
+            MakeBracePair(context.BRACKET_L(), context.BRACKET_R());
+            return base.VisitAttr(context);
         }
 
 

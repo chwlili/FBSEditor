@@ -15,6 +15,11 @@ namespace FlatBufferData.Model
         public string Comment { get; set; }
 
         /// <summary>
+        /// 基础类型
+        /// </summary>
+        public string BaseType { get; set; }
+
+        /// <summary>
         /// 元数据列表
         /// </summary>
         public List<Meta> Metas { get; set; } = new List<Meta>();
@@ -22,7 +27,7 @@ namespace FlatBufferData.Model
         /// <summary>
         /// 特性列表
         /// </summary>
-        public List<Attribute> Attributes { get; set; } = new List<Attribute>();
+        public AttributeInfo Attributes { get; set; }
 
         /// <summary>
         /// 字段列表

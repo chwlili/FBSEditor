@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static FlatbufferParser;
 
 namespace FlatBufferData.Model
 {
@@ -10,9 +11,29 @@ namespace FlatBufferData.Model
         public string Path { get; set; }
 
         /// <summary>
+        /// 主表
+        /// </summary>
+        public Table RootTable { get; set; }
+
+        /// <summary>
+        /// 主结构
+        /// </summary>
+        public Struct RootStruct { get; set; }
+
+        /// <summary>
         /// 名称空间
         /// </summary>
         public string NameSpace { get; set; }
+
+        /// <summary>
+        /// 文件扩展名
+        /// </summary>
+        public string FileExtension { get; set; }
+
+        /// <summary>
+        /// 文件标识符
+        /// </summary>
+        public string FileIdentifier { get; set; }
 
         /// <summary>
         /// 表列表
@@ -34,7 +55,11 @@ namespace FlatBufferData.Model
         /// </summary>
         public List<Union> Unions { get; } = new List<Union>();
 
+        /// <summary>
+        /// RPC
+        /// </summary>
         public List<Rpc> Rpcs { get; } = new List<Rpc>();
+
 
         public bool HasDefine(string name)
         {
