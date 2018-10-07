@@ -1,7 +1,6 @@
 ﻿using Antlr4.Runtime;
-using Antlr4.Runtime.Misc;
-using FlatBufferData.Editor;
 using FlatBufferData.Model;
+using FlatBufferData.Model.Attributes;
 using System.Collections.Generic;
 using System.IO;
 using static FlatbufferParser;
@@ -10,91 +9,96 @@ namespace FlatBufferData.Build
 {
     public class FBSBuilder
     {
-        public delegate void ErrorReport(string projectName,string path,string text,int line,int column);
+        public delegate void ErrorReport(string projectName, string path, string text, int line, int column);
 
+        private string projectName;
+        private ErrorReport report;
+        private Dictionary<string, FBSFile> files = new Dictionary<string, FBSFile>();
 
-        public static FBSFile[] Build(string projectName, string[] paths, ErrorReport report)
+        public FBSBuilder(string projectName, ErrorReport report)
         {
-            var files = new List<FBSFile>();
+            this.projectName = projectName;
+            this.report = report;
+        }
 
-            foreach (var path in paths)
+        public void Open(string path)
+        {
+            path = Path.GetFullPath(path);
+            var builder = new FBSFileBuild(this, path, report);
+            var fbsFile = builder.Build();
+        }
+
+        public bool HasFile(string path)
+        {
+            return files.ContainsKey(path);
+        }
+
+        public FBSFile GetFile(string path)
+        {
+            if(files.ContainsKey(path))
+                return files[path];
+            return null;
+        }
+
+        public void SetFile(string path, FBSFile file)
+        {
+            if (path != null && file != null)
+                files.Add(path, file);
+        }
+
+        public FBSFile GetFBSFile(string curr, string include)
+        {
+            if (!Path.IsPathRooted(include))
             {
-                if (path.ToLower().EndsWith(Constants.ExtName))
+                var path = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(curr), include));
+                if(HasFile(path))
+                    return GetFile(path);
+
+                if (File.Exists(path))
                 {
-                    var builder = new FBSFileBuild(path, report);
-                    files.Add(builder.Build());
+                    var builder = new FBSFileBuild(this, path, report);
+                    var fbsFile = builder.Build();
+                    return fbsFile;
                 }
             }
-
-            return files.ToArray();
+            return null;
         }
+
 
         private class FBSFileBuild
         {
+            private FBSBuilder project;
             private string path;
             public ErrorReport report;
-            private Dictionary<int, string> commentTable;
-            private Dictionary<string, int> typeName2start = new Dictionary<string, int>();
 
             private FBSFile file;
+            private Dictionary<object, object> data2context = new Dictionary<object, object>();
 
-            public FBSFileBuild(string path, ErrorReport report)
+            public FBSFileBuild(FBSBuilder project, string path, ErrorReport report)
             {
+                this.project = project;
                 this.path = path;
                 this.report = report;
             }
 
             public FBSFile Build()
             {
-                var text = File.ReadAllText(path);
+                return Build(File.ReadAllText(path));
+            }
 
+            public FBSFile Build(string text)
+            {
                 var lexer = new FlatbufferLexer(new AntlrInputStream(text));
                 var parser = new FlatbufferParser(new CommonTokenStream(lexer));
-
-                InitComments(lexer);
+                var comments = InitComments(lexer);
+                var schema = parser.schema();
 
                 file = new FBSFile();
 
-                var schema = parser.schema();
-                var namespaces = schema.@namespace();
-                var tables = schema.table();
-                var structs = schema.@struct();
-                var enums = schema.@enum();
-                var unions = schema.union();
-                var rpcs = schema.rpc();
-                var rootTypes = schema.rootType();
-
-                typeName2start.Clear();
-                foreach (var item in tables) { if (item.name != null && !string.IsNullOrEmpty(item.name.Text) && !typeName2start.ContainsKey(item.name.Text)) { typeName2start[item.name.Text] = item.name.StartIndex; } }
-                foreach (var item in structs) { if (item.name != null && !string.IsNullOrEmpty(item.name.Text) && !typeName2start.ContainsKey(item.name.Text)) { typeName2start[item.name.Text] = item.name.StartIndex; } }
-                foreach (var item in enums) { if (item.name != null && !string.IsNullOrEmpty(item.name.Text) && !typeName2start.ContainsKey(item.name.Text)) { typeName2start[item.name.Text] = item.name.StartIndex; } }
-                foreach (var item in unions) { if (item.name != null && !string.IsNullOrEmpty(item.name.Text) && !typeName2start.ContainsKey(item.name.Text)) { typeName2start[item.name.Text] = item.name.StartIndex; } }
-                foreach (var item in rpcs) { if (item.name != null && !string.IsNullOrEmpty(item.name.Text) && !typeName2start.ContainsKey(item.name.Text)) { typeName2start[item.name.Text] = item.name.StartIndex; } }
-
-                HandleNamespace(namespaces);
-                HandleTable(tables);
-                HandleStruct(structs);
-                HandleEnum(enums);
-                HandleUnion(unions);
-                HandleRpc(rpcs);
-                HandleRootType(rootTypes);
-                HandleFileExtension(schema.fileExtension());
-                HandleFileIdentifier(schema.fileIdentifier());
-
-                return file;
-            }
-
-            private void ReportError(string text, int line, int column)
-            {
-                report?.Invoke("", path, text, line, column);
-            }
-
-            private void HandleNamespace(NamespaceContext[] contexts)
-            {
-                for (var i = 0; i < contexts.Length; i++)
+                //namespace
+                foreach(var context in schema.@namespace())
                 {
-                    var context = contexts[i];
-                    if (i == 0)
+                    if (file.NameSpace == null)
                     {
                         var idents = context.IDENT();
                         var tokens = new string[idents.Length];
@@ -102,406 +106,905 @@ namespace FlatBufferData.Build
                         file.NameSpace = string.Join(".", tokens);
                     }
                     else
-                    {
-                        ReportError("namespace 重复声明!", context.Start.Line, context.Start.Column);
-                    }
+                        ReportError("namespace 重复声明!", context);
                 }
-            }
-
-            private void HandleTable(TableContext[] contexts)
-            {
-                foreach (var context in contexts)
+                //file_extension
+                foreach(var context in schema.fileExtension())
                 {
-                    var fieldList = new List<TableField>();
-                    var fieldNameList = new List<string>();
-
-                    var fieldsContext = context.tableField();
-                    if (fieldsContext != null)
+                    if(file.FileExtension==null)
                     {
-                        var nameTable = new HashSet<string>();
-                        foreach (var fieldContext in fieldsContext)
-                        {
-                            var fieldComm = GetComment(fieldContext, fieldContext.fieldName);
-                            var fieldName = fieldContext.fieldName != null ? fieldContext.fieldName.Text : "";
-                            var fieldType = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : "";
-                            var arrayType = fieldContext.arrayType != null && fieldContext.arrayType.type != null ? fieldContext.arrayType.type.GetText() : "";
-                            var fieldValue = fieldContext.fieldValue != null ? fieldContext.fieldValue.GetText() : "";
-                            var fieldLink = fieldContext.fieldMap != null ? fieldContext.fieldMap.Text : "";
-                            var fieldMetas = GetMetaDatas(fieldContext.metaList);
-                            var fieldAttrs = GetFieldAttributes(fieldContext.attr());
-
-                            if (string.IsNullOrEmpty(fieldName))
-                            {
-                                ReportError("字段名不能为空", fieldContext.Start.Line, fieldContext.Start.Column);
-                                continue;
-                            }
-                            if (string.IsNullOrEmpty(fieldType) && string.IsNullOrEmpty(arrayType))
-                            {
-                                ReportError("字段类型不能为空", fieldContext.fieldName.Line, fieldContext.fieldName.Column);
-                                continue;
-                            }
-                            if (nameTable.Contains(fieldName))
-                            {
-                                ReportError(string.Format("字段名称重复定义:\"{0}\"", fieldName), fieldContext.fieldName.Line, fieldContext.fieldName.Column);
-                                continue;
-                            }
-
-                            var field = new TableField();
-                            field.Comment = fieldComm;
-                            field.Name = fieldName;
-                            field.Type = !string.IsNullOrEmpty(fieldType) ? fieldType : arrayType;
-                            field.IsArray = !string.IsNullOrEmpty(arrayType);
-                            field.DefaultValue = fieldValue;
-                            field.LinkField = !string.IsNullOrEmpty(fieldLink) ? fieldLink : fieldName;
-                            field.Metas = fieldMetas;
-                            field.Attributes = fieldAttrs;
-
-                            fieldList.Add(field);
-                            fieldNameList.Add(field.Name);
-
-                            nameTable.Add(fieldName);
-                        }
-                    }
-
-                    var tableName = context.name.Text;
-                    if (typeName2start.ContainsKey(tableName) && typeName2start[tableName] !=context.name.StartIndex)
-                    {
-                        ReportError(string.Format("表名重复定义:\"{0}\"", tableName), context.name.Line, context.name.Column);
+                        if (context.val == null)
+                            ReportError("错误的file_extension声明。", context);
+                        else if (string.IsNullOrEmpty(context.val.Text.Trim('"')))
+                            ReportError("file_extension声明的扩展名不能为空。", context.val);
+                        else
+                            file.FileExtension = context.val.Text.Trim('"');
                     }
                     else
-                    {
-                        var data = new Table();
-                        data.Name = tableName;
-                        data.Comment = GetComment(context, context.name);
-                        data.Metas = GetMetaDatas(context.metaList);
-                        data.AttributeInfo = GetTableAttributes(context.attr(),fieldNameList.ToArray());
-
-                        file.Tables.Add(data);
-                    }
+                        ReportError("file_extension 重复声明。", context);
                 }
-            }
-
-            private void HandleStruct(StructContext[] contexts)
-            {
-                foreach(var context in contexts)
+                //file_identifier
+                foreach(var context in schema.fileIdentifier())
                 {
-                    var fieldList = new List<StructField>();
-                    var fieldNameList = new List<string>();
-
-                    var fieldsContext = context.structField();
-                    if (fieldsContext != null)
+                    if (file.FileIdentifier == null)
                     {
-                        var nameTable = new HashSet<string>();
-                        foreach (var fieldContext in fieldsContext)
-                        {
-                            var fieldComm = GetComment(fieldContext, fieldContext.fieldName);
-                            var fieldName = fieldContext.fieldName != null ? fieldContext.fieldName.Text : "";
-                            var fieldType = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : "";
-                            var arrayType = fieldContext.arrayType != null && fieldContext.arrayType.type != null ? fieldContext.arrayType.type.GetText() : "";
-                            var fieldValue = fieldContext.fieldValue != null ? fieldContext.fieldValue.GetText() : "";
-                            var fieldLink = fieldContext.fieldMap != null ? fieldContext.fieldMap.Text : "";
-                            var fieldMetas = GetMetaDatas(fieldContext.metaList);
-                            var fieldAttrs = GetFieldAttributes(fieldContext.attr());
-
-                            if (string.IsNullOrEmpty(fieldName))
-                            {
-                                ReportError("字段名不能为空", fieldContext.Start.Line, fieldContext.Start.Column);
-                                continue;
-                            }
-                            if (string.IsNullOrEmpty(fieldType) && string.IsNullOrEmpty(arrayType))
-                            {
-                                ReportError("字段类型不能为空", fieldContext.fieldName.Line, fieldContext.fieldName.Column);
-                                continue;
-                            }
-                            if (nameTable.Contains(fieldName))
-                            {
-                                ReportError(string.Format("字段名称重复定义:\"{0}\"", fieldName), fieldContext.fieldName.Line, fieldContext.fieldName.Column);
-                                continue;
-                            }
-
-                            var field = new StructField();
-                            field.Comment = fieldComm;
-                            field.Name = fieldName;
-                            field.Type = !string.IsNullOrEmpty(fieldType) ? fieldType : arrayType;
-                            field.IsArray = !string.IsNullOrEmpty(arrayType);
-                            field.DefaultValue = fieldValue;
-                            field.Metas = fieldMetas;
-                            field.LinkField = !string.IsNullOrEmpty(fieldLink) ? fieldLink : fieldName;
-                            field.Attributes = fieldAttrs;
-
-                            fieldList.Add(field);
-                            fieldNameList.Add(field.Name);
-
-                            nameTable.Add(fieldName);
-                        }
-                    }
-
-                    var tableName = context.name.Text;
-                    if (typeName2start.ContainsKey(tableName) && typeName2start[tableName] != context.name.StartIndex)
-                    {
-                        ReportError(string.Format("结构名称重复定义:\"{0}\"", tableName), context.name.Line, context.name.Column);
+                        if (context.val == null)
+                            ReportError("错误的file_identifier声明。", context);
+                        else if (string.IsNullOrEmpty(context.val.Text.Trim('"')))
+                            ReportError("错误的file_identifier声明声明的标识符不能为空。", context.val);
+                        else
+                            file.FileIdentifier = context.val.Text.Trim('"');
                     }
                     else
-                    {
-                        var data = new Struct();
-                        data.Name = context.name.Text;
-                        data.Comment = GetComment(context, context.name);
-                        data.Metas = GetMetaDatas(context.metaList);
-                        data.Attributes = GetTableAttributes(context.attr(),fieldNameList.ToArray());
-
-                        file.Structs.Add(data);
-                    }
+                        ReportError("错误的file_identifier声明 重复声明。", context);
                 }
-            }
+                //table
+                foreach (var context in schema.table())
+                {
+                    var data = new Table();
+                    data.Comment = GetComment(comments, context, context.name);
+                    data.Name = context.name.Text;
+                    data.Metas = ParseMetaDatas(context.metaList);
+                    data.Fields = new List<TableField>();
 
-            private void HandleEnum(EnumContext[] contexts)
-            {
-                var EnumBaseTypeNames = new List<string>() { "bool", "byte", "ubyte", "short", "ushort", "int", "uint", "long", "ulong", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64" };
+                    var fieldNameSet = new HashSet<string>();
+                    foreach (var fieldContext in context.tableField())
+                    {
+                        var field = new TableField();
+                        field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
+                        field.Name = fieldContext.fieldName != null ? fieldContext.fieldName.Text : null;
+                        field.Type = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : (fieldContext.arrayType.type != null ? fieldContext.arrayType.type.GetText() : null);
+                        field.IsArray = fieldContext.arrayType != null && fieldContext.fieldType == null;
+                        field.DefaultValue = ParseDefaultValue(field.Type, field.IsArray, fieldContext.fieldValue);
+                        field.Metas = ParseMetaDatas(fieldContext.metaList);
+                        field.DataField = fieldContext.fieldMap != null ? fieldContext.fieldMap.Text : field.Name;
 
-                foreach (var context in contexts)
+                        if (string.IsNullOrEmpty(field.Name))
+                            ReportError("名称不能为空。", fieldContext);
+                        else if (fieldNameSet.Contains(field.Name))
+                            ReportError("重复的名称。", fieldContext.fieldName);
+                        else
+                            fieldNameSet.Add(field.Name);
+
+                        data.Fields.Add(field);
+                        data2context.Add(field, fieldContext);
+                    }
+
+                    file.Tables.Add(data);
+                    data2context.Add(data, context);
+                }
+                //struct
+                foreach(var context in schema.@struct())
+                {
+                    var data = new Struct();
+                    data.Comment = GetComment(comments, context, context.name);
+                    data.Name = context.name.Text;
+                    data.Metas = ParseMetaDatas(context.metaList);
+                    data.Fields = new List<StructField>();
+
+                    var fieldNameSet = new HashSet<string>();
+                    foreach (var fieldContext in context.structField())
+                    {
+                        var field = new StructField();
+                        field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
+                        field.Name = fieldContext.fieldName != null ? fieldContext.fieldName.Text : null;
+                        field.Type = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : (fieldContext.arrayType != null ? fieldContext.arrayType.GetText() : null);
+                        field.IsArray = fieldContext.arrayType != null && fieldContext.fieldType == null;
+                        field.DefaultValue = null;
+                        field.Metas = ParseMetaDatas(fieldContext.metaList);
+                        field.DataField = fieldContext.fieldMap != null ? fieldContext.fieldMap.Text : field.Name;
+
+                        if (string.IsNullOrEmpty(field.Name))
+                            ReportError("名称不能为空。", fieldContext);
+                        else if (fieldNameSet.Contains(field.Name))
+                            ReportError("重复的名称。", fieldContext.fieldName);
+                        else
+                            fieldNameSet.Add(field.Name);
+
+                        if (field.IsArray || "string".Equals(field.Type) || !IsNativeType(field.Type))
+                            ReportError("struct字段的类型只能是布尔，数值，struct。", fieldContext.arrayType!=null ? fieldContext.arrayType as ParserRuleContext : fieldContext.fieldType as ParserRuleContext);
+
+                        if (fieldContext.fieldValue != null)
+                            ReportError("struct字段目前不支持默认值。", fieldContext.fieldValue);
+
+                        data.Fields.Add(field);
+                        data2context.Add(field, fieldContext);
+                    }
+
+                    file.Structs.Add(data);
+                    data2context.Add(data, context);
+                }
+                //enum
+                foreach(var context in schema.@enum())
                 {
                     var data = new Enum();
+                    data.Comment = GetComment(comments, context, context.name);
                     data.Name = context.name.Text;
+                    data.Metas = ParseMetaDatas(context.metaList);
                     data.BaseType = "int";
-                    data.Metas = GetMetaDatas(context.metaList);
-                    data.Attributes = GetAttributes(context.attr());
-                    data.Comment = GetComment(context, context.name);
+
+                    var fieldNameSet = new HashSet<string>();
+                    foreach (var fieldContext in context.enumField())
+                    {
+                        var field = new EnumField();
+                        field.Name = fieldContext.fieldName.Text;
+                        field.Value = fieldContext.fieldValue != null ? fieldContext.fieldValue.Text : null;
+                        field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
+
+                        if (string.IsNullOrEmpty(field.Name))
+                            ReportError("名称不能为空。", fieldContext);
+                        else if (fieldNameSet.Contains(field.Name))
+                            ReportError("重复的名称。", fieldContext.fieldName);
+                        else
+                            fieldNameSet.Add(field.Name);
+
+                        data.Fields.Add(field);
+                        data2context.Add(field, fieldContext);
+                    }
 
                     if (context.baseType != null)
                     {
                         var name = context.baseType.GetText();
-                        if (EnumBaseTypeNames.Contains(name))
-                        {
+                        if (IsNativeType(name) && !"float".Equals(name) && !"float32".Equals(name) && !"double".Equals(name) && !"float64".Equals(name) && !"string".Equals(name))
                             data.BaseType = name;
-                        }
                         else
-                        {
-                            ReportError("enum的基类型必须是整数类型.", context.baseType.Start.Line, context.baseType.Start.Column);
-                        }
+                            ReportError("enum的基类型必须是整数类型.", context.baseType);
                     }
 
-                    var fieldsContext = context.enumField();
-                    if (fieldsContext != null)
-                    {
-                        var nameTable = new HashSet<string>();
-                        foreach (var fieldContext in fieldsContext)
-                        {
-                            var fieldName = fieldContext.fieldName != null ? fieldContext.fieldName.Text : "";
-                            var fieldValue = fieldContext.fieldValue != null ? fieldContext.fieldValue.Text : "";
-                            var fieldComm = GetComment(fieldContext, fieldContext.fieldName);
-                            var fieldAttrs = GetAttributes(fieldContext.attr());
-
-                            if (string.IsNullOrEmpty(fieldName))
-                            {
-                                ReportError("字段名不能为空", fieldContext.Start.Line, fieldContext.Start.Column);
-                                continue;
-                            }
-                            if (nameTable.Contains(fieldName))
-                            {
-                                ReportError(string.Format("字段名称重复定义:\"{0}\"", fieldName), fieldContext.fieldName.Line, fieldContext.fieldName.Column);
-                                continue;
-                            }
-
-                            var field = new EnumField();
-                            field.Name = fieldName;
-                            field.Value = fieldValue;
-                            field.Comment = fieldComm;
-                            field.Attributes = fieldAttrs;
-
-                            data.Fields.Add(field);
-                            nameTable.Add(fieldName);
-                        }
-                    }
-
-                    if (typeName2start.ContainsKey(data.Name) && typeName2start[data.Name] != context.name.StartIndex)
-                    {
-                        ReportError(string.Format("枚举名称重复定义:\"{0}\"", data.Name), context.name.Line, context.name.Column);
-                    }
-                    else
-                    {
-                        file.Enums.Add(data);
-                    }
+                    file.Enums.Add(data);
+                    data2context.Add(data, context);
                 }
-            }
-
-            private void HandleUnion(UnionContext[] contexts)
-            {
-                foreach(var context in contexts)
+                //union
+                foreach (var context in schema.union())
                 {
                     var data = new Union();
+                    data.Comment = GetComment(comments, context, context.name);
                     data.Name = context.name.Text;
-                    data.Metas = GetMetaDatas(context.metaList);
-                    data.Attributes = GetAttributes(context.attr());
-                    data.Comment = GetComment(context, context.name);
+                    data.Metas = ParseMetaDatas(context.metaList);
 
-                    var fieldsContext = context.unionField();
-                    if (fieldsContext != null)
+                    var fieldNameSet = new HashSet<string>();
+                    foreach (var fieldContext in context.unionField())
                     {
-                        var nameTable = new HashSet<string>();
-                        foreach (var fieldContext in fieldsContext)
-                        {
-                            var fieldName = fieldContext.fieldName != null ? fieldContext.fieldName.Text : "";
-                            var fieldValue = fieldContext.fieldValue != null ? fieldContext.fieldValue.Text : "";
-                            var fieldComm = GetComment(fieldContext, fieldContext.fieldName);
-                            var fieldAttrs = GetAttributes(fieldContext.attr());
+                        var field = new UnionField();
+                        field.Name = fieldContext.fieldName.Text;
+                        field.Value = fieldContext.fieldValue != null ? fieldContext.fieldValue.Text : null;
+                        field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
 
-                            if (string.IsNullOrEmpty(fieldName))
-                            {
-                                ReportError("字段名不能为空", fieldContext.Start.Line, fieldContext.Start.Column);
-                                continue;
-                            }
-                            if (nameTable.Contains(fieldName))
-                            {
-                                ReportError(string.Format("字段名称重复定义:\"{0}\"", fieldName), fieldContext.fieldName.Line, fieldContext.fieldName.Column);
-                                continue;
-                            }
+                        if (string.IsNullOrEmpty(field.Name))
+                            ReportError("名称不能为空。", fieldContext);
+                        else if (fieldNameSet.Contains(field.Name))
+                            ReportError("重复的名称。", fieldContext.fieldName);
+                        else
+                            fieldNameSet.Add(field.Name);
 
-                            var field = new UnionField();
-                            field.Name = fieldName;
-                            field.Value = fieldValue;
-                            field.Comment = fieldComm;
-                            field.Attributes = fieldAttrs;
-
-                            data.Fields.Add(field);
-                            nameTable.Add(fieldName);
-                        }
+                        data.Fields.Add(field);
+                        data2context.Add(field, fieldContext);
                     }
 
-                    if (typeName2start.ContainsKey(data.Name) && typeName2start[data.Name] != context.name.StartIndex)
-                    {
-                        ReportError(string.Format("联合名称重复定义:\"{0}\"", data.Name), context.name.Line, context.name.Column);
-                    }
-                    else
-                    {
-                        file.Unions.Add(data);
-                    }
+                    file.Unions.Add(data);
+                    data2context.Add(data, context);
                 }
-            }
-
-            private void HandleRpc(RpcContext[] contexts)
-            {
-                foreach(var context in contexts)
+                //rpc
+                foreach (var context in schema.rpc())
                 {
                     var data = new Rpc();
+                    data.Comment = GetComment(comments, context, context.name);
                     data.Name = context.name.Text;
-                    data.Attributes = GetAttributes(context.attr());
-                    data.Comment = GetComment(context, context.name);
 
-                    var fieldsContext = context.rpcField();
-                    if (fieldsContext != null)
+                    var fieldNameSet = new HashSet<string>();
+                    foreach (var fieldContext in context.rpcField())
                     {
-                        var nameTable = new HashSet<string>();
-                        foreach (var fieldContext in fieldsContext)
-                        {
-                            var fieldName = fieldContext.fieldName != null ? fieldContext.fieldName.Text : "";
-                            var fieldParam = fieldContext.fieldParam != null ? fieldContext.fieldParam.Text : "";
-                            var fieldReturn = fieldContext.fieldReturn != null ? fieldContext.fieldReturn.Text : "";
-                            var fieldComm = GetComment(fieldContext, fieldContext.fieldName);
-                            var fieldMetas = GetMetaDatas(fieldContext.metaList);
-                            var fieldAttrs = GetAttributes(fieldContext.attr());
+                        var field = new RpcMethod();
+                        field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
+                        field.Name = fieldContext.fieldName.Text;
+                        field.Param = fieldContext.fieldParam != null ? fieldContext.fieldParam.Text : null;
+                        field.Return = fieldContext.fieldReturn != null ? fieldContext.fieldReturn.Text : null;
+                        field.Metas = ParseMetaDatas(fieldContext.metaList);
 
-                            if (string.IsNullOrEmpty(fieldName))
+                        if (string.IsNullOrEmpty(field.Name))
+                            ReportError("名称不能为空。", fieldContext);
+                        else if (fieldNameSet.Contains(field.Name))
+                            ReportError("重复的名称。", fieldContext.fieldName);
+                        else
+                            fieldNameSet.Add(field.Name);
+
+                        data.Fields.Add(field);
+                        data2context.Add(field, fieldContext);
+                    }
+
+                    file.Rpcs.Add(data);
+                    data2context.Add(data, context);
+                }
+                //root_type
+                foreach(var context in schema.rootType())
+                {
+                    if(file.RootTable==null)
+                    {
+                        if (context.val == null)
+                            ReportError("错误的 root_type 声明。", context);
+                        else
+                        { 
+                            var tabName = context.val.Text;
+                            if (string.IsNullOrEmpty(tabName))
+                                ReportError("错误的 root_type 声明。", context.val);
+                            else
                             {
-                                ReportError("方法名不能为空", fieldContext.Start.Line, fieldContext.Start.Column);
-                                continue;
+                                foreach (var item in file.Tables) { if (item.Name.Equals(tabName)) { file.RootTable = item; break; } }
+                                if (file.RootTable == null)
+                                    ReportError(string.Format("主表定义 ({0}) 未找到!", context.val.Text), context);
                             }
-                            if (nameTable.Contains(fieldName))
-                            {
-                                ReportError(string.Format("方法名称重复定义:\"{0}\"", fieldName), fieldContext.fieldName.Line, fieldContext.fieldName.Column);
-                                continue;
-                            }
-
-                            var field = new RpcMethod();
-                            field.Name = fieldName;
-                            field.Param = fieldParam;
-                            field.Return = fieldReturn;
-                            field.Comment = fieldComm;
-                            field.Metas = fieldMetas;
-                            field.Attributes = fieldAttrs;
-
-                            data.Fields.Add(field);
-                            nameTable.Add(fieldName);
                         }
                     }
-
-                    if (typeName2start.ContainsKey(data.Name) && typeName2start[data.Name] != context.name.StartIndex)
-                    {
-                        ReportError(string.Format("RPC名称重复定义:\"{0}\"", data.Name), context.name.Line, context.name.Column);
-                    }
                     else
-                    {
-                        file.Rpcs.Add(data);
-                    }
+                        ReportError("root_type 重复声明!", context);
                 }
+                //include
+                var includeFBSs = new List<FBSFile>();
+                foreach (var context in schema.include())
+                {
+                    if (context.val == null)
+                    {
+                        ReportError("无效的include。", context);
+                        continue;
+                    }
+                    var url = context.val.Text.Trim('"');
+                    if (string.IsNullOrEmpty(url))
+                    {
+                        ReportError("无效的include。", context.val);
+                        continue;
+                    }
+                    var fbs = project.GetFBSFile(path, url);
+                    if (fbs == null)
+                    {
+                        ReportError(string.Format("{0} 未找到。",url), context.val);
+                        continue;
+                    }
+
+                    includeFBSs.Add(fbs);
+                }
+                file.Includes = includeFBSs.ToArray();
+
+                //
+                project.SetFile(path, file);
+
+                //check
+                CheckAllDefined();
+
+                //attributes
+                ParseAllAttributes();
+
+                //clear
+                data2context.Clear();
+
+                return file;
             }
 
-            private void HandleRootType(RootTypeContext[] contexts)
+            #region 处理默认值
+            private object ParseDefaultValue(string fieldType, bool isArray, ScalarValueContext context)
             {
-                for (var i = 0; i < contexts.Length; i++)
-                {
-                    var context = contexts[i];
-                    if (i == 0)
-                    {
-                        if (context.val != null && !string.IsNullOrEmpty(context.val.Text))
-                        {
-                            foreach (var item in file.Tables) { if (item.Name.Equals(context.val.Text)) { file.RootTable = item; break; } }
-                            if (file.RootTable == null)
-                            {
-                                foreach (var item in file.Structs) { if (item.Name.Equals(context.val.Text)) { file.RootStruct = item; break; } }
-                            }
+                if (context == null) { return null; }
 
-                            if (file.RootTable == null && file.RootStruct == null)
+                var fieldValue = context.GetText();
+
+                if (string.IsNullOrEmpty(fieldValue)) { return null; }
+
+                if (isArray)
+                {
+                    ReportError("列表类型不支持默认值。", context);
+                    return null;
+                }
+                else if (fieldType.Equals("bool"))
+                {
+                    var boolValue = false;
+                    if (bool.TryParse(fieldValue, out boolValue))
+                        return boolValue;
+                    else
+                        ReportError(string.Format("默认值 {0} 不是一个有效的 {1}。", fieldValue, fieldType), context);
+                }
+                else if (fieldType.Equals("byte") || fieldType.Equals("int8"))
+                {
+                    sbyte byteValue = 0;
+                    if (sbyte.TryParse(fieldValue, out byteValue))
+                        return byteValue;
+                    else
+                        ReportError(string.Format("默认值 {0} 不是一个有效的 {1}。", fieldValue, fieldType), context);
+                }
+                else if (fieldType.Equals("ubyte") || fieldType.Equals("uint8"))
+                {
+                    byte byteValue = 0;
+                    if (byte.TryParse(fieldValue, out byteValue))
+                        return byteValue;
+                    else
+                        ReportError(string.Format("默认值 {0} 不是一个有效的 {1}。", fieldValue, fieldType), context);
+                }
+                else if (fieldType.Equals("short") || fieldType.Equals("int16"))
+                {
+                    short byteValue = 0;
+                    if (short.TryParse(fieldValue, out byteValue))
+                        return byteValue;
+                    else
+                        ReportError(string.Format("默认值 {0} 不是一个有效的 {1}。", fieldValue, fieldType), context);
+                }
+                else if (fieldType.Equals("ushort") || fieldType.Equals("uint16"))
+                {
+                    ushort byteValue = 0;
+                    if (ushort.TryParse(fieldValue, out byteValue))
+                        return byteValue;
+                    else
+                        ReportError(string.Format("默认值 {0} 不是一个有效的 {1}。", fieldValue, fieldType), context);
+                }
+                else if (fieldType.Equals("int") || fieldType.Equals("int32"))
+                {
+                    int byteValue = 0;
+                    if (int.TryParse(fieldValue, out byteValue))
+                        return byteValue;
+                    else
+                        ReportError(string.Format("默认值 {0} 不是一个有效的 {1}。", fieldValue, fieldType), context);
+                }
+                else if (fieldType.Equals("uint") || fieldType.Equals("uint32"))
+                {
+                    uint byteValue = 0;
+                    if (uint.TryParse(fieldValue, out byteValue))
+                        return byteValue;
+                    else
+                        ReportError(string.Format("默认值 {0} 不是一个有效的 {1}。", fieldValue, fieldType), context);
+                }
+                else if (fieldType.Equals("long") || fieldType.Equals("int64"))
+                {
+                    long byteValue = 0;
+                    if (long.TryParse(fieldValue, out byteValue))
+                        return byteValue;
+                    else
+                        ReportError(string.Format("默认值 {0} 不是一个有效的 {1}。", fieldValue, fieldType), context);
+                }
+                else if (fieldType.Equals("ulong") || fieldType.Equals("uint64"))
+                {
+                    ulong byteValue = 0;
+                    if (ulong.TryParse(fieldValue, out byteValue))
+                        return byteValue;
+                    else
+                        ReportError(string.Format("默认值 {0} 不是一个有效的 {1}。", fieldValue, fieldType), context);
+                }
+                else if (fieldType.Equals("float") || fieldType.Equals("float32"))
+                {
+                    float byteValue = 0;
+                    if (float.TryParse(fieldValue, out byteValue))
+                        return byteValue;
+                    else
+                        ReportError(string.Format("默认值 {0} 不是一个有效的 {1}。", fieldValue, fieldType), context);
+                }
+                else if (fieldType.Equals("double") || fieldType.Equals("float64"))
+                {
+                    double byteValue = 0;
+                    if (double.TryParse(fieldValue, out byteValue))
+                        return byteValue;
+                    else
+                        ReportError(string.Format("默认值 {0} 不是一个有效的 {1}。", fieldValue, fieldType), context);
+                }
+                else
+                {
+                    ReportError(string.Format("目前 {0} 不支持默认值。", fieldType), context);
+                }
+                return null;
+            }
+
+            #endregion
+
+            #region 处理元数据
+            private List<Meta> ParseMetaDatas(FlatbufferParser.MetadataContext metaList)
+            {
+                var fieldMetas = new List<Meta>();
+                if (metaList != null)
+                {
+                    foreach (var meta in metaList.metadataField())
+                    {
+                        var metaName = meta.metaName != null ? meta.metaName.Text : "";
+                        var metaValue = meta.metaValue != null ? meta.metaValue.GetText() : "";
+                        if (string.IsNullOrEmpty(metaName))
+                        {
+                            ReportError("元数据键不能为空", meta);
+                            continue;
+                        }
+                        fieldMetas.Add(new Meta(metaName, metaValue));
+                    }
+                }
+                return fieldMetas;
+            }
+            #endregion
+
+            #region 检查所有定义
+
+            private void CheckAllDefined()
+            {
+                var allDefined = GetAllDefined(file);
+
+                //检查类定义
+                var ns = !string.IsNullOrEmpty(file.NameSpace) ? file.NameSpace + "." : "";
+                foreach (var data in file.Tables)
+                {
+                    if (string.IsNullOrEmpty(data.Name)) continue;
+                    var key = ns + data.Name;
+                    if (allDefined.ContainsKey(key) && allDefined[key].Count > 1)
+                        ReportError("名称重复定义。", (data2context[data] as TableContext).name);
+                }
+                foreach (var data in file.Structs)
+                {
+                    if (string.IsNullOrEmpty(data.Name)) continue;
+                    var key = ns + data.Name;
+                    if (allDefined.ContainsKey(key) && allDefined[key].Count > 1)
+                        ReportError("名称重复定义。", (data2context[data] as StructContext).name);
+                }
+                foreach (var data in file.Enums)
+                {
+                    if (string.IsNullOrEmpty(data.Name)) continue;
+                    var key = ns + data.Name;
+                    if (allDefined.ContainsKey(key) && allDefined[key].Count > 1)
+                        ReportError("名称重复定义。", (data2context[data] as EnumContext).name);
+                }
+                foreach (var data in file.Unions)
+                {
+                    if (string.IsNullOrEmpty(data.Name)) continue;
+                    var key = ns + data.Name;
+                    if (allDefined.ContainsKey(key) && allDefined[key].Count > 1)
+                        ReportError("名称重复定义。", (data2context[data] as UnionContext).name);
+                }
+                foreach (var data in file.Rpcs)
+                {
+                    if (string.IsNullOrEmpty(data.Name)) continue;
+                    var key = ns + data.Name;
+                    if (allDefined.ContainsKey(key) && allDefined[key].Count > 1)
+                        ReportError("名称重复定义。", (data2context[data] as RpcContext).name);
+                }
+                //检查字段定义
+                foreach (var data in file.Tables)
+                {
+                    foreach (var field in data.Fields)
+                    {
+                        if (string.IsNullOrEmpty(field.Type) || IsNativeType(field.Type)) continue;
+                        var context = data2context[field] as TableFieldContext;
+                        var locator = context.arrayType != null ? context.arrayType as ParserRuleContext : context.fieldType as ParserRuleContext;
+                        if (allDefined.ContainsKey(field.Type))
+                        {
+                            if (allDefined[field.Type].Count > 1)
+                                ReportError(string.Format("找到多个名称为 {0} 的定义。", field.Type), locator);
+                            else if (allDefined[field.Type].Count == 1)
                             {
-                                ReportError(context.val.Text + "主类型未找到!", context.Start.Line, context.Start.Column);
+                                var first = allDefined[field.Type][0];
+                                if (first is Table || first is Struct || first is Enum || first is Union)
+                                    field.TypeDefined = first;
+                                else
+                                    ReportError("table字段的类型不能是rpc。", locator);
                             }
                         }
                         else
+                            ReportError(string.Format("没有找到 {0} 的定义。", field.Type), locator);
+                    }
+                }
+                foreach (var data in file.Structs)
+                {
+                    foreach (var field in data.Fields)
+                    {
+                        if (string.IsNullOrEmpty(field.Type) || IsNativeType(field.Type)) continue;
+                        var context = data2context[field] as TableFieldContext;
+                        var locator = context.arrayType != null ? context.arrayType as ParserRuleContext : context.fieldType as ParserRuleContext;
+                        if (allDefined.ContainsKey(field.Type))
                         {
-                            ReportError("root_type 不能声明空类型!", context.Start.Line, context.Start.Column);
+                            if (allDefined[field.Type].Count > 1)
+                                ReportError(string.Format("找到多个名称为 {0} 的定义。", field.Type), locator);
+                            else if (allDefined[field.Type].Count == 1)
+                            {
+                                var first = allDefined[field.Type][0];
+                                if (first is Struct || first is Enum)
+                                    field.TypeDefined = first;
+                                else
+                                    ReportError("struct字段的类型只能是布尔，数值，struct。", locator);
+                            }
+                        }
+                        else
+                            ReportError(string.Format("没有找到 {0} 的定义。", field.Type), locator);
+                    }
+                }
+                foreach (var data in file.Rpcs)
+                {
+                    foreach (var field in data.Fields)
+                    {
+                        if (!string.IsNullOrEmpty(field.Param) && !IsNativeType(field.Param))
+                        {
+                            if (allDefined.ContainsKey(field.Param))
+                            {
+                                if (allDefined[field.Param].Count > 1)
+                                    ReportError(string.Format("找到多个名称为 {0} 的定义。", field.Param), (data2context[field] as RpcFieldContext).fieldParam);
+                                else if (allDefined[field.Param].Count == 1)
+                                {
+                                    var first = allDefined[field.Param][0];
+                                    if (first is Struct || first is Table || first is Enum || first is Union)
+                                        field.ParamTypeDefined = first;
+                                    else
+                                        ReportError("rpc字段的参数类型不能是rpc", (data2context[field] as RpcFieldContext).fieldParam);
+                                }
+                            }
+                            else
+                                ReportError(string.Format("没有找到 {0} 的定义。", field.Param), (data2context[field] as RpcFieldContext).fieldParam);
+                        }
+                        if (!string.IsNullOrEmpty(field.Return) && !IsNativeType(field.Return))
+                        {
+                            if (allDefined.ContainsKey(field.Return))
+                            {
+                                if (allDefined[field.Return].Count > 1)
+                                    ReportError(string.Format("找到多个名称为 {0} 的定义。", field.Return), (data2context[field] as RpcFieldContext).fieldReturn);
+                                else if (allDefined[field.Return].Count == 1)
+                                {
+                                    var first = allDefined[field.Param][0];
+                                    if (first is Struct || first is Table || first is Enum || first is Union)
+                                        field.ReturnTypeDefined = first;
+                                    else
+                                        ReportError("rpc字段的返回类型不能是rpc", (data2context[field] as RpcFieldContext).fieldReturn);
+                                }
+                            }
+                            else
+                                ReportError(string.Format("没有找到 {0} 的定义。", field.Return), (data2context[field] as RpcFieldContext).fieldReturn);
                         }
                     }
-                    else
-                    {
-                        ReportError("root_type 重复声明!", context.Start.Line, context.Start.Column);
-                    }
                 }
             }
 
-            private void HandleFileExtension(FileExtensionContext[] contexts)
+            private Dictionary<string, List<object>> GetAllDefined(FBSFile file)
             {
-                for (var i = 0; i < contexts.Length; i++)
+                var files = new HashSet<FBSFile>();
+                var all = new Dictionary<string, List<object>>();
+                GetAllDefined(file, files, all);
+                return all;
+            }
+
+            private Dictionary<string, List<object>> GetAllDefined(FBSFile file, HashSet<FBSFile> files, Dictionary<string, List<object>> all)
+            {
+                var ns = !string.IsNullOrEmpty(file.NameSpace) ? file.NameSpace + "." : "";
+                foreach(var data in file.Tables)
                 {
-                    var context = contexts[i];
-                    if (i == 0)
-                    {
-                        file.FileExtension = context.key.Text.Trim('"');
-                    }
-                    else
-                    {
-                        ReportError("file_extension 重复声明!", context.Start.Line, context.Start.Column);
-                    }
+                    if (string.IsNullOrEmpty(data.Name)) continue;
+                    var key = ns + data.Name;
+                    if (!all.ContainsKey(key)) all.Add(key, new List<object>());
+                    all[key].Add(data);
                 }
-            }
-
-            private void HandleFileIdentifier(FileIdentifierContext[] contexts)
-            {
-                for (var i = 0; i < contexts.Length; i++)
+                foreach (var data in file.Structs)
                 {
-                    var context = contexts[i];
-                    if (i == 0)
+                    if (string.IsNullOrEmpty(data.Name)) continue;
+                    var key = ns + data.Name;
+                    if (!all.ContainsKey(key)) all.Add(key, new List<object>());
+                    all[key].Add(data);
+                }
+                foreach (var data in file.Enums)
+                {
+                    if (string.IsNullOrEmpty(data.Name)) continue;
+                    var key = ns + data.Name;
+                    if (!all.ContainsKey(key)) all.Add(key, new List<object>());
+                    all[key].Add(data);
+                }
+                foreach (var data in file.Unions)
+                {
+                    if (string.IsNullOrEmpty(data.Name)) continue;
+                    var key = ns + data.Name;
+                    if (!all.ContainsKey(key)) all.Add(key, new List<object>());
+                    all[key].Add(data);
+                }
+                foreach (var data in file.Rpcs)
+                {
+                    if (string.IsNullOrEmpty(data.Name)) continue;
+                    var key = ns + data.Name;
+                    if (!all.ContainsKey(key)) all.Add(key, new List<object>());
+                    all[key].Add(data);
+                }
+
+                files.Add(file);
+
+                foreach(var include in file.Includes)
+                {
+                    if(!files.Contains(include))
                     {
-                        file.FileIdentifier = context.key.Text;
+                        GetAllDefined(include, files, all);
                     }
-                    else
-                    {
-                        ReportError("file_identifier 重复声明!", context.Start.Line, context.Start.Column);
-                    }
+                }
+                return all;
+            }
+
+            #endregion
+
+            #region 处理附加特性
+
+            private void ParseAllAttributes()
+            {
+                //处理附加特性
+                foreach (var data in file.Tables)
+                {
+                    data.Attributes = GetAttributes((data2context[data] as TableContext).attr(), data);
+                    foreach (var field in data.Fields)
+                        field.Attributes = GetAttributes((data2context[field] as TableFieldContext).attr(), field);
+                }
+                foreach (var data in file.Structs)
+                {
+                    data.Attributes = GetAttributes((data2context[data] as StructContext).attr(), data);
+                    foreach (var field in data.Fields)
+                        field.Attributes = GetAttributes((data2context[field] as StructFieldContext).attr(), field);
+                }
+                foreach (var data in file.Enums)
+                {
+                    data.Attributes = GetAttributes((data2context[data] as EnumContext).attr(), data);
+                    foreach (var field in data.Fields)
+                        field.Attributes = GetAttributes((data2context[field] as EnumFieldContext).attr(), field);
+                }
+                foreach (var data in file.Unions)
+                {
+                    data.Attributes = GetAttributes((data2context[data] as UnionContext).attr(), data);
+                    foreach (var field in data.Fields)
+                        field.Attributes = GetAttributes((data2context[field] as UnionFieldContext).attr(), field);
+                }
+                foreach (var data in file.Rpcs)
+                {
+                    data.Attributes = GetAttributes((data2context[data] as RpcContext).attr(), data);
+                    foreach (var field in data.Fields)
+                        field.Attributes = GetAttributes((data2context[field] as RpcFieldContext).attr(), field);
                 }
             }
 
-            private void InitComments(FlatbufferLexer lexer)
+            private AttributeInfo GetAttributes(AttrContext[] context, object owner)
             {
-                commentTable = new Dictionary<int, string>();
+                var info = new AttributeInfo();
+
+                foreach (var item in context)
+                {
+                    var name = item.key != null ? item.key.Text : null;
+                    if (string.IsNullOrEmpty(name))
+                        ReportError("特性名称不能为空", item);
+                    else
+                    {
+                        Attribute attr = null;
+                        switch (name)
+                        {
+                            case "XLS": attr = HandleXLS(info, item, owner); break;
+                            case "Index": attr = HandleIndex(info, item, owner); break;
+                            case "Nullable": attr = HandleNullable(info, item, owner); break;
+                        }
+
+                        if (attr != null)
+                            info.Attributes.Add(attr);
+                    }
+                }
+
+                return info;
+            }
+
+            /// <summary>
+            /// XLS
+            /// </summary>
+            /// <param name="item"></param>
+            /// <param name="owner"></param>
+            /// <returns></returns>
+            private Attribute HandleXLS(AttributeInfo attributes, AttrContext item, object owner)
+            {
+                if (!(owner is Table))
+                    ReportError("XLS标记只能应用到table", item);
+                
+                if (attributes.GetAttributes<XLS>().Length > 0)
+                    ReportError("Nullable不能多次应用到同一对象。", item.key);
+
+                var fields = item.attrField();
+
+                string filePath = null;
+                string sheetName = null;
+                int titleRow = 0;
+                int dataBeginRow = 1;
+
+                //文件路径
+                if(fields.Length>0)
+                {
+                    var field = fields[0];
+                    if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                        ReportError("第一个参数必须是字符串表示的文件路径", field);
+                    else
+                    {
+                        var path = field.attrValue.vstr.Text.Trim('"');
+                        if (!File.Exists(path))
+                            ReportError(path + "不是一个有效的文件", field.attrValue.vstr);
+                        else
+                            filePath = path;
+                    }
+                }
+                else
+                    ReportError("需要指定文件路径", item);
+
+                //表名
+                if (fields.Length > 1)
+                {
+                    var field = fields[1];
+                    if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                        ReportError("第二个参数必须是字符串表示的表名", field);
+                    else if(string.IsNullOrEmpty(field.attrValue.vstr.Text.Trim('"')))
+                        ReportError("表名不能为空", field.attrValue.vstr);
+                    else
+                        sheetName = field.attrValue.vstr.Text.Trim('"');
+                }
+                else
+                    ReportError("需要指定表名", item);
+
+                //标题行
+                if(fields.Length>2)
+                {
+                    var field = fields[2];
+                    if (field.attrName != null || field.attrValue == null || field.attrValue.vint == null)
+                        ReportError("第二个参数必须是正整数指定的标题行的行号", field);
+                    else
+                    {
+                        var newRow = titleRow;
+                        if (int.TryParse(field.attrValue.vint.Text, out newRow))
+                        {
+                            if (newRow <= 0)
+                                ReportError("第二个参数必须是正整数指定的标题行的行号", field.attrValue.vint);
+                            else
+                                titleRow = newRow;
+                        }
+                        else
+                            ReportError("第二个参数必须是正整数指定的标题行的行号", field.attrValue.vint);
+                    }   
+                }
+
+                //数据起始行
+                if (fields.Length > 3)
+                {
+                    var field = fields[3];
+                    if (field.attrName != null || field.attrValue == null || field.attrValue.vint == null)
+                        ReportError("第三个参数必须是正整数指定的数据起始行的行号", field);
+                    else
+                    {
+                        var newRow = dataBeginRow;
+                        if (int.TryParse(field.attrValue.vint.Text, out newRow))
+                        {
+                            if (newRow <= 0)
+                                ReportError("第三个参数必须是正整数指定的数据起始行的行号", field);
+                            else if (newRow <= titleRow)
+                                ReportError("数据起始行必须大于标题行", field.attrValue.vint);
+                            else
+                                dataBeginRow = newRow;
+                        }
+                        else
+                            ReportError("第三个参数必须是正整数指定的数据起始行的行号", field.attrValue.vint);
+                    }
+                }
+
+                //后续值
+                for (var i = 4; i < fields.Length; i++) { ReportWarning("无效的参数", fields[i]); }
+
+                //返回值
+                if (!string.IsNullOrEmpty(filePath) && !string.IsNullOrEmpty(sheetName))
+                    return new XLS(filePath, sheetName, titleRow, dataBeginRow);
+                else
+                    return null;
+            }
+
+            /// <summary>
+            /// Index
+            /// </summary>
+            /// <param name="item"></param>
+            /// <param name="owner"></param>
+            /// <returns></returns>
+            private Attribute HandleIndex(AttributeInfo attributes, AttrContext item, object owner)
+            {
+                if (!(owner is Table))
+                    ReportError("此标记只能应用到table", item);
+
+                var fields = item.attrField();
+
+                if (fields.Length <= 0)
+                {
+                    ReportError("未指定有效的索引名和索引列。", item);
+                    return null;
+                }
+
+                Dictionary<string, bool> keys = new Dictionary<string, bool>();
+                foreach (var key in (owner as Table).Fields) { keys.Add(key.Name, IsNativeType(key.Type)); }
+
+                string indexName = null;
+                List<string> indexFields = new List<string>();
+
+                //索引名
+                var field = fields[0];
+                if(field.attrName!=null || field.attrValue==null || field.attrValue.vstr==null)
+                    ReportError("第一个参数必须是字符串指定的索引名称", field);
+                else
+                {
+                    var name = field.attrValue.vstr.Text.Trim('"');
+
+                    var finded = false;
+                    var indexList = attributes.GetAttributes<Index>();
+                    foreach (var index in indexList)
+                    {
+                        if (index.name.Equals(name))
+                        {
+                            finded = true;
+                            break;
+                        }
+                    }
+
+                    if (finded)
+                        ReportError("索引名称" + name + "重复定义", field.attrValue.vstr);
+                    else
+                        indexName = name;
+                }
+
+                //索引列
+                for (var i = 1; i < fields.Length; i++)
+                {
+                    field = fields[i];
+                    if (field.attrName != null || field.attrValue == null || field.attrValue.vid == null)
+                        ReportError("索引字段名必须是不带引号的字符串", field);
+                    else
+                    {
+                        var indexField = field.attrValue.vid.Text;
+                        if (!keys.ContainsKey(indexField))
+                            ReportError(indexField + "无效，无法为不存在的字段建立索引。", field.attrValue.vid);
+                        else if (!keys[indexField])
+                            ReportError(indexField + "无效，不支持为此类型的字段建立索引。", field.attrValue.vid);
+                        else if (indexFields.Contains(indexField))
+                            ReportError(indexField + "已经是存在，重复指定。", field.attrValue.vid);
+                        else
+                            indexFields.Add(indexField);
+                    }
+                }
+
+                if (indexFields.Count <= 0)
+                    ReportError("有效的索引列数量为0，无法建立索引。", item);
+                else if (!string.IsNullOrEmpty(indexName))
+                    return new Index(indexName, indexFields.ToArray());
+
+                return null;
+            }
+
+            /// <summary>
+            /// Nullable
+            /// </summary>
+            /// <param name="attributes"></param>
+            /// <param name="item"></param>
+            /// <param name="owner"></param>
+            /// <returns></returns>
+            private Attribute HandleNullable(AttributeInfo attributes, AttrContext item, object owner)
+            {
+                if (!(owner is TableField))
+                    ReportError("Nullable只能应用到table字段。", item.key);
+
+                if (attributes.GetAttributes<Nullable>().Length > 0)
+                    ReportError("Nullable不能多次应用到同一对象。", item.key);
+
+                var fields = item.attrField();
+                if (fields.Length > 0)
+                {
+                    var field = fields[0];
+                    if (field.attrName != null || field.attrValue == null || field.attrValue.vbool == null)
+                        ReportError("第一个参数必须是一个有效的布尔值。", field);
+                    else
+                    {
+                        var value = true;
+                        if (bool.TryParse(field.attrValue.vbool.Text, out value))
+                            return new Nullable(value);
+                        else
+                            ReportError("第一个参数不是一个有效的布尔值。", field.attrValue.vbool);
+                    }
+
+                    for(var i=1;i<fields.Length;i++)
+                    {
+                        ReportError("多余的参数。", fields[i]);
+                    }
+                    return null;
+                }
+                else
+                    return new Nullable(true);
+            }
+
+            #endregion
+
+            #region 处理内容注释
+
+            private Dictionary<int, string> InitComments(FlatbufferLexer lexer)
+            {
+                var commentTable = new Dictionary<int, string>();
 
                 foreach (var token in lexer.GetAllTokens())
                 {
@@ -522,9 +1025,11 @@ namespace FlatBufferData.Build
                     }
                 }
                 lexer.Reset();
+
+                return commentTable;
             }
 
-            private string GetComment(ParserRuleContext context, IToken token)
+            private string GetComment(Dictionary<int, string> commentTable, ParserRuleContext context, IToken token)
             {
                 if (token == null) { return null; }
 
@@ -542,186 +1047,46 @@ namespace FlatBufferData.Build
                 }
                 return null;
             }
+            #endregion
 
-            private List<Meta> GetMetaDatas(FlatbufferParser.MetadataContext metaList)
+            #region 工具函数
+
+            private void ReportError(string text, IToken token)
             {
-                var fieldMetas = new List<Meta>();
-                if (metaList != null)
-                {
-                    foreach (var meta in metaList.metadataField())
-                    {
-                        var metaName = meta.metaName != null ? meta.metaName.Text : "";
-                        var metaValue = meta.metaValue != null ? meta.metaValue.GetText() : "";
-                        if (string.IsNullOrEmpty(metaName))
-                        {
-                            ReportError("元数据键不能为空", meta.Start.Line, meta.Start.Column);
-                            continue;
-                        }
-                        fieldMetas.Add(new Meta(metaName, metaValue));
-                    }
-                }
-                return fieldMetas;
+                ReportError(text, token.Line, token.Column);
+            }
+            private void ReportError(string text, ParserRuleContext context)
+            {
+                ReportError(text, context.Start.Line, context.Start.Column);
+            }
+            private void ReportError(string text, int line, int column)
+            {
+                report?.Invoke("", path, text, line, column);
+            }
+            private void ReportWarning(string text, IToken token)
+            {
+                ReportError(text, token.Line, token.Column);
+            }
+            private void ReportWarning(string text, ParserRuleContext context)
+            {
+                ReportError(text, context.Start.Line, context.Start.Column);
+            }
+            private void ReportWarning(string text, int line, int column)
+            {
+                report?.Invoke("", path, text, line, column);
             }
 
-            private AttributeInfo GetAttributes(FlatbufferParser.AttrContext[] context)
+            private static bool IsNativeType(string type)
             {
-                var info = new AttributeInfo();
-                foreach (var item in context)
+                foreach (var t in new string[] { "bool", "byte", "ubyte", "short", "ushort", "int", "uint", "long", "ulong", "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64", "float", "float32", "double", "float64", "string" })
                 {
-                    var name = item.key != null ? item.key.Text : null;
-                    if (string.IsNullOrEmpty(name))
-                    {
-                        ReportError("特性名称不能为空", item.Start.Line, item.Start.Column);
-                        continue;
-                    }
-
-                    var values = new List<string>();
-                    foreach (var value in item.attrField()) { values.Add(value.GetText()); }
-
-                    var attribute = new Attribute();
-                    attribute.Name = name;
-                    attribute.Values = values;
-
-                    info.Attributes.Add(attribute);
+                    if (t.Equals(type))
+                        return true;
                 }
-                return info;
+                return false;
             }
 
-            private AttributeInfo GetTableAttributes(FlatbufferParser.AttrContext[] context,string[] fieldNames)
-            {
-                var info = new AttributeInfo();
-
-                foreach (var item in context)
-                {
-                    var name = item.key != null ? item.key.Text : null;
-                    if (string.IsNullOrEmpty(name))
-                    {
-                        ReportError("特性名称不能为空", item.Start.Line, item.Start.Column);
-                        continue;
-                    }
-
-                    var attrFields = item.attrField();
-                    if ("Bind".Equals(name))
-                    {
-                        if(string.IsNullOrEmpty(info.BindInfo))
-                        {
-                            if (attrFields.Length != 1 || attrFields[0].vstr == null)
-                                ReportError("[Bind(\"xx/xx/xx.xx\")]", attrFields[0].Start.Line, attrFields[0].Start.Column);
-                            else
-                                info.BindInfo = attrFields[0].vstr.Text;
-                        }
-                        else
-                        {
-                            ReportError("Bind 重复指定!", item.Start.Line, item.Start.Column);
-                        }
-                    }
-                    else if("Index".Equals(name))
-                    {
-                        var indexNames = new List<string>();
-                        var attrFieldCounter = new Dictionary<string, int>();
-                        foreach (var fieldName in fieldNames) { attrFieldCounter.Add(fieldName, 0); }
-                        foreach (var attrField in attrFields)
-                        {
-                            if (attrField.vid != null && attrFieldCounter.ContainsKey(attrField.vid.Text))
-                            {
-                                var attrFieldName = attrField.vid.Text;
-                                if (attrFieldCounter[attrFieldName] > 0)
-                                {
-                                    ReportError("[" + attrFieldName + "]不能重复存在", attrField.Start.Line, attrField.Start.Column);
-                                }
-                                else
-                                { 
-                                    indexNames.Add(attrFieldName);
-                                }
-                                attrFieldCounter[attrFieldName] += 1;
-                            }
-                            else
-                            {
-                                ReportError("[" + attrField.GetText() + "]不是一个字段名", attrField.Start.Line, attrField.Start.Column);
-                            }
-                        }
-                        info.IndexTable.Add(indexNames.ToArray());
-                    }
-                    else if("Nullable".Equals(name) || "Reference".Equals(name))
-                    {
-                        ReportError("["+name+"] 只能应用到table字段或struct字段", item.Start.Line, item.Start.Column);
-                    }
-                    else
-                    {
-                        var values = new List<string>();
-                        foreach (var value in attrFields) { values.Add(value.GetText()); }
-
-                        var attribute = new Attribute();
-                        attribute.Name = name;
-                        attribute.Values = values;
-                        info.Attributes.Add(attribute);
-                    }
-                }
-
-                return info;
-            }
-
-            private AttributeInfo GetFieldAttributes(AttrContext[] context)
-            {
-                var info = new AttributeInfo();
-                var nullableCount = 0;
-                var referenceCount = 0;
-                foreach (var item in context)
-                {
-                    var name = item.key != null ? item.key.Text : null;
-                    if (string.IsNullOrEmpty(name))
-                    {
-                        ReportError("特性名称不能为空", item.Start.Line, item.Start.Column);
-                        continue;
-                    }
-
-                    var attrFields = item.attrField();
-                    if ("Bind".Equals(name) || "Index".Equals(name))
-                    {
-                        ReportError("[" + name + "] 只能应用到table或struct", item.Start.Line, item.Start.Column);
-                    }
-                    else if ("Nullable".Equals(name))
-                    {
-                        if (nullableCount > 0)
-                            ReportError("Nullable 重复声明", attrFields[0].Start.Line, attrFields[0].Start.Column);
-                        else
-                        {
-                            if (attrFields.Length == 0)
-                                info.Nullable = true;
-                            else if (attrFields.Length == 1)
-                            {
-                                if (attrFields[0].vbool == null)
-                                    ReportError("Nullable 值只能是true/false", attrFields[0].Start.Line, attrFields[0].Start.Column);
-                                else
-                                    info.Nullable = attrFields[0].vbool.Text.Equals("true");
-                            }
-                        }
-                        nullableCount++;
-                    }
-                    else if("Reference".Equals(name))
-                    {
-                        if(referenceCount>0)
-                            ReportError("Nullable 重复声明", attrFields[0].Start.Line, attrFields[0].Start.Column);
-                        else
-                        {
-                            //...
-                        }
-                        referenceCount++;
-                    }
-                    else
-                    {
-                        var values = new List<string>();
-                        foreach (var value in attrFields) { values.Add(value.GetText()); }
-
-                        var attribute = new Attribute();
-                        attribute.Name = name;
-                        attribute.Values = values;
-                        info.Attributes.Add(attribute);
-                    }
-                }
-
-                return info;
-            }
+            #endregion
         }
     }
 }

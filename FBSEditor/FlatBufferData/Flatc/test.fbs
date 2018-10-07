@@ -1,0 +1,39 @@
+
+namespace ss;
+enum FA:int
+{
+	a,b
+}
+
+rpc_service ann
+{
+	ww(A):B;
+}
+
+table OKK
+{
+	id:int=1;
+	bb:[A];
+	cc:[N];
+	xx:A;
+	yy:N;
+	zz:FA;
+	ff:[FA];
+	aa:ann;
+}
+
+table A
+{
+	SS:int=1;
+	BB:N;
+}
+
+struct N
+{
+	A:int;
+	B:int;
+}
+
+
+
+root_type OKK;

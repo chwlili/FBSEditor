@@ -299,6 +299,18 @@ public partial class FlatbufferBaseListener : IFlatbufferListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitAttrField([NotNull] FlatbufferParser.AttrFieldContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="FlatbufferParser.attrFieldValue"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAttrFieldValue([NotNull] FlatbufferParser.AttrFieldValueContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="FlatbufferParser.attrFieldValue"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAttrFieldValue([NotNull] FlatbufferParser.AttrFieldValueContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="FlatbufferParser.singleType"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

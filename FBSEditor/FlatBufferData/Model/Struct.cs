@@ -27,6 +27,6 @@ namespace FlatBufferData.Model
         /// <summary>
         /// 字段列表
         /// </summary>
-        public List<StructField> Fields { get; } = new List<StructField>();
+        public List<StructField> Fields { get; set; } = new List<StructField>();
     }
 }

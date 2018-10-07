@@ -1,0 +1,24 @@
+include "A.fbs";
+namespace ss;
+
+struct B
+{
+	id:int;
+	a:bool;
+}
+
+table C
+{
+	n:B;
+}
+
+table BB
+{
+	a:int=1;
+	b:B;
+	c:[B];
+	d:C;
+	e:[C];
+}
+
+root_type BB;

@@ -34,10 +34,11 @@ unionField : attr* fieldName = IDENT ('=' fieldValue = INTEGER)? ','?;
 metadata : PARENTHESES_L (metadataField (',' metadataField)*)? PARENTHESES_R ;
 metadataField : metaName = IDENT (':' metaValue = singleValue)? ;
 
-attr : BRACKET_L key = IDENT (PARENTHESES_L attrField (',' attrField)* PARENTHESES_R)? BRACKET_R;
-attrField : vid = IDENT | vstr = STRING | vint = INTEGER | vfloat = FLOAT | vbool = BOOL;
+attr : BRACKET_L key = IDENT (PARENTHESES_L (attrField (',' attrField)*)? PARENTHESES_R)? BRACKET_R;
+attrField : (attrName = IDENT '=')? attrValue = attrFieldValue;
+attrFieldValue : vid = IDENT | vstr = STRING | vint = INTEGER | vfloat = FLOAT | vbool = BOOL;
 
-singleType : 'bool' | 'byte' | 'ubyte' | 'short' | 'ushort' | 'int' | 'uint' | 'float' | 'long' | 'ulong' | 'double' | 'int8' | 'uint8' | 'int16' | 'uint16' | 'int32' | 'uint32'| 'int64' | 'uint64' | 'float32' | 'float64' | 'string' | IDENT ;
+singleType : 'bool' | 'byte' | 'ubyte' | 'short' | 'ushort' | 'int' | 'uint' | 'float' | 'long' | 'ulong' | 'double' | 'int8' | 'uint8' | 'int16' | 'uint16' | 'int32' | 'uint32'| 'int64' | 'uint64' | 'float32' | 'float64' | 'string' | IDENT('.'IDENT)*;
 listType : BRACKET_L type = singleType BRACKET_R;
 
 

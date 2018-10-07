@@ -14,18 +14,33 @@ namespace FlatBufferData.Model
         public List<Attribute> Attributes { get; set; } = new List<Attribute>();
 
         /// <summary>
-        /// 绑定信息
+        /// 获取特性
         /// </summary>
-        public string BindInfo;
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public T GetAttribte<T>() where T : Attribute
+        {
+            foreach(var item in Attributes)
+            {
+                if(item is T)
+                {
+                    return item as T;
+                }
+            }
+            return null;
+        }
 
-        /// <summary>
-        /// 索引表
-        /// </summary>
-        public List<string[]> IndexTable = new List<string[]>();
-
-        /// <summary>
-        /// 可以为空
-        /// </summary>
-        public bool Nullable;
+        public T[] GetAttributes<T>() where T :Attribute
+        {
+            List<T> list = new List<T>();
+            foreach (var item in Attributes)
+            {
+                if (item is T)
+                {
+                    list.Add(item as T);
+                }
+            }
+            return list.ToArray();
+        }
     }
 }

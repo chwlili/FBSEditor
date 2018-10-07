@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static FlatbufferParser;
 
 namespace FlatBufferData.Model
 {
@@ -17,7 +18,7 @@ namespace FlatBufferData.Model
         /// <summary>
         /// 字段列表
         /// </summary>
-        public List<TableField> Fields { get; } = new List<TableField>();
+        public List<TableField> Fields { get; set; } = new List<TableField>();
 
         /// <summary>
         /// 元数据列表
@@ -27,6 +28,6 @@ namespace FlatBufferData.Model
         /// <summary>
         /// 特性列表
         /// </summary>
-        public AttributeInfo AttributeInfo { get; set; }
+        public AttributeInfo Attributes { get; set; }
     }
 }

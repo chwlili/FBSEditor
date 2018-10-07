@@ -19,6 +19,11 @@ namespace FlatBufferData.Model
         /// </summary>
         public string Type { get; set; }
 
+        /// <summary>
+        /// 类型定义
+        /// </summary>
+        public object TypeDefined { get; set; }
+
         //是否为数组
         public bool IsArray { get; set; }
 
@@ -30,11 +35,11 @@ namespace FlatBufferData.Model
         /// <summary>
         /// 默认值
         /// </summary>
-        public string DefaultValue { get; set; }
+        public object DefaultValue { get; set; }
 
 
 
-        public string LinkField { get; set; }
+        public string DataField { get; set; }
 
         /// <summary>
         /// 注释

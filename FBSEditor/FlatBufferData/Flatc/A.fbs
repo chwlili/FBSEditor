@@ -1,0 +1,8 @@
+namespace ss;
+
+struct A1
+{
+	id:int;
+	a:bool;
+}
+

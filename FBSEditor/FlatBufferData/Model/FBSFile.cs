@@ -6,6 +6,11 @@ namespace FlatBufferData.Model
     public class FBSFile
     {
         /// <summary>
+        /// 导入的文件
+        /// </summary>
+        public FBSFile[] Includes { get; set; }
+
+        /// <summary>
         /// 路径
         /// </summary>
         public string Path { get; set; }
@@ -14,11 +19,6 @@ namespace FlatBufferData.Model
         /// 主表
         /// </summary>
         public Table RootTable { get; set; }
-
-        /// <summary>
-        /// 主结构
-        /// </summary>
-        public Struct RootStruct { get; set; }
 
         /// <summary>
         /// 名称空间
@@ -59,16 +59,5 @@ namespace FlatBufferData.Model
         /// RPC
         /// </summary>
         public List<Rpc> Rpcs { get; } = new List<Rpc>();
-
-
-        public bool HasDefine(string name)
-        {
-            foreach (var item in Tables) { if (name.Equals(item.Name)) { return true; } }
-            foreach (var item in Structs) { if (name.Equals(item.Name)) { return true; } }
-            foreach (var item in Enums) { if (name.Equals(item.Name)) { return true; } }
-            foreach (var item in Unions) { if (name.Equals(item.Name)) { return true; } }
-            foreach (var item in Rpcs) { if (name.Equals(item.Name)) { return true; } }
-            return false;
-        }
     }
 }
