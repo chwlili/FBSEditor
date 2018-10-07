@@ -1,0 +1,10 @@
+C:\Users\chw\Desktop\npoi (1)\npoi\AllInOne\main\bin\Debug\NPOI.dll
+C:\Users\chw\Desktop\npoi (1)\npoi\AllInOne\main\bin\Debug\NPOI.pdb
+C:\Users\chw\Desktop\npoi (1)\npoi\AllInOne\main\bin\Debug\Ionic.Zip.dll
+C:\Users\chw\Desktop\npoi (1)\npoi\AllInOne\main\obj\Debug\main.csprojResolveAssemblyReference.cache
+C:\Users\chw\Desktop\npoi (1)\npoi\AllInOne\main\obj\Debug\NPOI.Resource1.resources
+C:\Users\chw\Desktop\npoi (1)\npoi\AllInOne\main\obj\Debug\main.csproj.GenerateResource.cache
+C:\Users\chw\Desktop\npoi (1)\npoi\AllInOne\main\obj\Debug\main.csproj.CoreCompileInputs.cache
+C:\Users\chw\Desktop\npoi (1)\npoi\AllInOne\main\obj\Debug\main.csproj.CopyComplete
+C:\Users\chw\Desktop\npoi (1)\npoi\AllInOne\main\obj\Debug\NPOI.dll
+C:\Users\chw\Desktop\npoi (1)\npoi\AllInOne\main\obj\Debug\NPOI.pdb
