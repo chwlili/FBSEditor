@@ -60,6 +60,8 @@ namespace FlatBufferData.Editor
         public List<string> StructNameList { get; } = new List<string>();
         public List<SnapshotSpan> ErrorList { get; } = new List<SnapshotSpan>();
 
+        private string filePath = null;
+
         public event EventHandler<ClassificationChangedEventArgs> ClassificationChanged;
 
         internal Classification(IClassificationTypeRegistryService registry, ITextBuffer buffer)
@@ -147,8 +149,9 @@ namespace FlatBufferData.Editor
             var dom = this.Buffer.Properties.GetProperty(typeof(ITextDocument));
             if (dom != null)
             {
-                var builder = new FBSBuilder("", ErrorReport);
-                builder.Open((dom as ITextDocument).FilePath, snapshot.GetText());
+                filePath = (dom as ITextDocument).FilePath;
+
+                new FBSBuilder("", ErrorReport).Open(filePath, snapshot.GetText());
             }
             
             ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(snapshot, 0, snapshot.Length)));
@@ -156,17 +159,20 @@ namespace FlatBufferData.Editor
 
         public void ErrorReport(string projectName, string path, string text, int line, int column, int begin, int count)
         {
-            if (count > 0)
+            if (path.Equals(filePath))
             {
-                var span = new Span(begin, count);
-                var snapshotSpan = new SnapshotSpan(Buffer.CurrentSnapshot, span);
-                ErrorList.Add(snapshotSpan);
-            }
-            else
-            {
-                var span = new Span(begin, 1);
-                var snapshotSpan = new SnapshotSpan(Buffer.CurrentSnapshot, span);
-                ErrorList.Add(snapshotSpan);
+                if (count > 0)
+                {
+                    var span = new Span(begin, count);
+                    var snapshotSpan = new SnapshotSpan(Buffer.CurrentSnapshot, span);
+                    ErrorList.Add(snapshotSpan);
+                }
+                else
+                {
+                    var span = new Span(begin, 1);
+                    var snapshotSpan = new SnapshotSpan(Buffer.CurrentSnapshot, span);
+                    ErrorList.Add(snapshotSpan);
+                }
             }
         }
     }

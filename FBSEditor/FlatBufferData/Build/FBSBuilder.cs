@@ -332,7 +332,7 @@ namespace FlatBufferData.Build
                 var includeFBSs = new List<FBSFile>();
                 foreach (var context in schema.include())
                 {
-                    if (context.val == null)
+                    if (context.val == null || context.val.StartIndex == -1)
                     {
                         ReportError("无效的include。", context);
                         continue;
@@ -548,15 +548,16 @@ namespace FlatBufferData.Build
                     foreach (var field in data.Fields)
                     {
                         if (string.IsNullOrEmpty(field.Type) || IsNativeType(field.Type)) continue;
+                        var typeName = field.Type.IndexOf(".") != -1 ? field.Type : ns + field.Type;
                         var context = data2context[field] as TableFieldContext;
                         var locator = context.arrayType != null ? context.arrayType as ParserRuleContext : context.fieldType as ParserRuleContext;
-                        if (allDefined.ContainsKey(field.Type))
+                        if (allDefined.ContainsKey(typeName))
                         {
-                            if (allDefined[field.Type].Count > 1)
+                            if (allDefined[typeName].Count > 1)
                                 ReportError(string.Format("找到多个名称为 {0} 的定义。", field.Type), locator);
-                            else if (allDefined[field.Type].Count == 1)
+                            else if (allDefined[typeName].Count == 1)
                             {
-                                var first = allDefined[field.Type][0];
+                                var first = allDefined[typeName][0];
                                 if (first is Table || first is Struct || first is Enum || first is Union)
                                     field.TypeDefined = first;
                                 else
@@ -572,15 +573,16 @@ namespace FlatBufferData.Build
                     foreach (var field in data.Fields)
                     {
                         if (string.IsNullOrEmpty(field.Type) || IsNativeType(field.Type)) continue;
+                        var typeName = field.Type.IndexOf(".") != -1 ? field.Type : ns + field.Type;
                         var context = data2context[field] as TableFieldContext;
                         var locator = context.arrayType != null ? context.arrayType as ParserRuleContext : context.fieldType as ParserRuleContext;
-                        if (allDefined.ContainsKey(field.Type))
+                        if (allDefined.ContainsKey(typeName))
                         {
-                            if (allDefined[field.Type].Count > 1)
+                            if (allDefined[typeName].Count > 1)
                                 ReportError(string.Format("找到多个名称为 {0} 的定义。", field.Type), locator);
-                            else if (allDefined[field.Type].Count == 1)
+                            else if (allDefined[typeName].Count == 1)
                             {
-                                var first = allDefined[field.Type][0];
+                                var first = allDefined[typeName][0];
                                 if (first is Struct || first is Enum)
                                     field.TypeDefined = first;
                                 else
@@ -597,13 +599,14 @@ namespace FlatBufferData.Build
                     {
                         if (!string.IsNullOrEmpty(field.Param) && !IsNativeType(field.Param))
                         {
-                            if (allDefined.ContainsKey(field.Param))
+                            var typeName = field.Param.IndexOf(".") != -1 ? field.Param : ns + field.Param;
+                            if (allDefined.ContainsKey(typeName))
                             {
-                                if (allDefined[field.Param].Count > 1)
+                                if (allDefined[typeName].Count > 1)
                                     ReportError(string.Format("找到多个名称为 {0} 的定义。", field.Param), (data2context[field] as RpcFieldContext).fieldParam);
-                                else if (allDefined[field.Param].Count == 1)
+                                else if (allDefined[typeName].Count == 1)
                                 {
-                                    var first = allDefined[field.Param][0];
+                                    var first = allDefined[typeName][0];
                                     if (first is Struct || first is Table || first is Enum || first is Union)
                                         field.ParamTypeDefined = first;
                                     else
@@ -615,13 +618,14 @@ namespace FlatBufferData.Build
                         }
                         if (!string.IsNullOrEmpty(field.Return) && !IsNativeType(field.Return))
                         {
-                            if (allDefined.ContainsKey(field.Return))
+                            var typeName = field.Return.IndexOf(".") != -1 ? field.Return : ns + field.Return;
+                            if (allDefined.ContainsKey(typeName))
                             {
-                                if (allDefined[field.Return].Count > 1)
+                                if (allDefined[typeName].Count > 1)
                                     ReportError(string.Format("找到多个名称为 {0} 的定义。", field.Return), (data2context[field] as RpcFieldContext).fieldReturn);
-                                else if (allDefined[field.Return].Count == 1)
+                                else if (allDefined[typeName].Count == 1)
                                 {
-                                    var first = allDefined[field.Param][0];
+                                    var first = allDefined[typeName][0];
                                     if (first is Struct || first is Table || first is Enum || first is Union)
                                         field.ReturnTypeDefined = first;
                                     else
