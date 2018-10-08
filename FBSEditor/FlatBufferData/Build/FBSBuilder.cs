@@ -9,7 +9,7 @@ namespace FlatBufferData.Build
 {
     public class FBSBuilder
     {
-        public delegate void ErrorReport(string projectName, string path, string text, int line, int column);
+        public delegate void ErrorReport(string projectName, string path, string text, int line, int column, int begin, int count);
 
         private string projectName;
         private ErrorReport report;
@@ -21,69 +21,61 @@ namespace FlatBufferData.Build
             this.report = report;
         }
 
-        public void Open(string path)
+        public FBSFile Open(string path,string text = null)
         {
             path = Path.GetFullPath(path);
-            var builder = new FBSFileBuild(this, path, report);
-            var fbsFile = builder.Build();
-        }
-
-        public bool HasFile(string path)
-        {
-            return files.ContainsKey(path);
-        }
-
-        public FBSFile GetFile(string path)
-        {
-            if(files.ContainsKey(path))
-                return files[path];
-            return null;
-        }
-
-        public void SetFile(string path, FBSFile file)
-        {
-            if (path != null && file != null)
-                files.Add(path, file);
-        }
-
-        public FBSFile GetFBSFile(string curr, string include)
-        {
-            if (!Path.IsPathRooted(include))
+            if (!files.ContainsKey(path) || text != null)
             {
-                var path = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(curr), include));
-                if(HasFile(path))
-                    return GetFile(path);
+                var fbsFile = new FBSFile(path);
+
+                files.Add(path, fbsFile);
+
+                if (text != null)
+                    new FBSFileParser(this, fbsFile, report).Build(text);
+                else
+                    new FBSFileParser(this, fbsFile, report).Build();
+
+                return fbsFile;
+            }
+            else
+            {
+                return files[path];
+            }
+        }
+
+        public FBSFile FindFile(string currPath, string includePath)
+        {
+            if (!Path.IsPathRooted(includePath))
+            {
+                var path = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(currPath), includePath));
+                if (files.ContainsKey(path))
+                    return files[path];
 
                 if (File.Exists(path))
-                {
-                    var builder = new FBSFileBuild(this, path, report);
-                    var fbsFile = builder.Build();
-                    return fbsFile;
-                }
+                    return Open(path);
             }
             return null;
         }
 
 
-        private class FBSFileBuild
+        private class FBSFileParser
         {
             private FBSBuilder project;
-            private string path;
+            private FBSFile file;
             public ErrorReport report;
 
-            private FBSFile file;
             private Dictionary<object, object> data2context = new Dictionary<object, object>();
 
-            public FBSFileBuild(FBSBuilder project, string path, ErrorReport report)
+            public FBSFileParser(FBSBuilder project, FBSFile file, ErrorReport report)
             {
                 this.project = project;
-                this.path = path;
+                this.file = file;
                 this.report = report;
             }
 
             public FBSFile Build()
             {
-                return Build(File.ReadAllText(path));
+                return Build(File.ReadAllText(file.Path));
             }
 
             public FBSFile Build(string text)
@@ -92,8 +84,6 @@ namespace FlatBufferData.Build
                 var parser = new FlatbufferParser(new CommonTokenStream(lexer));
                 var comments = InitComments(lexer);
                 var schema = parser.schema();
-
-                file = new FBSFile();
 
                 //namespace
                 foreach(var context in schema.@namespace())
@@ -153,7 +143,7 @@ namespace FlatBufferData.Build
                         var field = new TableField();
                         field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
                         field.Name = fieldContext.fieldName != null ? fieldContext.fieldName.Text : null;
-                        field.Type = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : (fieldContext.arrayType.type != null ? fieldContext.arrayType.type.GetText() : null);
+                        field.Type = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : (fieldContext.arrayType != null ? fieldContext.arrayType.type.GetText() : null);
                         field.IsArray = fieldContext.arrayType != null && fieldContext.fieldType == null;
                         field.DefaultValue = ParseDefaultValue(field.Type, field.IsArray, fieldContext.fieldValue);
                         field.Metas = ParseMetaDatas(fieldContext.metaList);
@@ -353,7 +343,7 @@ namespace FlatBufferData.Build
                         ReportError("无效的include。", context.val);
                         continue;
                     }
-                    var fbs = project.GetFBSFile(path, url);
+                    var fbs = project.FindFile(file.Path, url);
                     if (fbs == null)
                     {
                         ReportError(string.Format("{0} 未找到。",url), context.val);
@@ -363,9 +353,6 @@ namespace FlatBufferData.Build
                     includeFBSs.Add(fbs);
                 }
                 file.Includes = includeFBSs.ToArray();
-
-                //
-                project.SetFile(path, file);
 
                 //check
                 CheckAllDefined();
@@ -1053,27 +1040,27 @@ namespace FlatBufferData.Build
 
             private void ReportError(string text, IToken token)
             {
-                ReportError(text, token.Line, token.Column);
+                ReportError(text, token.Line, token.Column, token.StartIndex, token.StopIndex - token.StartIndex + 1);
             }
             private void ReportError(string text, ParserRuleContext context)
             {
-                ReportError(text, context.Start.Line, context.Start.Column);
+                ReportError(text, context.Start.Line, context.Start.Column, context.Start.StartIndex, context.Stop.StopIndex - context.Start.StartIndex + 1);
             }
-            private void ReportError(string text, int line, int column)
+            private void ReportError(string text, int line, int column, int begin, int count)
             {
-                report?.Invoke("", path, text, line, column);
+                report?.Invoke(project.projectName, file.Path, text, line, column, begin, count);
             }
             private void ReportWarning(string text, IToken token)
             {
-                ReportError(text, token.Line, token.Column);
+                ReportError(text, token.Line, token.Column, token.StartIndex, token.StopIndex - token.StartIndex + 1);
             }
             private void ReportWarning(string text, ParserRuleContext context)
             {
-                ReportError(text, context.Start.Line, context.Start.Column);
+                ReportError(text, context.Start.Line, context.Start.Column, context.Start.StartIndex, context.Stop.StopIndex - context.Start.StartIndex + 1);
             }
-            private void ReportWarning(string text, int line, int column)
+            private void ReportWarning(string text, int line, int column, int begin, int count)
             {
-                report?.Invoke("", path, text, line, column);
+                report?.Invoke(project.projectName, file.Path, text, line, column, begin, count);
             }
 
             private static bool IsNativeType(string type)

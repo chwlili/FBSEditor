@@ -11,29 +11,28 @@ using NPOI.HSSF.UserModel;
 using System.Text;
 using FlatBufferData.Model.Attributes;
 using FlatBufferData.Build;
+using System.Windows.Forms;
 
 namespace FlatBufferData.Editor
 {
     internal sealed class BuildCommand
     {
-        public const int CommandId = 0x0200;
         public static readonly Guid CommandSet = new Guid("04f51c64-0c0a-412c-818c-57880c441058");
+
+        public const int FBS_ITEM_CHECK_FBS = 0x001;
+        public const int FBS_ITEM_CHECK_FBS_ALL = 0x002;
+        public const int FBS_ITEM_CHECK_DATA = 0x003;
+        public const int FBS_ITEM_CHECK_DATA_ALL = 0x004;
+        
+        public const int CommandId = 0x0200;
 
         private readonly BuildCommandPackage package;
 
         private int errorCount = 0;
 
-        public static BuildCommand Instance
-        {
-            get;
-            private set;
-        }
+        public static BuildCommand Instance { get; private set; }
         private IServiceProvider ServiceProvider { get { return this.package; } }
-
-        public static void Initialize(BuildCommandPackage package)
-        {
-            Instance = new BuildCommand(package);
-        }
+        public static void Initialize(BuildCommandPackage package) { Instance = new BuildCommand(package); }
 
         private BuildCommand(BuildCommandPackage package)
         {
@@ -42,10 +41,130 @@ namespace FlatBufferData.Editor
             var commandService = this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             if (commandService != null)
             {
-                commandService.AddCommand(new OleMenuCommand(OnMenuClick, OnMenuStateChanged, OnMenuQueryStatus, new CommandID(CommandSet, CommandId)));
+                commandService.AddCommand(new OleMenuCommand(OnMenuClick1, OnMenuStateChanged, OnMenuQueryStatus, new CommandID(CommandSet, FBS_ITEM_CHECK_FBS)));
+                commandService.AddCommand(new OleMenuCommand(OnMenuClick2, OnMenuStateChanged, OnMenuQueryStatus, new CommandID(CommandSet, FBS_ITEM_CHECK_FBS_ALL)));
+                commandService.AddCommand(new OleMenuCommand(OnMenuClick3, OnMenuStateChanged, OnMenuQueryStatus, new CommandID(CommandSet, FBS_ITEM_CHECK_DATA)));
+                commandService.AddCommand(new OleMenuCommand(OnMenuClick4, OnMenuStateChanged, OnMenuQueryStatus, new CommandID(CommandSet, FBS_ITEM_CHECK_DATA_ALL)));
             }
         }
 
+        #region single fbs
+        private void OnMenuClick1(object sender, EventArgs e)
+        {
+            var dte = ServiceProvider.GetService(typeof(DTE)) as DTE;
+            if (dte != null && dte.SelectedItems.Count == 1 && dte.SelectedItems.Item(1).Name.EndsWith(Constants.ExtName))
+            {
+                var selectedItem = dte.SelectedItems.Item(1).ProjectItem;
+                var selectedProject = selectedItem.ContainingProject;
+
+                errorCount = 0;
+                package.ClearError();
+
+                new FBSBuilder(selectedProject.Name, ErrorHandler).Open(selectedItem.FileNames[0]);
+
+                if (errorCount > 0)
+                {
+                    package.ShowError();
+                }
+                errorCount = 0;
+            }
+        }
+
+        private void OnMenuClick2(object sender, EventArgs e)
+        {
+            var dte = ServiceProvider.GetService(typeof(DTE)) as DTE;
+            if (dte != null && dte.SelectedItems.Count == 1 && dte.SelectedItems.Item(1).Name.EndsWith(Constants.ExtName))
+            {
+                var selectedItem = dte.SelectedItems.Item(1).ProjectItem;
+                var selectedProject = selectedItem.ContainingProject;
+
+                errorCount = 0;
+                package.ClearError();
+
+                var builder = new FBSBuilder(selectedProject.Name, ErrorHandler);
+                foreach (var path in GetAllFBSFiles(selectedProject))
+                {
+                    builder.Open(path);
+                }
+
+                if (errorCount > 0)
+                {
+                    package.ShowError();
+                }
+                errorCount = 0;
+            }
+        }
+
+        private void OnMenuClick3(object sender, EventArgs e)
+        {
+            var dte = ServiceProvider.GetService(typeof(DTE)) as DTE;
+            if (dte != null && dte.SelectedItems.Count == 1 && dte.SelectedItems.Item(1).Name.EndsWith(Constants.ExtName))
+            {
+                var selectedItem = dte.SelectedItems.Item(1).ProjectItem;
+                var selectedProject = selectedItem.ContainingProject;
+
+                errorCount = 0;
+                package.ClearError();
+
+                var file = new FBSBuilder(selectedProject.Name, ErrorHandler).Open(selectedItem.FileNames[0]);
+                if (errorCount <= 0)
+                {
+                    if (file.RootTable != null)
+                    {
+                        var xls = file.RootTable.Attributes.GetAttribte<XLS>();
+                        if (xls != null)
+                        {
+                            ProcessXLS(xls.filePath, file);
+                        }
+                    }
+                }
+                else
+                {
+                    package.ShowError();
+                    errorCount = 0;
+                }
+            }
+        }
+
+        private void OnMenuClick4(object sender, EventArgs e)
+        {
+            var dte = ServiceProvider.GetService(typeof(DTE)) as DTE;
+            if (dte != null && dte.SelectedItems.Count == 1 && dte.SelectedItems.Item(1).Name.EndsWith(Constants.ExtName))
+            {
+                var selectedItem = dte.SelectedItems.Item(1).ProjectItem;
+                var selectedProject = selectedItem.ContainingProject;
+
+                errorCount = 0;
+                package.ClearError();
+
+                var files = new List<FBSFile>();
+                var builder = new FBSBuilder(selectedProject.Name, ErrorHandler);
+                foreach (var path in GetAllFBSFiles(selectedProject))
+                {
+                    files.Add(builder.Open(path));
+                }
+
+                if (errorCount <= 0)
+                {
+                    foreach(var file in files)
+                    {
+                        if (file.RootTable != null)
+                        {
+                            var xls = file.RootTable.Attributes.GetAttribte<XLS>();
+                            if (xls != null)
+                            {
+                                ProcessXLS(xls.filePath, file);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    package.ShowError();
+                    errorCount = 0;
+                }
+            }
+        }
 
         private void OnMenuStateChanged(object sender, EventArgs e)
         {
@@ -60,53 +179,10 @@ namespace FlatBufferData.Editor
                 command.Visible = dte != null && dte.SelectedItems.Count == 1 && dte.SelectedItems.Item(1).Name.EndsWith(Constants.ExtName);
             }
         }
-
-        private void OnMenuClick(object sender, EventArgs e)
-        {
-            var dte = ServiceProvider.GetService(typeof(DTE)) as DTE;
-            if (dte != null && dte.SelectedItems.Count == 1 && dte.SelectedItems.Item(1).Name.EndsWith(Constants.ExtName))
-            {
-                var a = dte.SelectedItems.Item(1);
-                var b = a.ProjectItem;
-                var c = a.Project;
-                BuildProject(dte.SelectedItems.Item(1).ProjectItem.ContainingProject);
-
-                /*
-                var selected = dte.SelectedItems.Item(1);
-                var selectedPath = selected.ProjectItem.FileNames[0];
-                var outputPath = selectedPath + ".txt";
-
-                var task = new BuildTask(selectedPath);
-                var text = task.Build();
-                if (text != null)
-                {
-                    var list = new List<string>();
-                    for (int i = 2; i < selected.ProjectItem.ProjectItems.Count; i++)
-                    {
-                        list.Add(selected.ProjectItem.ProjectItems.Item(i).FileNames[0]);
-                    }
-                    for(int i=0;i<list.Count;i++)
-                    {
-                        File.Delete(list[i]);
-                    }
-                    if (!File.Exists(outputPath))
-                    {
-                        var writer = File.CreateText(outputPath);
-                        writer.WriteLine(text);
-                        writer.Flush();
-                        writer.Close();
-                    }
-                    else
-                    {
-                        File.WriteAllText(outputPath, text);
-                    }
-                    selected.ProjectItem.ProjectItems.AddFromFile(outputPath);
-                }*/
-            }
-        }
+        #endregion
 
 
-        private void BuildProject(Project project)
+        private string[] GetAllFBSFiles(Project project)
         {
             var paths = new List<string>();
             var files = new List<ProjectItem>();
@@ -137,40 +213,17 @@ namespace FlatBufferData.Editor
                 folder.RemoveAt(0);
             }
 
-            errorCount = 0;
-            package.ClearError();
-            var fbsProject = new FBSBuilder(project.Name, ErrorHandler);
-            foreach(var path in paths)
-            {
-                fbsProject.Open(path);
-            }
-            if (errorCount > 0)
-            {
-                package.ShowError();
-            }
-
-            /*
-            foreach (var tree in trees)
-            {
-                if (tree.RootTable != null)
-                {
-                    var xls = tree.RootTable.AttributeInfo.GetAttribte<XLS>();
-                    if (xls != null)
-                    {
-                        ProcessFile(xls.filePath, tree);
-                    }
-                }
-            }
-            */
+            return paths.ToArray();
         }
 
-        private void ErrorHandler(string projectName, string path, string text, int line, int column)
+
+        private void ErrorHandler(string projectName, string path, string text, int line, int column,int begin,int count)
         {
             errorCount++;
             package.AddError(projectName, path, text, line, column);
         }
 
-        private void ProcessFile(string path, FBSFile file)
+        private void ProcessXLS(string path, FBSFile file)
         {
             var xls = file.RootTable.Attributes.GetAttribte<XLS>();
             var filePath = xls.filePath;
@@ -371,19 +424,19 @@ namespace FlatBufferData.Editor
         
         private void ReportXlsError(string text, string filePath)
         {
-            ErrorHandler("", filePath, text + string.Format(" ( {0} )", filePath), 0, 0);
+            ErrorHandler("", filePath, text + string.Format(" ( {0} )", filePath), 0, 0, 0, 0);
         }
         private void ReportXlsError(string text, string filePath, string sheet)
         {
-            ErrorHandler("", filePath, text + string.Format(" ( {0} # {1} )", filePath, sheet), 0, 0);
+            ErrorHandler("", filePath, text + string.Format(" ( {0} # {1} )", filePath, sheet), 0, 0, 0, 0);
         }
         private void ReportXlsError(string text, string filePath, string sheet, int row)
         {
-            ErrorHandler("", filePath, text + string.Format(" ( {0} # {1} : {2} )", filePath, sheet, row + 1), 0, 0);
+            ErrorHandler("", filePath, text + string.Format(" ( {0} # {1} : {2} )", filePath, sheet, row + 1), 0, 0, 0, 0);
         }
         private void ReportXlsError(string text, string filePath, string sheet, int row,int col)
         {
-            ErrorHandler("", filePath, text + string.Format(" ( {0} # {1} : {2} )", filePath, sheet, (row + 1) + FormatXlsColumnName(col)), 0, 0);
+            ErrorHandler("", filePath, text + string.Format(" ( {0} # {1} : {2} )", filePath, sheet, (row + 1) + FormatXlsColumnName(col)), 0, 0, 0, 0);
         }
 
         /// <summary>
