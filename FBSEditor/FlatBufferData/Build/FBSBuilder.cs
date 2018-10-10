@@ -91,9 +91,14 @@ namespace FlatBufferData.Build
                     if (file.NameSpace == null)
                     {
                         var idents = context.IDENT();
-                        var tokens = new string[idents.Length];
-                        for (int j = 0; j < tokens.Length; j++) { tokens[j] = idents[j].GetText(); }
-                        file.NameSpace = string.Join(".", tokens);
+                        if (idents.Length > 0)
+                        {
+                            var tokens = new string[idents.Length];
+                            for (int j = 0; j < tokens.Length; j++) { tokens[j] = idents[j].GetText(); }
+                            file.NameSpace = string.Join(".", tokens);
+                        }
+                        else
+                            ReportError("错误的 namespace 声明!", context);
                     }
                     else
                         ReportError("namespace 重复声明!", context);
@@ -101,9 +106,9 @@ namespace FlatBufferData.Build
                 //file_extension
                 foreach(var context in schema.fileExtension())
                 {
-                    if(file.FileExtension==null)
+                    if (file.FileExtension == null)
                     {
-                        if (context.val == null)
+                        if (context.val == null || context.val.StartIndex == -1)
                             ReportError("错误的file_extension声明。", context);
                         else if (string.IsNullOrEmpty(context.val.Text.Trim('"')))
                             ReportError("file_extension声明的扩展名不能为空。", context.val);
@@ -118,7 +123,7 @@ namespace FlatBufferData.Build
                 {
                     if (file.FileIdentifier == null)
                     {
-                        if (context.val == null)
+                        if (context.val == null || context.val.StartIndex == -1)
                             ReportError("错误的file_identifier声明。", context);
                         else if (string.IsNullOrEmpty(context.val.Text.Trim('"')))
                             ReportError("错误的file_identifier声明声明的标识符不能为空。", context.val);
@@ -142,12 +147,12 @@ namespace FlatBufferData.Build
                     {
                         var field = new TableField();
                         field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
-                        field.Name = fieldContext.fieldName != null ? fieldContext.fieldName.Text : null;
-                        field.Type = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : (fieldContext.arrayType != null ? fieldContext.arrayType.type.GetText() : null);
+                        field.Name = fieldContext.fieldName != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldName.Text : null;
+                        field.Type = fieldContext.fieldType != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldType.GetText() : (fieldContext.arrayType != null ? fieldContext.arrayType.type.GetText() : null);
                         field.IsArray = fieldContext.arrayType != null && fieldContext.fieldType == null;
                         field.DefaultValue = ParseDefaultValue(field.Type, field.IsArray, fieldContext.fieldValue);
                         field.Metas = ParseMetaDatas(fieldContext.metaList);
-                        field.DataField = fieldContext.fieldMap != null ? fieldContext.fieldMap.Text : field.Name;
+                        field.DataField = fieldContext.fieldMap != null && fieldContext.fieldMap.StartIndex != -1 ? fieldContext.fieldMap.Text : field.Name;
 
                         if (string.IsNullOrEmpty(field.Name))
                             ReportError("名称不能为空。", fieldContext);
@@ -177,12 +182,12 @@ namespace FlatBufferData.Build
                     {
                         var field = new StructField();
                         field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
-                        field.Name = fieldContext.fieldName != null ? fieldContext.fieldName.Text : null;
-                        field.Type = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : (fieldContext.arrayType != null ? fieldContext.arrayType.GetText() : null);
+                        field.Name = fieldContext.fieldName != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldName.Text : null;
+                        field.Type = fieldContext.fieldType != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldType.GetText() : (fieldContext.arrayType != null ? fieldContext.arrayType.GetText() : null);
                         field.IsArray = fieldContext.arrayType != null && fieldContext.fieldType == null;
                         field.DefaultValue = null;
                         field.Metas = ParseMetaDatas(fieldContext.metaList);
-                        field.DataField = fieldContext.fieldMap != null ? fieldContext.fieldMap.Text : field.Name;
+                        field.DataField = fieldContext.fieldMap != null && fieldContext.fieldMap.StartIndex != -1 ? fieldContext.fieldMap.Text : field.Name;
 
                         if (string.IsNullOrEmpty(field.Name))
                             ReportError("名称不能为空。", fieldContext);
@@ -217,8 +222,8 @@ namespace FlatBufferData.Build
                     foreach (var fieldContext in context.enumField())
                     {
                         var field = new EnumField();
-                        field.Name = fieldContext.fieldName.Text;
-                        field.Value = fieldContext.fieldValue != null ? fieldContext.fieldValue.Text : null;
+                        field.Name = fieldContext.fieldName != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldName.Text : null;
+                        field.Value = fieldContext.fieldValue != null && fieldContext.fieldValue.StartIndex != -1 ? fieldContext.fieldValue.Text : null;
                         field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
 
                         if (string.IsNullOrEmpty(field.Name))
@@ -256,8 +261,8 @@ namespace FlatBufferData.Build
                     foreach (var fieldContext in context.unionField())
                     {
                         var field = new UnionField();
-                        field.Name = fieldContext.fieldName.Text;
-                        field.Value = fieldContext.fieldValue != null ? fieldContext.fieldValue.Text : null;
+                        field.Name = fieldContext.fieldName != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldName.Text : null;
+                        field.Value = fieldContext.fieldValue != null && fieldContext.fieldValue.StartIndex != -1 ? fieldContext.fieldValue.Text : null;
                         field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
 
                         if (string.IsNullOrEmpty(field.Name))
@@ -286,9 +291,9 @@ namespace FlatBufferData.Build
                     {
                         var field = new RpcMethod();
                         field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
-                        field.Name = fieldContext.fieldName.Text;
-                        field.Param = fieldContext.fieldParam != null ? fieldContext.fieldParam.Text : null;
-                        field.Return = fieldContext.fieldReturn != null ? fieldContext.fieldReturn.Text : null;
+                        field.Name = fieldContext.fieldName != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldName.Text : null;
+                        field.Param = fieldContext.fieldParam != null && fieldContext.fieldParam.StartIndex != -1 ? fieldContext.fieldParam.Text : null;
+                        field.Return = fieldContext.fieldReturn != null && fieldContext.fieldReturn.StartIndex != -1 ? fieldContext.fieldReturn.Text : null;
                         field.Metas = ParseMetaDatas(fieldContext.metaList);
 
                         if (string.IsNullOrEmpty(field.Name))
@@ -310,10 +315,10 @@ namespace FlatBufferData.Build
                 {
                     if(file.RootTable==null)
                     {
-                        if (context.val == null)
+                        if (context.val == null || context.val.StartIndex == -1)
                             ReportError("错误的 root_type 声明。", context);
                         else
-                        { 
+                        {
                             var tabName = context.val.Text;
                             if (string.IsNullOrEmpty(tabName))
                                 ReportError("错误的 root_type 声明。", context.val);
@@ -321,7 +326,7 @@ namespace FlatBufferData.Build
                             {
                                 foreach (var item in file.Tables) { if (item.Name.Equals(tabName)) { file.RootTable = item; break; } }
                                 if (file.RootTable == null)
-                                    ReportError(string.Format("主表定义 ({0}) 未找到!", context.val.Text), context);
+                                    ReportError(string.Format("主表定义 ({0}) 未找到!", context.val.Text), context.val);
                             }
                         }
                     }
