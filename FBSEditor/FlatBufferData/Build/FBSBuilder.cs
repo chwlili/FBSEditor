@@ -759,6 +759,7 @@ namespace FlatBufferData.Build
                             case "XLS": attr = HandleXLS(info, item, owner); break;
                             case "Index": attr = HandleIndex(info, item, owner); break;
                             case "Nullable": attr = HandleNullable(info, item, owner); break;
+                            case "Unique":attr = HandleUnique(info, item, owner);break;
                         }
 
                         if (attr != null)
@@ -994,6 +995,26 @@ namespace FlatBufferData.Build
                     return new Nullable(true);
             }
 
+            private Attribute HandleUnique(AttributeInfo attributes, AttrContext item, object owner)
+            {
+                if (!(owner is TableField))
+                    ReportError("Unique只能应用到table字段。", item.key);
+
+                if (attributes.GetAttributes<Unique>().Length > 0)
+                    ReportError("Unique不能多次应用到同一对象。", item.key);
+
+                var fields = item.attrField();
+                if (fields.Length > 0)
+                {
+                    for (var i = 1; i < fields.Length; i++)
+                    {
+                        ReportError("多余的参数。", fields[i]);
+                    }
+                    return null;
+                }
+                else
+                    return new Unique();
+            }
             #endregion
 
             #region 处理内容注释
