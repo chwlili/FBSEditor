@@ -247,6 +247,9 @@
     <Compile Include="Antlr4\UnbufferedCharStream.cs" />
     <Compile Include="Antlr4\UnbufferedTokenStream.cs" />
     <Compile Include="Antlr4\Vocabulary.cs" />
+    <Compile Include="FlatBufferData\Build\DataReader.cs" />
+    <Compile Include="FlatBufferData\Build\DataReaderFactory.cs" />
+    <Compile Include="FlatBufferData\Build\XLSReader.cs" />
     <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferBaseListener.cs" />
     <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferBaseVisitor.cs" />
     <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferLexer.cs" />
