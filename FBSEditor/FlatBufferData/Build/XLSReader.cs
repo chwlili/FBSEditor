@@ -2,6 +2,7 @@
 using FlatBufferData.Model.Attributes;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -50,7 +51,19 @@ namespace FlatBufferData.Build
 
             using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             {
-                var workbook = new HSSFWorkbook(stream);
+                var ext = Path.GetExtension(filePath).ToLower();
+
+                IWorkbook workbook = null;
+                if (ext == ".xlsx")
+                    workbook = new XSSFWorkbook(stream);
+                else if(ext==".xls")
+                    workbook = new HSSFWorkbook(stream);
+                else
+                {
+                    ReportXlsError("未知的文件类型!", filePath);
+                    return;
+                }
+
                 var sheet = workbook.GetSheet(sheetName);
                 if (sheet == null)
                 {
@@ -71,8 +84,8 @@ namespace FlatBufferData.Build
                 for (var i = 0; i <= titleRow.LastCellNum; i++)
                 {
                     var cell = titleRow.GetCell(i);
-                    if (cell == null || cell.CellType == CellType.BLANK) continue;
-                    if (cell.CellType == CellType.STRING)
+                    if (cell == null || cell.CellType == CellType.Blank) continue;
+                    if (cell.CellType == CellType.String)
                     {
                         if (fieldName2CellIndex.ContainsKey(cell.StringCellValue))
                             ReportXlsError("标题列名重复出现。", filePath, sheetName, titleRowIndex, i);
@@ -88,7 +101,7 @@ namespace FlatBufferData.Build
                 foreach (var fieldName in dataKey2FieldSchema.Keys)
                 {
                     if (!fieldName2CellIndex.ContainsKey(fieldName))
-                        ReportXlsError("标题行中未找到列 " + fieldName + ":" + dataKey2FieldSchema[fieldName].Type + "。", filePath, sheetName, titleRowIndex);
+                        ReportXlsError("标题行中未找到列 " + fieldName +  "。", filePath, sheetName, titleRowIndex);
                 }
                 //data
                 var uniqueChecker = new Dictionary<int, Dictionary<object, List<int>>>();
@@ -102,7 +115,7 @@ namespace FlatBufferData.Build
                         if (fieldName2CellIndex.ContainsKey(dataKeyList[j]))
                         {
                             var cellData = row.GetCell(fieldName2CellIndex[dataKeyList[j]]);
-                            if (cellData != null && cellData.CellType != CellType.BLANK)
+                            if (cellData != null && cellData.CellType != CellType.Blank)
                                 colCount++;
                         }
                     }
@@ -126,7 +139,7 @@ namespace FlatBufferData.Build
                         object fieldValue = null;
                         if (IsInteger(fieldSchemaType))
                         {
-                            if (cellData != null && cellData.CellType == CellType.NUMERIC)
+                            if (cellData != null && cellData.CellType == CellType.Numeric)
                             {
                                 if (fieldSchemaType.Equals("byte") || fieldSchemaType.Equals("int8"))
                                 {
@@ -185,13 +198,13 @@ namespace FlatBufferData.Build
                                         fieldValue = (ulong)cellData.NumericCellValue;
                                 }
                             }
-                            else if (cellData != null && cellData.CellType == CellType.STRING)
+                            else if (cellData != null && cellData.CellType == CellType.String)
                                 ReportXlsError(String.Format("\"{0}\"不是一个有效的{1}", cellData.StringCellValue, fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData != null && cellData.CellType == CellType.BOOLEAN)
+                            else if (cellData != null && cellData.CellType == CellType.Boolean)
                                 ReportXlsError(String.Format("\"{0}\"不是一个有效的{1}", cellData.BooleanCellValue, fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData != null && (cellData.CellType == CellType.FORMULA || cellData.CellType == CellType.ERROR || cellData.CellType == CellType.Unknown))
+                            else if (cellData != null && (cellData.CellType == CellType.Formula || cellData.CellType == CellType.Error || cellData.CellType == CellType.Unknown))
                                 ReportXlsError(String.Format("内容不是一个有效的{0}", fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData == null || cellData.CellType == CellType.BLANK)
+                            else if (cellData == null || cellData.CellType == CellType.Blank)
                             {
                                 if (!isNullable || isUnique)
                                     ReportXlsError(String.Format("内容不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
@@ -208,7 +221,7 @@ namespace FlatBufferData.Build
                         }
                         else if (IsFloat(fieldSchemaType))
                         {
-                            if (cellData != null && cellData.CellType == CellType.NUMERIC)
+                            if (cellData != null && cellData.CellType == CellType.Numeric)
                             {
                                 if (fieldSchemaType.Equals("float") || fieldSchemaType.Equals("float32"))
                                 {
@@ -225,13 +238,13 @@ namespace FlatBufferData.Build
                                         fieldValue = cellData.NumericCellValue;
                                 }
                             }
-                            else if (cellData != null && cellData.CellType == CellType.STRING)
+                            else if (cellData != null && cellData.CellType == CellType.String)
                                 ReportXlsError(String.Format("\"{0}\"不是一个有效的{1}", cellData.StringCellValue, fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData != null && cellData.CellType == CellType.BOOLEAN)
+                            else if (cellData != null && cellData.CellType == CellType.Boolean)
                                 ReportXlsError(String.Format("\"{0}\"不是一个有效的{1}", cellData.BooleanCellValue, fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData != null && (cellData.CellType == CellType.FORMULA || cellData.CellType == CellType.ERROR || cellData.CellType == CellType.Unknown))
+                            else if (cellData != null && (cellData.CellType == CellType.Formula || cellData.CellType == CellType.Error || cellData.CellType == CellType.Unknown))
                                 ReportXlsError(String.Format("内容不是一个有效的{0}", fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData == null || cellData.CellType == CellType.BLANK)
+                            else if (cellData == null || cellData.CellType == CellType.Blank)
                             {
                                 if (!isNullable || isUnique)
                                     ReportXlsError(String.Format("内容不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
@@ -248,15 +261,15 @@ namespace FlatBufferData.Build
                         }
                         else if ("bool".Equals(fieldSchemaType))
                         {
-                            if (cellData != null && cellData.CellType == CellType.BOOLEAN)
+                            if (cellData != null && cellData.CellType == CellType.Boolean)
                                 fieldValue = cellData.BooleanCellValue;
-                            else if (cellData != null && cellData.CellType == CellType.NUMERIC)
+                            else if (cellData != null && cellData.CellType == CellType.Numeric)
                                 fieldValue = cellData.NumericCellValue != 0;
-                            else if (cellData != null && cellData.CellType == CellType.STRING)
+                            else if (cellData != null && cellData.CellType == CellType.String)
                                 ReportXlsError(String.Format("\"{0}\"不是一个有效的{1}", cellData.StringCellValue, fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData != null && (cellData.CellType == CellType.FORMULA || cellData.CellType == CellType.ERROR || cellData.CellType == CellType.Unknown))
+                            else if (cellData != null && (cellData.CellType == CellType.Formula || cellData.CellType == CellType.Error || cellData.CellType == CellType.Unknown))
                                 ReportXlsError(String.Format("内容不是一个有效的{0}", fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData != null || cellData.CellType == CellType.BLANK)
+                            else if (cellData != null || cellData.CellType == CellType.Blank)
                             {
                                 if (!isNullable || isUnique)
                                     ReportXlsError(String.Format("内容不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
@@ -273,15 +286,15 @@ namespace FlatBufferData.Build
                         }
                         else if ("string".Equals(fieldSchemaType))
                         {
-                            if (cellData != null && cellData.CellType == CellType.STRING)
+                            if (cellData != null && cellData.CellType == CellType.String)
                                 fieldValue = cellData.StringCellValue.ToString();
-                            else if (cellData != null && cellData.CellType == CellType.BOOLEAN)
+                            else if (cellData != null && cellData.CellType == CellType.Boolean)
                                 fieldValue = cellData.BooleanCellValue.ToString();
-                            else if (cellData != null && cellData.CellType == CellType.NUMERIC)
+                            else if (cellData != null && cellData.CellType == CellType.Numeric)
                                 fieldValue = cellData.NumericCellValue.ToString();
-                            else if (cellData != null && (cellData.CellType == CellType.FORMULA || cellData.CellType == CellType.ERROR || cellData.CellType == CellType.Unknown))
+                            else if (cellData != null && (cellData.CellType == CellType.Formula || cellData.CellType == CellType.Error || cellData.CellType == CellType.Unknown))
                                 ReportXlsError(String.Format("内容不是一个有效的{0}", fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData == null || cellData.CellType == CellType.BLANK)
+                            else if (cellData == null || cellData.CellType == CellType.Blank)
                             {
                                 if (!isNullable || isUnique)
                                     ReportXlsError(String.Format("内容不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
@@ -291,21 +304,54 @@ namespace FlatBufferData.Build
                                     fieldValue = "";
                             }
                         }
-                        else
+                        else if (fieldSchema.TypeDefined is Model.Enum)
                         {
-                                /*
-                            if (fieldSchema.TypeDefined is Model.Enum)
+                            var t = fieldSchema.TypeDefined as Model.Enum;
+                            if (cellData == null)
                             {
-                                Model.Enum
+                                if (!isNullable || isUnique || isIndex)
+                                    ReportXlsError(String.Format("内容不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
+                            }
+                            else if (cellData.CellType == CellType.Blank)
+                            {
+                                if(!isNullable || isUnique || isIndex)
+                                    ReportXlsError(String.Format("内容不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
+                            }
+                            else if (cellData.CellType == CellType.Numeric)
+                            {
+                                var enumIndex = (int)cellData.NumericCellValue;
+                                if (enumIndex < t.Fields.Count)
+                                    fieldValue = enumIndex;
+                                else
+                                    ReportXlsError(String.Format("无效的枚举值!"), filePath, sheetName, rowIndex, cellIndex);
+                            }
+                            else if (cellData.CellType == CellType.String)
+                            {
+                                var enumIndex = -1;
+                                for (var enumItem = 0; enumItem < t.Fields.Count; enumItem++)
+                                {
+                                    if (t.Fields[enumItem].Name.Equals(cellData.StringCellValue))
+                                    {
+                                        enumIndex = enumItem;
+                                        fieldValue = enumIndex;
+                                        break;
+                                    }
+                                }
+                                if (enumIndex == -1)
+                                    ReportXlsError(String.Format("无效的枚举值!"), filePath, sheetName, rowIndex, cellIndex);
                             }
                             else
+                                ReportXlsError(String.Format("无效的枚举值!"), filePath, sheetName, rowIndex, cellIndex);
+                        }
+                        else
+                        {
+                            /*
+                            if(Factory!=null)
                             {
-                                if(Factory!=null)
-                                {
-                                    //Factory.ReadData(fieldSchema.TypeDefined,cellData.)
-                                    fieldSchema.TypeDefined
-                                }
-                            }*/
+                                //Factory.ReadData(fieldSchema.TypeDefined,cellData.)
+                                fieldSchema.TypeDefined
+                            }
+                            */
                         }
 
                         dataSetRow[j] = fieldValue;

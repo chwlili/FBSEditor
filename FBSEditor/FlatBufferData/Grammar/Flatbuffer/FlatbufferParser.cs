@@ -805,10 +805,7 @@ public partial class FlatbufferParser : Parser {
 		public MetadataContext metaList;
 		public IToken fieldArrow;
 		public IToken fieldMap;
-		public ITerminalNode[] IDENT() { return GetTokens(FlatbufferParser.IDENT); }
-		public ITerminalNode IDENT(int i) {
-			return GetToken(FlatbufferParser.IDENT, i);
-		}
+		public ITerminalNode IDENT() { return GetToken(FlatbufferParser.IDENT, 0); }
 		public AttrContext[] attr() {
 			return GetRuleContexts<AttrContext>();
 		}
@@ -827,6 +824,7 @@ public partial class FlatbufferParser : Parser {
 		public MetadataContext metadata() {
 			return GetRuleContext<MetadataContext>(0);
 		}
+		public ITerminalNode STRING() { return GetToken(FlatbufferParser.STRING, 0); }
 		public TableFieldContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
@@ -933,7 +931,7 @@ public partial class FlatbufferParser : Parser {
 			if (_la==T__11) {
 				{
 				State = 157; _localctx.fieldArrow = Match(T__11);
-				State = 158; _localctx.fieldMap = Match(IDENT);
+				State = 158; _localctx.fieldMap = Match(STRING);
 				}
 			}
 
@@ -1069,10 +1067,7 @@ public partial class FlatbufferParser : Parser {
 		public MetadataContext metaList;
 		public IToken fieldArrow;
 		public IToken fieldMap;
-		public ITerminalNode[] IDENT() { return GetTokens(FlatbufferParser.IDENT); }
-		public ITerminalNode IDENT(int i) {
-			return GetToken(FlatbufferParser.IDENT, i);
-		}
+		public ITerminalNode IDENT() { return GetToken(FlatbufferParser.IDENT, 0); }
 		public AttrContext[] attr() {
 			return GetRuleContexts<AttrContext>();
 		}
@@ -1091,6 +1086,7 @@ public partial class FlatbufferParser : Parser {
 		public MetadataContext metadata() {
 			return GetRuleContext<MetadataContext>(0);
 		}
+		public ITerminalNode STRING() { return GetToken(FlatbufferParser.STRING, 0); }
 		public StructFieldContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
@@ -1197,7 +1193,7 @@ public partial class FlatbufferParser : Parser {
 			if (_la==T__11) {
 				{
 				State = 203; _localctx.fieldArrow = Match(T__11);
-				State = 204; _localctx.fieldMap = Match(IDENT);
+				State = 204; _localctx.fieldMap = Match(STRING);
 				}
 			}
 
@@ -2988,7 +2984,7 @@ public partial class FlatbufferParser : Parser {
 		'\x9D', '\x3', '\x2', '\x2', '\x2', '\x9C', '\x9E', '\x5', '&', '\x14', 
 		'\x2', '\x9D', '\x9C', '\x3', '\x2', '\x2', '\x2', '\x9D', '\x9E', '\x3', 
 		'\x2', '\x2', '\x2', '\x9E', '\xA1', '\x3', '\x2', '\x2', '\x2', '\x9F', 
-		'\xA0', '\a', '\xE', '\x2', '\x2', '\xA0', '\xA2', '\a', '\x34', '\x2', 
+		'\xA0', '\a', '\xE', '\x2', '\x2', '\xA0', '\xA2', '\a', '\x33', '\x2', 
 		'\x2', '\xA1', '\x9F', '\x3', '\x2', '\x2', '\x2', '\xA1', '\xA2', '\x3', 
 		'\x2', '\x2', '\x2', '\xA2', '\xA4', '\x3', '\x2', '\x2', '\x2', '\xA3', 
 		'\xA5', '\a', '\x4', '\x2', '\x2', '\xA4', '\xA3', '\x3', '\x2', '\x2', 
@@ -3021,7 +3017,7 @@ public partial class FlatbufferParser : Parser {
 		'\xCB', '\x3', '\x2', '\x2', '\x2', '\xCA', '\xCC', '\x5', '&', '\x14', 
 		'\x2', '\xCB', '\xCA', '\x3', '\x2', '\x2', '\x2', '\xCB', '\xCC', '\x3', 
 		'\x2', '\x2', '\x2', '\xCC', '\xCF', '\x3', '\x2', '\x2', '\x2', '\xCD', 
-		'\xCE', '\a', '\xE', '\x2', '\x2', '\xCE', '\xD0', '\a', '\x34', '\x2', 
+		'\xCE', '\a', '\xE', '\x2', '\x2', '\xCE', '\xD0', '\a', '\x33', '\x2', 
 		'\x2', '\xCF', '\xCD', '\x3', '\x2', '\x2', '\x2', '\xCF', '\xD0', '\x3', 
 		'\x2', '\x2', '\x2', '\xD0', '\xD2', '\x3', '\x2', '\x2', '\x2', '\xD1', 
 		'\xD3', '\a', '\x4', '\x2', '\x2', '\xD2', '\xD1', '\x3', '\x2', '\x2', 

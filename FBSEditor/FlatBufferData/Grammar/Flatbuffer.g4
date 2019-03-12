@@ -17,10 +17,10 @@ fileIdentifier : key = 'file_identifier' val = STRING ';'? ;
 string : text = STRING;
 
 table : attr* key = 'table' name = IDENT metaList = metadata? BRACE_L tableField* BRACE_R ;
-tableField : attr* fieldName = IDENT ':' (fieldType = singleType | arrayType = listType) ('=' fieldValue = scalarValue)? metaList = metadata? (fieldArrow = '=>' fieldMap = IDENT)? ';'? ;
+tableField : attr* fieldName = IDENT ':' (fieldType = singleType | arrayType = listType) ('=' fieldValue = scalarValue)? metaList = metadata? (fieldArrow = '=>' fieldMap = STRING)? ';'? ;
 
 struct : attr* key = 'struct' name = IDENT metaList = metadata? BRACE_L structField* BRACE_R ;
-structField : attr* fieldName = IDENT ':' (fieldType = singleType | arrayType = listType) ('=' fieldValue = scalarValue)? metaList = metadata? (fieldArrow = '=>' fieldMap = IDENT)? ';'? ;
+structField : attr* fieldName = IDENT ':' (fieldType = singleType | arrayType = listType) ('=' fieldValue = scalarValue)? metaList = metadata? (fieldArrow = '=>' fieldMap = STRING)? ';'? ;
 
 rpc : attr* key = 'rpc_service' name = IDENT BRACE_L rpcField* BRACE_R ;
 rpcField : attr* fieldName = IDENT PARENTHESES_L fieldParam = IDENT PARENTHESES_R ':' fieldReturn = IDENT metaList = metadata? ';'? ;

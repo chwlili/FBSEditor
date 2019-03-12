@@ -138,7 +138,7 @@ namespace FlatBufferData.Build
                 {
                     var data = new Table();
                     data.Comment = GetComment(comments, context, context.name);
-                    data.Name = context.name.Text;
+                    data.Name = context.name != null ? context.name.Text : null;
                     data.Metas = ParseMetaDatas(context.metaList);
                     data.Fields = new List<TableField>();
 
@@ -152,7 +152,7 @@ namespace FlatBufferData.Build
                         field.IsArray = fieldContext.arrayType != null && fieldContext.fieldType == null;
                         field.DefaultValue = ParseDefaultValue(field.Type, field.IsArray, fieldContext.fieldValue);
                         field.Metas = ParseMetaDatas(fieldContext.metaList);
-                        field.DataField = fieldContext.fieldMap != null && fieldContext.fieldMap.StartIndex != -1 ? fieldContext.fieldMap.Text : field.Name;
+                        field.DataField = fieldContext.fieldMap != null && fieldContext.fieldMap.StartIndex != -1 ? fieldContext.fieldMap.Text.Trim('"') : field.Name;
 
                         if (string.IsNullOrEmpty(field.Name))
                             ReportError("名称不能为空。", fieldContext);
@@ -173,7 +173,7 @@ namespace FlatBufferData.Build
                 {
                     var data = new Struct();
                     data.Comment = GetComment(comments, context, context.name);
-                    data.Name = context.name.Text;
+                    data.Name = context.name != null ? context.name.Text : null;
                     data.Metas = ParseMetaDatas(context.metaList);
                     data.Fields = new List<StructField>();
 
@@ -187,7 +187,7 @@ namespace FlatBufferData.Build
                         field.IsArray = fieldContext.arrayType != null && fieldContext.fieldType == null;
                         field.DefaultValue = null;
                         field.Metas = ParseMetaDatas(fieldContext.metaList);
-                        field.DataField = fieldContext.fieldMap != null && fieldContext.fieldMap.StartIndex != -1 ? fieldContext.fieldMap.Text : field.Name;
+                        field.DataField = fieldContext.fieldMap != null && fieldContext.fieldMap.StartIndex != -1 ? fieldContext.fieldMap.Text.Trim('"') : field.Name;
 
                         if (string.IsNullOrEmpty(field.Name))
                             ReportError("名称不能为空。", fieldContext);
@@ -214,10 +214,11 @@ namespace FlatBufferData.Build
                 {
                     var data = new Enum();
                     data.Comment = GetComment(comments, context, context.name);
-                    data.Name = context.name.Text;
+                    data.Name = context.name != null ? context.name.Text : null;
                     data.Metas = ParseMetaDatas(context.metaList);
                     data.BaseType = "int";
 
+                    var index = 0;
                     var fieldNameSet = new HashSet<string>();
                     foreach (var fieldContext in context.enumField())
                     {
@@ -254,7 +255,7 @@ namespace FlatBufferData.Build
                 {
                     var data = new Union();
                     data.Comment = GetComment(comments, context, context.name);
-                    data.Name = context.name.Text;
+                    data.Name = context.name != null ? context.name.Text : null;
                     data.Metas = ParseMetaDatas(context.metaList);
 
                     var fieldNameSet = new HashSet<string>();
@@ -284,7 +285,7 @@ namespace FlatBufferData.Build
                 {
                     var data = new Rpc();
                     data.Comment = GetComment(comments, context, context.name);
-                    data.Name = context.name.Text;
+                    data.Name = context.name != null ? context.name.Text : null;
 
                     var fieldNameSet = new HashSet<string>();
                     foreach (var fieldContext in context.rpcField())

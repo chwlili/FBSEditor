@@ -4,6 +4,9 @@ namespace FlatBufferData.Model
 {
     public class EnumField
     {
+        //枚举索引
+        public int Index { get; set; }
+
         /// <summary>
         /// 名称
         /// </summary>
