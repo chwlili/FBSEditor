@@ -11,11 +11,6 @@ namespace FlatBufferData.Build
 {
     public class XLSReader : DataReader
     {
-        private List<string> integerTypes = new List<string>() { "byte", "int8", "ubyte", "uint8", "short", "int16", "ushort", "uint16", "int", "int32", "uint", "uint32", "long", "int64", "ulong", "uint64" };
-        private List<string> floatTypes = new List<string>() { "float", "float32", "double", "double64" };
-
-        private bool IsInteger(string type) { return integerTypes.Contains(type); }
-        private bool IsFloat(string type) { return floatTypes.Contains(type); }
 
         public override void Read(Table table)
         {
@@ -132,217 +127,26 @@ namespace FlatBufferData.Build
                         var fieldSchema = dataKey2FieldSchema[linkName];
                         var fieldSchemaName = fieldSchema.Name;
                         var fieldSchemaType = fieldSchema.Type;
+                        var fieldSchemaList = fieldSchema.IsArray;
+
                         var isUnique = fieldSchema.Attributes.GetAttribte<Unique>() != null;
                         var isIndex = indexKeys.Contains(fieldSchema.DataField);
                         var isNullable = fieldSchema.Attributes.GetAttribte<Model.Attributes.Nullable>() != null ? fieldSchema.Attributes.GetAttribte<Model.Attributes.Nullable>().nullable : true;
                         var defaultValue = fieldSchema.DefaultValue;
+
+                        string fieldError = null;
                         object fieldValue = null;
+
                         if (IsInteger(fieldSchemaType))
-                        {
-                            if (cellData != null && cellData.CellType == CellType.Numeric)
-                            {
-                                if (fieldSchemaType.Equals("byte") || fieldSchemaType.Equals("int8"))
-                                {
-                                    if (cellData.NumericCellValue < sbyte.MinValue || cellData.NumericCellValue > sbyte.MaxValue)
-                                        ReportXlsError("数值范围超出" + fieldSchemaType + "的范围。", filePath, sheetName, rowIndex, cellIndex);
-                                    else
-                                        fieldValue = (sbyte)cellData.NumericCellValue;
-                                }
-                                else if (fieldSchemaType.Equals("ubyte") || fieldSchemaType.Equals("uint8"))
-                                {
-                                    if (cellData.NumericCellValue < byte.MinValue || cellData.NumericCellValue > byte.MaxValue)
-                                        ReportXlsError("数值范围超出" + fieldSchemaType + "的范围。", filePath, sheetName, rowIndex, cellIndex);
-                                    else
-                                        fieldValue = (byte)cellData.NumericCellValue;
-                                }
-                                else if (fieldSchemaType.Equals("short") || fieldSchemaType.Equals("int16"))
-                                {
-                                    if (cellData.NumericCellValue < short.MinValue || cellData.NumericCellValue > short.MaxValue)
-                                        ReportXlsError("数值范围超出" + fieldSchemaType + "的范围。", filePath, sheetName, rowIndex, cellIndex);
-                                    else
-                                        fieldValue = (short)cellData.NumericCellValue;
-                                }
-                                else if (fieldSchemaType.Equals("ushort") || fieldSchemaType.Equals("uint16"))
-                                {
-                                    if (cellData.NumericCellValue < ushort.MinValue || cellData.NumericCellValue > ushort.MaxValue)
-                                        ReportXlsError("数值范围超出" + fieldSchemaType + "的范围。", filePath, sheetName, rowIndex, cellIndex);
-                                    else
-                                        fieldValue = (ushort)cellData.NumericCellValue;
-                                }
-                                else if (fieldSchemaType.Equals("int") || fieldSchemaType.Equals("int32"))
-                                {
-                                    if (cellData.NumericCellValue < int.MinValue || cellData.NumericCellValue > int.MaxValue)
-                                        ReportXlsError("数值范围超出" + fieldSchemaType + "的范围。", filePath, sheetName, rowIndex, cellIndex);
-                                    else
-                                        fieldValue = (int)cellData.NumericCellValue;
-                                }
-                                else if (fieldSchemaType.Equals("uint") || fieldSchemaType.Equals("uint32"))
-                                {
-                                    if (cellData.NumericCellValue < uint.MinValue || cellData.NumericCellValue > uint.MaxValue)
-                                        ReportXlsError("数值范围超出" + fieldSchemaType + "的范围。", filePath, sheetName, rowIndex, cellIndex);
-                                    else
-                                        fieldValue = (uint)cellData.NumericCellValue;
-                                }
-                                else if (fieldSchemaType.Equals("long") || fieldSchemaType.Equals("int64"))
-                                {
-                                    if (cellData.NumericCellValue < long.MinValue || cellData.NumericCellValue > long.MaxValue)
-                                        ReportXlsError("数值范围超出" + fieldSchemaType + "的范围。", filePath, sheetName, rowIndex, cellIndex);
-                                    else
-                                        fieldValue = (long)cellData.NumericCellValue;
-                                }
-                                else if (fieldSchemaType.Equals("ulong") || fieldSchemaType.Equals("uint64"))
-                                {
-                                    if (cellData.NumericCellValue < ulong.MinValue || cellData.NumericCellValue > ulong.MaxValue)
-                                        ReportXlsError("数值范围超出" + fieldSchemaType + "的范围。", filePath, sheetName, rowIndex, cellIndex);
-                                    else
-                                        fieldValue = (ulong)cellData.NumericCellValue;
-                                }
-                            }
-                            else if (cellData != null && cellData.CellType == CellType.String)
-                                ReportXlsError(String.Format("\"{0}\"不是一个有效的{1}", cellData.StringCellValue, fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData != null && cellData.CellType == CellType.Boolean)
-                                ReportXlsError(String.Format("\"{0}\"不是一个有效的{1}", cellData.BooleanCellValue, fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData != null && (cellData.CellType == CellType.Formula || cellData.CellType == CellType.Error || cellData.CellType == CellType.Unknown))
-                                ReportXlsError(String.Format("内容不是一个有效的{0}", fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData == null || cellData.CellType == CellType.Blank)
-                            {
-                                if (!isNullable || isUnique)
-                                    ReportXlsError(String.Format("内容不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
-                                else if (isIndex)
-                                    ReportXlsError(String.Format("索引字段不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
-                                else
-                                {
-                                    if (defaultValue != null)
-                                        fieldValue = defaultValue;
-                                    else
-                                        fieldValue = 0;
-                                }
-                            }
-                        }
+                            fieldValue = GetInteger(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
                         else if (IsFloat(fieldSchemaType))
-                        {
-                            if (cellData != null && cellData.CellType == CellType.Numeric)
-                            {
-                                if (fieldSchemaType.Equals("float") || fieldSchemaType.Equals("float32"))
-                                {
-                                    if (cellData.NumericCellValue < float.MinValue || cellData.NumericCellValue > float.MaxValue)
-                                        ReportXlsError("数值范围超出" + fieldSchemaType + "的范围。", filePath, sheetName, rowIndex, cellIndex);
-                                    else
-                                        fieldValue = (float)cellData.NumericCellValue;
-                                }
-                                else if (fieldSchemaType.Equals("double") || fieldSchemaType.Equals("double64"))
-                                {
-                                    if (cellData.NumericCellValue < double.MinValue || cellData.NumericCellValue > double.MaxValue)
-                                        ReportXlsError("数值范围超出" + fieldSchemaType + "的范围。", filePath, sheetName, rowIndex, cellIndex);
-                                    else
-                                        fieldValue = cellData.NumericCellValue;
-                                }
-                            }
-                            else if (cellData != null && cellData.CellType == CellType.String)
-                                ReportXlsError(String.Format("\"{0}\"不是一个有效的{1}", cellData.StringCellValue, fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData != null && cellData.CellType == CellType.Boolean)
-                                ReportXlsError(String.Format("\"{0}\"不是一个有效的{1}", cellData.BooleanCellValue, fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData != null && (cellData.CellType == CellType.Formula || cellData.CellType == CellType.Error || cellData.CellType == CellType.Unknown))
-                                ReportXlsError(String.Format("内容不是一个有效的{0}", fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData == null || cellData.CellType == CellType.Blank)
-                            {
-                                if (!isNullable || isUnique)
-                                    ReportXlsError(String.Format("内容不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
-                                else if (isIndex)
-                                    ReportXlsError(String.Format("索引字段不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
-                                else
-                                {
-                                    if (defaultValue != null)
-                                        fieldValue = defaultValue;
-                                    else
-                                        fieldValue = 0;
-                                }
-                            }
-                        }
-                        else if ("bool".Equals(fieldSchemaType))
-                        {
-                            if (cellData != null && cellData.CellType == CellType.Boolean)
-                                fieldValue = cellData.BooleanCellValue;
-                            else if (cellData != null && cellData.CellType == CellType.Numeric)
-                                fieldValue = cellData.NumericCellValue != 0;
-                            else if (cellData != null && cellData.CellType == CellType.String)
-                                ReportXlsError(String.Format("\"{0}\"不是一个有效的{1}", cellData.StringCellValue, fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData != null && (cellData.CellType == CellType.Formula || cellData.CellType == CellType.Error || cellData.CellType == CellType.Unknown))
-                                ReportXlsError(String.Format("内容不是一个有效的{0}", fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData != null || cellData.CellType == CellType.Blank)
-                            {
-                                if (!isNullable || isUnique)
-                                    ReportXlsError(String.Format("内容不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
-                                else if (isIndex)
-                                    ReportXlsError(String.Format("索引字段不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
-                                else
-                                {
-                                    if (defaultValue != null)
-                                        fieldValue = defaultValue;
-                                    else
-                                        fieldValue = 0;
-                                }
-                            }
-                        }
-                        else if ("string".Equals(fieldSchemaType))
-                        {
-                            if (cellData != null && cellData.CellType == CellType.String)
-                                fieldValue = cellData.StringCellValue.ToString();
-                            else if (cellData != null && cellData.CellType == CellType.Boolean)
-                                fieldValue = cellData.BooleanCellValue.ToString();
-                            else if (cellData != null && cellData.CellType == CellType.Numeric)
-                                fieldValue = cellData.NumericCellValue.ToString();
-                            else if (cellData != null && (cellData.CellType == CellType.Formula || cellData.CellType == CellType.Error || cellData.CellType == CellType.Unknown))
-                                ReportXlsError(String.Format("内容不是一个有效的{0}", fieldSchemaType), filePath, sheetName, rowIndex, cellIndex);
-                            else if (cellData == null || cellData.CellType == CellType.Blank)
-                            {
-                                if (!isNullable || isUnique)
-                                    ReportXlsError(String.Format("内容不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
-                                else if (isIndex)
-                                    ReportXlsError(String.Format("索引字段不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
-                                else
-                                    fieldValue = "";
-                            }
-                        }
+                            fieldValue = GetFloat(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
+                        else if (IsBool(fieldSchemaType))
+                            fieldValue = GetBool(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
+                        else if (IsString(fieldSchemaType))
+                            fieldValue = GetString(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
                         else if (fieldSchema.TypeDefined is Model.Enum)
-                        {
-                            var t = fieldSchema.TypeDefined as Model.Enum;
-                            if (cellData == null)
-                            {
-                                if (!isNullable || isUnique || isIndex)
-                                    ReportXlsError(String.Format("内容不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
-                            }
-                            else if (cellData.CellType == CellType.Blank)
-                            {
-                                if(!isNullable || isUnique || isIndex)
-                                    ReportXlsError(String.Format("内容不允许为空!"), filePath, sheetName, rowIndex, cellIndex);
-                            }
-                            else if (cellData.CellType == CellType.Numeric)
-                            {
-                                var enumIndex = (int)cellData.NumericCellValue;
-                                if (enumIndex < t.Fields.Count)
-                                    fieldValue = enumIndex;
-                                else
-                                    ReportXlsError(String.Format("无效的枚举值!"), filePath, sheetName, rowIndex, cellIndex);
-                            }
-                            else if (cellData.CellType == CellType.String)
-                            {
-                                var enumIndex = -1;
-                                for (var enumItem = 0; enumItem < t.Fields.Count; enumItem++)
-                                {
-                                    if (t.Fields[enumItem].Name.Equals(cellData.StringCellValue))
-                                    {
-                                        enumIndex = enumItem;
-                                        fieldValue = enumIndex;
-                                        break;
-                                    }
-                                }
-                                if (enumIndex == -1)
-                                    ReportXlsError(String.Format("无效的枚举值!"), filePath, sheetName, rowIndex, cellIndex);
-                            }
-                            else
-                                ReportXlsError(String.Format("无效的枚举值!"), filePath, sheetName, rowIndex, cellIndex);
-                        }
+                            fieldValue = GetEnum(cellData, fieldSchema.TypeDefined as Model.Enum, isUnique, isIndex, isNullable, defaultValue, out fieldError);
                         else
                         {
                             /*
@@ -353,6 +157,9 @@ namespace FlatBufferData.Build
                             }
                             */
                         }
+
+                        if (fieldError != null)
+                            ReportXlsError(fieldError, filePath, sheetName, rowIndex, cellIndex);
 
                         dataSetRow[j] = fieldValue;
 
@@ -387,6 +194,200 @@ namespace FlatBufferData.Build
                 }
             }
         }
+
+        #region 单元格数据转换
+
+        private List<string> integerTypes = new List<string>() { "byte", "int8", "ubyte", "uint8", "short", "int16", "ushort", "uint16", "int", "int32", "uint", "uint32", "long", "int64", "ulong", "uint64" };
+
+        private bool IsInteger(string type) { return integerTypes.Contains(type); }
+
+        private object GetInteger(ICell cellData,string fieldSchemaType,bool isUnique,bool isIndex,bool isNullable,object defaultValue,out string error)
+        {
+            string fieldError = null;
+            object fieldValue = null;
+
+            if (cellData == null || cellData.CellType == CellType.Blank)
+            {
+                if (!isNullable || isUnique)
+                    fieldError = String.Format("内容不允许为空!");
+                else if (isIndex)
+                    fieldError = String.Format("索引字段不允许为空!");
+                else
+                    fieldValue = defaultValue != null ? defaultValue : 0;
+            }
+            else if (cellData.CellType == CellType.Numeric)
+            {
+                if ((fieldSchemaType.Equals("byte") || fieldSchemaType.Equals("int8")) && sbyte.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= sbyte.MaxValue)
+                    fieldValue = (sbyte)cellData.NumericCellValue;
+                else if ((fieldSchemaType.Equals("ubyte") || fieldSchemaType.Equals("uint8")) && byte.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= byte.MaxValue)
+                    fieldValue = (byte)cellData.NumericCellValue;
+                else if ((fieldSchemaType.Equals("short") || fieldSchemaType.Equals("int16")) && short.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= short.MaxValue)
+                    fieldValue = (short)cellData.NumericCellValue;
+                else if ((fieldSchemaType.Equals("ushort") || fieldSchemaType.Equals("uint16")) && ushort.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= ushort.MaxValue)
+                    fieldValue = (ushort)cellData.NumericCellValue;
+                else if (fieldSchemaType.Equals("int") || fieldSchemaType.Equals("int32") && int.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= int.MaxValue)
+                    fieldValue = (int)cellData.NumericCellValue;
+                else if (fieldSchemaType.Equals("uint") || fieldSchemaType.Equals("uint32") && uint.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= uint.MaxValue)
+                    fieldValue = (uint)cellData.NumericCellValue;
+                else if (fieldSchemaType.Equals("long") || fieldSchemaType.Equals("int64") && long.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= long.MaxValue)
+                    fieldValue = (long)cellData.NumericCellValue;
+                else if (fieldSchemaType.Equals("ulong") || fieldSchemaType.Equals("uint64") && ulong.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= ulong.MaxValue)
+                    fieldValue = (ulong)cellData.NumericCellValue;
+
+                fieldError = fieldValue == null ? "数值范围超出" + fieldSchemaType + "的范围。" : null;
+            }
+            else
+                fieldError = String.Format("内容不是一个有效的{0}", fieldSchemaType);
+
+            error = fieldError;
+
+            return fieldValue;
+        }
+
+
+        private List<string> floatTypes = new List<string>() { "float", "float32", "double", "double64" };
+
+        private bool IsFloat(string type) { return floatTypes.Contains(type); }
+
+        private object GetFloat(ICell cellData, string fieldSchemaType, bool isUnique, bool isIndex, bool isNullable, object defaultValue, out string error)
+        {
+            string fieldError = null;
+            object fieldValue = null;
+
+            if (cellData == null || cellData.CellType == CellType.Blank)
+            {
+                if (!isNullable || isUnique)
+                    fieldError = "内容不允许为空!";
+                else if (isIndex)
+                    fieldError = "索引字段不允许为空!";
+                else
+                    fieldValue = defaultValue != null ? defaultValue : 0;
+            }
+            else if (cellData.CellType == CellType.Numeric)
+            {
+                if ((fieldSchemaType.Equals("float") || fieldSchemaType.Equals("float32")) && float.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= float.MaxValue)
+                    fieldValue = (float)cellData.NumericCellValue;
+                else if ((fieldSchemaType.Equals("double") || fieldSchemaType.Equals("double64")) && double.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue > double.MaxValue)
+                    fieldValue = cellData.NumericCellValue;
+            }
+            else
+                fieldError = String.Format("内容不是一个有效的{0}", fieldSchemaType);
+
+            error = fieldError;
+
+            return fieldValue;
+        }
+
+        private bool IsBool(string type)
+        {
+            return "bool".Equals(type);
+        }
+
+        private object GetBool(ICell cellData, string fieldSchemaType, bool isUnique, bool isIndex, bool isNullable, object defaultValue, out string error)
+        {
+            string fieldError = null;
+            object fieldValue = null;
+
+            if (cellData == null || cellData.CellType == CellType.Blank)
+            {
+                if (!isNullable || isUnique)
+                    fieldError = "内容不允许为空!";
+                else if (isIndex)
+                    fieldError = "索引字段不允许为空!";
+                else
+                    fieldValue = defaultValue != null ? defaultValue : false;
+            }
+            else if (cellData.CellType == CellType.Boolean)
+                fieldValue = cellData.BooleanCellValue;
+            else if (cellData.CellType == CellType.Numeric)
+                fieldValue = cellData.NumericCellValue != 0;
+            else
+                fieldError = String.Format("内容不是一个有效的{0}", fieldSchemaType);
+
+            error = fieldError;
+
+            return fieldValue;
+        }
+
+        private bool IsString(string type)
+        {
+            return "string".Equals(type);
+        }
+
+        private object GetString(ICell cellData,string fieldSchemaType,bool isUnique,bool isIndex,bool isNullable,object defaultValue,out string error)
+        {
+            string fieldError = null;
+            object fieldValue = null;
+
+            if (cellData == null || cellData.CellType == CellType.Blank)
+            {
+                if (!isNullable || isUnique)
+                    fieldError = "内容不允许为空!";
+                else if (isIndex)
+                    fieldError = "索引字段不允许为空!";
+                else
+                    fieldValue = defaultValue != null ? defaultValue : "";
+            }
+            else if (cellData.CellType == CellType.String)
+                fieldValue = cellData.StringCellValue.ToString();
+            else if (cellData.CellType == CellType.Boolean)
+                fieldValue = cellData.BooleanCellValue.ToString();
+            else if (cellData.CellType == CellType.Numeric)
+                fieldValue = cellData.NumericCellValue.ToString();
+            else
+                fieldError = String.Format("内容不是一个有效的{0}", fieldSchemaType);
+
+            error = fieldError;
+
+            return fieldValue;
+        }
+
+        private object GetEnum(ICell cellData, Model.Enum type, bool isUnique,bool isIndex,bool isNullable,object defaultValue,out string error)
+        {
+            string fieldError = null;
+            object fieldValue = null;
+
+            if (cellData == null || cellData.CellType == CellType.Blank)
+            {
+                if (!isNullable || isUnique)
+                    fieldError = "内容不允许为空!";
+                else if (isIndex)
+                    fieldError = "索引字段不允许为空!";
+                //else
+                    //fieldValue = defaultValue != null ? defaultValue : "";
+            }
+            else if (cellData.CellType == CellType.Numeric)
+            {
+                var enumIndex = (int)cellData.NumericCellValue;
+                if (enumIndex < type.Fields.Count)
+                    fieldValue = enumIndex;
+                else
+                    fieldError = "无效的枚举值!";
+            }
+            else if (cellData.CellType == CellType.String)
+            {
+                var enumIndex = -1;
+                for (var enumItem = 0; enumItem < type.Fields.Count; enumItem++)
+                {
+                    if (type.Fields[enumItem].Name.Equals(cellData.StringCellValue))
+                    {
+                        enumIndex = enumItem;
+                        fieldValue = enumIndex;
+                        break;
+                    }
+                }
+                if (enumIndex == -1)
+                    fieldError = "无效的枚举值!";
+            }
+            else
+                fieldError = "无效的枚举值!";
+
+            error = fieldError;
+
+            return fieldValue;
+        }
+
+        #endregion
 
         #region 错误记录
 
