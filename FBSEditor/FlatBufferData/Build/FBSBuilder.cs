@@ -760,7 +760,8 @@ namespace FlatBufferData.Build
                             case "XLS": attr = HandleXLS(info, item, owner); break;
                             case "Index": attr = HandleIndex(info, item, owner); break;
                             case "Nullable": attr = HandleNullable(info, item, owner); break;
-                            case "Unique":attr = HandleUnique(info, item, owner);break;
+                            case "Unique": attr = HandleUnique(info, item, owner); break;
+                            case "ArrayValue": attr = HandleArrayValue(info, item, owner); break;
                         }
 
                         if (attr != null)
@@ -1015,6 +1016,32 @@ namespace FlatBufferData.Build
                 }
                 else
                     return new Unique();
+            }
+
+            private Attribute HandleArrayValue(AttributeInfo attributes,AttrContext item, object owner)
+            {
+                if (!(owner is TableField))
+                    ReportError("ArrayValue只能应用到table字段。", item.key);
+
+                if (attributes.GetAttributes<ArrayValue>().Length > 0)
+                    ReportError("ArrayValue不能多次应用到同一对象。", item.key);
+
+
+                var splitChar = ",";
+
+                var fields = item.attrField();
+                if (fields.Length > 0)
+                {
+                    var field = fields[0];
+                    if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                        ReportError("第一个参数必须是一个有效的字符串。", field);
+                    else
+                        splitChar = field.attrValue.vstr.Text.Trim('"');
+
+                    for (var i = 1; i < fields.Length; i++) { ReportError("多余的参数。", fields[i]); }
+                }
+
+                return new ArrayValue(splitChar);
             }
             #endregion
 
