@@ -218,7 +218,7 @@ namespace FlatBufferData.Build
                     data.Metas = ParseMetaDatas(context.metaList);
                     data.BaseType = "int";
 
-                    var index = 0;
+                    var fieldIDSet = new HashSet<int>();
                     var fieldNameSet = new HashSet<string>();
                     foreach (var fieldContext in context.enumField())
                     {
@@ -227,12 +227,37 @@ namespace FlatBufferData.Build
                         field.Value = fieldContext.fieldValue != null && fieldContext.fieldValue.StartIndex != -1 ? fieldContext.fieldValue.Text : null;
                         field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
 
+                        var enumIDValidate = false;
+                        if (!string.IsNullOrEmpty(field.Value))
+                        {
+                            var enumID = 0;
+                            if (int.TryParse(field.Value, out enumID))
+                            {
+                                field.ID = enumID;
+                                enumIDValidate = true;
+                            }
+                        }
+
                         if (string.IsNullOrEmpty(field.Name))
+                        {
                             ReportError("名称不能为空。", fieldContext);
+                            continue;
+                        }
+                        else if (fieldIDSet.Contains(field.ID))
+                        {
+                            ReportError("重复的ID。", fieldContext.fieldValue);
+                            continue;
+                        }
                         else if (fieldNameSet.Contains(field.Name))
+                        {
                             ReportError("重复的名称。", fieldContext.fieldName);
-                        else
-                            fieldNameSet.Add(field.Name);
+                            continue;
+                        }
+
+                        if(enumIDValidate)
+                            fieldIDSet.Add(field.ID);
+
+                        fieldNameSet.Add(field.Name);
 
                         data.Fields.Add(field);
                         data2context.Add(field, fieldContext);
@@ -245,6 +270,23 @@ namespace FlatBufferData.Build
                             data.BaseType = name;
                         else
                             ReportError("enum的基类型必须是整数类型.", context.baseType);
+                    }
+
+                    var autoID = 0;
+                    var autoedIDs = new HashSet<int>();
+                    foreach(var field in data.Fields)
+                    {
+                        if (fieldIDSet.Contains(field.ID))
+                        {
+                            autoID = field.ID + 1;
+                            continue;
+                        }
+
+                        while (fieldIDSet.Contains(autoID) || autoedIDs.Contains(autoID)) { autoID++; }
+
+                        autoedIDs.Add(autoID);
+
+                        field.ID = autoID;
                     }
 
                     file.Enums.Add(data);
@@ -761,7 +803,7 @@ namespace FlatBufferData.Build
                             case "Index": attr = HandleIndex(info, item, owner); break;
                             case "Nullable": attr = HandleNullable(info, item, owner); break;
                             case "Unique": attr = HandleUnique(info, item, owner); break;
-                            case "ArrayValue": attr = HandleArrayValue(info, item, owner); break;
+                            case "ArraySeparator": attr = HandleArrayValue(info, item, owner); break;
                         }
 
                         if (attr != null)
@@ -1021,10 +1063,13 @@ namespace FlatBufferData.Build
             private Attribute HandleArrayValue(AttributeInfo attributes,AttrContext item, object owner)
             {
                 if (!(owner is TableField))
-                    ReportError("ArrayValue只能应用到table字段。", item.key);
+                    ReportError("ArraySeparator只能应用到table字段。", item.key);
 
-                if (attributes.GetAttributes<ArrayValue>().Length > 0)
-                    ReportError("ArrayValue不能多次应用到同一对象。", item.key);
+                if(!(owner as TableField).IsArray)
+                    ReportError("ArraySeparator只能应用到数组字段。", item.key);
+
+                if (attributes.GetAttributes<ArraySeparator>().Length > 0)
+                    ReportError("ArraySeparator不能多次应用到同一对象。", item.key);
 
 
                 var splitChar = ",";
@@ -1041,7 +1086,7 @@ namespace FlatBufferData.Build
                     for (var i = 1; i < fields.Length; i++) { ReportError("多余的参数。", fields[i]); }
                 }
 
-                return new ArrayValue(splitChar);
+                return new ArraySeparator(splitChar);
             }
             #endregion
 

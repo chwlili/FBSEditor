@@ -260,6 +260,7 @@
     <Compile Include="FlatBufferCode\Editor\BuildCommand.cs" />
     <Compile Include="BuildCommandPackage.cs" />
     <Compile Include="FlatBufferData\Model\Attribute.cs" />
+    <Compile Include="FlatBufferData\Model\Attributes\ArraySeparator.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\Nullable.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\Index.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\Unique.cs" />
