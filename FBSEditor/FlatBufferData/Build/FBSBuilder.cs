@@ -148,18 +148,29 @@ namespace FlatBufferData.Build
                         var field = new TableField();
                         field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
                         field.Name = fieldContext.fieldName != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldName.Text : null;
-                        field.Type = fieldContext.fieldType != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldType.GetText() : (fieldContext.arrayType != null ? fieldContext.arrayType.type.GetText() : null);
+                        field.Type = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : (fieldContext.arrayType != null ? fieldContext.arrayType.type.GetText() : null);
                         field.IsArray = fieldContext.arrayType != null && fieldContext.fieldType == null;
                         field.DefaultValue = ParseDefaultValue(field.Type, field.IsArray, fieldContext.fieldValue);
                         field.Metas = ParseMetaDatas(fieldContext.metaList);
                         field.DataField = fieldContext.fieldMap != null && fieldContext.fieldMap.StartIndex != -1 ? fieldContext.fieldMap.Text.Trim('"') : field.Name;
 
                         if (string.IsNullOrEmpty(field.Name))
+                        {
                             ReportError("名称不能为空。", fieldContext);
+                            continue;
+                        }
                         else if (fieldNameSet.Contains(field.Name))
+                        {
                             ReportError("重复的名称。", fieldContext.fieldName);
-                        else
-                            fieldNameSet.Add(field.Name);
+                            continue;
+                        }
+                        else if (string.IsNullOrEmpty(field.Type))
+                        {
+                            ReportError("类型不能为空。", fieldContext);
+                            continue;
+                        }
+
+                        fieldNameSet.Add(field.Name);
 
                         data.Fields.Add(field);
                         data2context.Add(field, fieldContext);
@@ -183,24 +194,37 @@ namespace FlatBufferData.Build
                         var field = new StructField();
                         field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
                         field.Name = fieldContext.fieldName != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldName.Text : null;
-                        field.Type = fieldContext.fieldType != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldType.GetText() : (fieldContext.arrayType != null ? fieldContext.arrayType.GetText() : null);
+                        field.Type = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : (fieldContext.arrayType != null ? fieldContext.arrayType.GetText() : null);
                         field.IsArray = fieldContext.arrayType != null && fieldContext.fieldType == null;
                         field.DefaultValue = null;
                         field.Metas = ParseMetaDatas(fieldContext.metaList);
                         field.DataField = fieldContext.fieldMap != null && fieldContext.fieldMap.StartIndex != -1 ? fieldContext.fieldMap.Text.Trim('"') : field.Name;
 
                         if (string.IsNullOrEmpty(field.Name))
+                        {
                             ReportError("名称不能为空。", fieldContext);
+                            continue;
+                        }
                         else if (fieldNameSet.Contains(field.Name))
+                        {
                             ReportError("重复的名称。", fieldContext.fieldName);
-                        else
-                            fieldNameSet.Add(field.Name);
-
-                        if (field.IsArray || "string".Equals(field.Type) || !IsNativeType(field.Type))
-                            ReportError("struct字段的类型只能是布尔，数值，struct。", fieldContext.arrayType!=null ? fieldContext.arrayType as ParserRuleContext : fieldContext.fieldType as ParserRuleContext);
-
+                            continue;
+                        }
+                        else if (string.IsNullOrEmpty(field.Type))
+                        {
+                            ReportError("类型不能为空", fieldContext);
+                            continue;
+                        }
+                        else if (field.IsArray)
+                        {
+                            ReportError("struct字段的类型不能是数组。", fieldContext.arrayType != null ? fieldContext.arrayType as ParserRuleContext : fieldContext.fieldType as ParserRuleContext);
+                            continue;
+                        }
+                        
                         if (fieldContext.fieldValue != null)
                             ReportError("struct字段目前不支持默认值。", fieldContext.fieldValue);
+
+                        fieldNameSet.Add(field.Name);
 
                         data.Fields.Add(field);
                         data2context.Add(field, fieldContext);
@@ -305,15 +329,26 @@ namespace FlatBufferData.Build
                     {
                         var field = new UnionField();
                         field.Name = fieldContext.fieldName != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldName.Text : null;
-                        field.Value = fieldContext.fieldValue != null && fieldContext.fieldValue.StartIndex != -1 ? fieldContext.fieldValue.Text : null;
+                        field.Type = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : null;
                         field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
 
                         if (string.IsNullOrEmpty(field.Name))
+                        {
                             ReportError("名称不能为空。", fieldContext);
+                            continue;
+                        }
                         else if (fieldNameSet.Contains(field.Name))
+                        {
                             ReportError("重复的名称。", fieldContext.fieldName);
-                        else
-                            fieldNameSet.Add(field.Name);
+                            continue;
+                        }
+                        else if (string.IsNullOrEmpty(field.Type))
+                        {
+                            ReportError("类型不能为空", fieldContext);
+                            continue;
+                        }
+
+                        fieldNameSet.Add(field.Name);
 
                         data.Fields.Add(field);
                         data2context.Add(field, fieldContext);
@@ -340,11 +375,17 @@ namespace FlatBufferData.Build
                         field.Metas = ParseMetaDatas(fieldContext.metaList);
 
                         if (string.IsNullOrEmpty(field.Name))
+                        {
                             ReportError("名称不能为空。", fieldContext);
+                            continue;
+                        }
                         else if (fieldNameSet.Contains(field.Name))
+                        {
                             ReportError("重复的名称。", fieldContext.fieldName);
-                        else
-                            fieldNameSet.Add(field.Name);
+                            continue;
+                        }
+
+                        fieldNameSet.Add(field.Name);
 
                         data.Fields.Add(field);
                         data2context.Add(field, fieldContext);
@@ -620,25 +661,64 @@ namespace FlatBufferData.Build
                 {
                     foreach (var field in data.Fields)
                     {
-                        if (string.IsNullOrEmpty(field.Type) || IsNativeType(field.Type)) continue;
-                        var typeName = field.Type.IndexOf(".") != -1 ? field.Type : ns + field.Type;
-                        var context = data2context[field] as TableFieldContext;
+                        var context = data2context[field] as StructFieldContext;
                         var locator = context.arrayType != null ? context.arrayType as ParserRuleContext : context.fieldType as ParserRuleContext;
-                        if (allDefined.ContainsKey(typeName))
+
+                        if ("string".Equals(field.Type))
+                            ReportError("struct字段的类型只能是bool, number, enum, struct。", locator);
+                        else if (!IsNativeType(field.Type))
                         {
-                            if (allDefined[typeName].Count > 1)
-                                ReportError(string.Format("找到多个名称为 {0} 的定义。", field.Type), locator);
-                            else if (allDefined[typeName].Count == 1)
+                            var typeName = field.Type.IndexOf(".") != -1 ? field.Type : ns + field.Type;
+                            if (allDefined.ContainsKey(typeName))
                             {
-                                var first = allDefined[typeName][0];
-                                if (first is Struct || first is Enum)
-                                    field.TypeDefined = first;
-                                else
-                                    ReportError("struct字段的类型只能是布尔，数值，struct。", locator);
+                                if (allDefined[typeName].Count > 1)
+                                    ReportError(string.Format("找到多个名称为 {0} 的定义。", field.Type), locator);
+                                else if (allDefined[typeName].Count == 1)
+                                {
+                                    var first = allDefined[typeName][0];
+                                    if (first is Struct || first is Enum)
+                                        field.TypeDefined = first;
+                                    else
+                                        ReportError("struct字段的类型只能是bool, number, enum, struct。", locator);
+                                }
                             }
+                            else
+                                ReportError(string.Format("没有找到 {0} 的定义。", field.Type), locator);
+                        }
+                    }
+                }
+                foreach(var data in file.Unions)
+                {
+                    foreach(var field in data.Fields)
+                    {
+                        if ("string".Equals(field.Type))
+                            continue;
+
+                        var context = data2context[field] as UnionFieldContext;
+                        var locator = context.fieldType as ParserRuleContext;
+                        if(IsNativeType(field.Type))
+                        {
+                            ReportError("union字段的类型只能是string, struct, table。", locator);
                         }
                         else
-                            ReportError(string.Format("没有找到 {0} 的定义。", field.Type), locator);
+                        {
+                            var typeName = field.Type.IndexOf(".") != -1 ? field.Type : ns + field.Type;
+                            if (allDefined.ContainsKey(typeName))
+                            {
+                                if (allDefined[typeName].Count > 1)
+                                    ReportError(string.Format("找到多个名称为 {0} 的定义。", field.Type), locator);
+                                else if (allDefined[typeName].Count == 1)
+                                {
+                                    var first = allDefined[typeName][0];
+                                    if (first is Struct || first is Table)
+                                        field.TypeDefined = first;
+                                    else
+                                        ReportError("union字段的类型只能是string,struct,table。", locator);
+                                }
+                            }
+                            else
+                                ReportError(string.Format("没有找到 {0} 的定义。", field.Type), locator);
+                        }
                     }
                 }
                 foreach (var data in file.Rpcs)

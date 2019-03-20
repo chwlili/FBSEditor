@@ -12,7 +12,12 @@ namespace FlatBufferData.Model
         /// <summary>
         /// 值
         /// </summary>
-        public string Value { get; set; }
+        public string Type { get; set; }
+
+        /// <summary>
+        /// 类型定义
+        /// </summary>
+        public object TypeDefined { get; set; }
 
         /// <summary>
         /// 注释

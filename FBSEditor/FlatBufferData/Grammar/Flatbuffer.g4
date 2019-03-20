@@ -29,7 +29,7 @@ enum : attr* key = 'enum' name = IDENT (':' baseType = singleType)?  metaList = 
 enumField : attr* fieldName = IDENT ('=' fieldValue = INTEGER)? ','?;
 
 union : attr* key = 'union' name = IDENT metaList = metadata? BRACE_L unionField* BRACE_R ;
-unionField : attr* fieldName = IDENT ('=' fieldValue = INTEGER)? ','?;
+unionField : attr* fieldName = IDENT ':' fieldType = singleType ','?;
 
 metadata : PARENTHESES_L (metadataField (',' metadataField)*)? PARENTHESES_R ;
 metadataField : metaName = IDENT (':' metaValue = singleValue)? ;
