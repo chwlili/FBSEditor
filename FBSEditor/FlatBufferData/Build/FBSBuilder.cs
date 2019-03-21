@@ -883,7 +883,8 @@ namespace FlatBufferData.Build
                             case "Index": attr = HandleIndex(info, item, owner); break;
                             case "Nullable": attr = HandleNullable(info, item, owner); break;
                             case "Unique": attr = HandleUnique(info, item, owner); break;
-                            case "ArraySeparator": attr = HandleArrayValue(info, item, owner); break;
+                            case "ArrayLiteral": attr = HandleArrayLiteral(info, item, owner); break;
+                            case "StructLiteral":attr = HandleStructLiteral(info, item, owner);break;
                         }
 
                         if (attr != null)
@@ -1140,33 +1141,100 @@ namespace FlatBufferData.Build
                     return new Unique();
             }
 
-            private Attribute HandleArrayValue(AttributeInfo attributes,AttrContext item, object owner)
+            private Attribute HandleArrayLiteral(AttributeInfo attributes,AttrContext item, object owner)
             {
                 if (!(owner is TableField))
-                    ReportError("ArraySeparator只能应用到table字段。", item.key);
+                    ReportError("ArrayLiteral只能应用到table字段。", item.key);
 
                 if(!(owner as TableField).IsArray)
-                    ReportError("ArraySeparator只能应用到数组字段。", item.key);
+                    ReportError("ArrayLiteral只能应用到table字段只能应用到数组字段。", item.key);
 
-                if (attributes.GetAttributes<ArraySeparator>().Length > 0)
-                    ReportError("ArraySeparator不能多次应用到同一对象。", item.key);
+                if (attributes.GetAttributes<ArrayLiteral>().Length > 0)
+                    ReportError("ArrayLiteral只能应用到table字段不能多次应用到同一对象。", item.key);
 
 
-                var splitChar = ",";
+                var beginning = "";
+                var separator = ",";
+                var ending = "";
 
                 var fields = item.attrField();
                 if (fields.Length > 0)
                 {
-                    var field = fields[0];
-                    if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
-                        ReportError("第一个参数必须是一个有效的字符串。", field);
+                    if (fields.Length != 3)
+                        ReportError("ArrayLiteral的参数项不对, 格式必须为 [ArrayLiteral(\"beginning\",\"separator\",\"ending\")]", item.key);
                     else
-                        splitChar = field.attrValue.vstr.Text.Trim('"');
+                    {
+                        var field = fields[0];
+                        if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                            ReportError("第一个参数必须是一个有效的字符串。", field);
+                        else
+                            beginning = field.attrValue.vstr.Text.Trim('"');
 
-                    for (var i = 1; i < fields.Length; i++) { ReportError("多余的参数。", fields[i]); }
+                        field = fields[1];
+                        if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                            ReportError("第二个参数必须是一个有效的字符串。", field);
+                        else
+                            separator = field.attrValue.vstr.Text.Trim('"');
+
+                        field = fields[2];
+                        if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                            ReportError("第三个参数必须是一个有效的字符串。", field);
+                        else
+                            ending = field.attrValue.vstr.Text.Trim('"');
+
+                        for (var i = 3; i < fields.Length; i++) { ReportError("多余的参数。", fields[i]); }
+                    }
                 }
 
-                return new ArraySeparator(splitChar);
+                return new ArrayLiteral(beginning,separator,ending);
+            }
+
+            private Attribute HandleStructLiteral(AttributeInfo attributes, AttrContext item, object owner)
+            {
+                if (!(owner is TableField))
+                    ReportError("StructLiteral只能应用到table字段。", item.key);
+
+                if (!(owner as TableField).IsArray)
+                    ReportError("StructLiteral只能应用到table字段只能应用到数组字段。", item.key);
+
+                if (attributes.GetAttributes<ArrayLiteral>().Length > 0)
+                    ReportError("StructLiteral只能应用到table字段不能多次应用到同一对象。", item.key);
+
+
+                var beginning = "";
+                var separator = ",";
+                var ending = "";
+
+                var fields = item.attrField();
+                if (fields.Length > 0)
+                {
+                    if (fields.Length != 3)
+                        ReportError("StructLiteral的参数项不对, 格式必须为 [StructLiteral(\"beginning\",\"separator\",\"ending\")]", item.key);
+                    else
+                    {
+                        var field = fields[0];
+                        if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                            ReportError("第一个参数必须是一个有效的字符串。", field);
+                        else
+                            beginning = field.attrValue.vstr.Text.Trim('"');
+
+                        field = fields[1];
+                        if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                            ReportError("第二个参数必须是一个有效的字符串。", field);
+                        else
+                            separator = field.attrValue.vstr.Text.Trim('"');
+
+                        field = fields[2];
+                        if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                            ReportError("第三个参数必须是一个有效的字符串。", field);
+                        else
+                            ending = field.attrValue.vstr.Text.Trim('"');
+
+                        for (var i = 3; i < fields.Length; i++) { ReportError("多余的参数。", fields[i]); }
+                    }
+                }
+
+                return new StructLiteral(beginning, separator, ending);
             }
             #endregion
 

@@ -157,9 +157,15 @@ namespace FlatBufferData.Build
                             cellText = cellText.Trim();
 
                             var separator = ",";
-                            var arrayValue = fieldSchema.Attributes.GetAttribte<ArraySeparator>();
+                            var arrayValue = fieldSchema.Attributes.GetAttribte<ArrayLiteral>();
                             if (arrayValue != null)
-                                separator = arrayValue.splite;
+                            {
+                                separator = arrayValue.separator;
+                                if (cellText.StartsWith(arrayValue.beginning))
+                                    cellText = cellText.Substring(arrayValue.beginning.Length);
+                                if (cellText.EndsWith(arrayValue.ending))
+                                    cellText = cellText.Substring(0, cellText.Length - arrayValue.ending.Length);
+                            }
 
                             var cellTextParts = string.IsNullOrEmpty(cellText) ? new string[] { } : cellText.Split(new string[] { separator }, StringSplitOptions.None);
                             if (IsInteger(fieldSchemaType))
@@ -630,6 +636,16 @@ namespace FlatBufferData.Build
             error = errors.Count > 0 ? string.Format("第{0}个列表元素不是有效的{1}枚举值，已当作0处理。", string.Join(",", errors), type.Name) : null;
 
             return array;
+        }
+
+        #endregion
+
+
+        #region 结构
+
+        private object GetStruct(ICell cellData, Model.Struct type, bool isUnique, bool isIndex, bool isNullable, object defaultValue, out string error)
+        {
+
         }
 
         #endregion
