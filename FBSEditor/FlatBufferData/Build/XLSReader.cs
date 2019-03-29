@@ -184,42 +184,77 @@ namespace FlatBufferData.Build
                         }
                         else
                         {
-                            if (cellData == null || cellData.CellType == CellType.Blank)
+                            if (fieldSchema.TypeDefined is Model.Struct)
                             {
-                                if (!isNullable || isUnique)
-                                    fieldError = String.Format("内容不允许为空!");
-                                else if (isIndex)
-                                    fieldError = String.Format("索引字段不允许为空!");
-                                else
-                                    fieldValue = defaultValue != null ? defaultValue : 0;
+                                string cellText = null;
+
+                                if (cellData == null || cellData.CellType == CellType.Blank)
+                                    cellText = "";
+                                else if (cellData.CellType == CellType.String)
+                                    cellText = cellData.StringCellValue.Trim();
+                                else if (cellData.CellType == CellType.Numeric)
+                                    cellText = cellData.NumericCellValue.ToString();
+
+                                if (cellText == null)
+                                {
+                                    cellText = "";
+                                    fieldError = string.Format("内容无法转换成有效的{0}数组。", fieldSchemaType);
+                                }
+
+                                cellText = cellText.Trim();
+
+                                var separator = ",";
+                                var structValue = fieldSchema.Attributes.GetAttribte<StructLiteral>();
+                                if (structValue != null)
+                                {
+                                    separator = structValue.separator;
+                                    if (cellText.StartsWith(structValue.beginning))
+                                        cellText = cellText.Substring(structValue.beginning.Length);
+                                    if (cellText.EndsWith(structValue.ending))
+                                        cellText = cellText.Substring(0, cellText.Length - structValue.ending.Length);
+                                }
+                                var cellTextParts = string.IsNullOrEmpty(cellText) ? new string[] { } : cellText.Split(new string[] { separator }, StringSplitOptions.None);
+
                             }
                             else
                             {
-                                if (IsInteger(fieldSchemaType))
-                                    fieldValue = GetInteger(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
-                                else if (IsFloat(fieldSchemaType))
-                                    fieldValue = GetFloat(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
-                                else if (IsBool(fieldSchemaType))
-                                    fieldValue = GetBool(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
-                                else if (IsString(fieldSchemaType))
-                                    fieldValue = GetString(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
+                                if (cellData == null || cellData.CellType == CellType.Blank)
+                                {
+                                    if (!isNullable || isUnique)
+                                        fieldError = String.Format("内容不允许为空!");
+                                    else if (isIndex)
+                                        fieldError = String.Format("索引字段不允许为空!");
+                                    else
+                                        fieldValue = defaultValue != null ? defaultValue : 0;
+                                }
                                 else
                                 {
-                                    if (fieldSchema.TypeDefined is Model.Enum)
-                                        fieldValue = GetEnum(cellData, fieldSchema.TypeDefined as Model.Enum, isUnique, isIndex, isNullable, defaultValue, out fieldError);
-                                    else if(fieldSchema.TypeDefined is Model.Struct)
-                                    {
-                                        // struct
-                                    }
+                                    if (IsInteger(fieldSchemaType))
+                                        fieldValue = GetInteger(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
+                                    else if (IsFloat(fieldSchemaType))
+                                        fieldValue = GetFloat(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
+                                    else if (IsBool(fieldSchemaType))
+                                        fieldValue = GetBool(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
+                                    else if (IsString(fieldSchemaType))
+                                        fieldValue = GetString(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
                                     else
                                     {
-                                        /*
-                                        if(Factory!=null)
+                                        if (fieldSchema.TypeDefined is Model.Enum)
+                                            fieldValue = GetEnum(cellData, fieldSchema.TypeDefined as Model.Enum, isUnique, isIndex, isNullable, defaultValue, out fieldError);
+                                        else if (fieldSchema.TypeDefined is Model.Struct)
                                         {
-                                            //Factory.ReadData(fieldSchema.TypeDefined,cellData.)
-                                            fieldSchema.TypeDefined
+                                            // struct
                                         }
-                                        */
+                                        else
+                                        {
+                                            /*
+                                            if(Factory!=null)
+                                            {
+                                                //Factory.ReadData(fieldSchema.TypeDefined,cellData.)
+                                                fieldSchema.TypeDefined
+                                            }
+                                            */
+                                        }
                                     }
                                 }
                             }
@@ -643,9 +678,159 @@ namespace FlatBufferData.Build
 
         #region 结构
 
-        private object GetStruct(ICell cellData, Model.Struct type, bool isUnique, bool isIndex, bool isNullable, object defaultValue, out string error)
+        private object GetStruct(string[] txts, Model.Struct type, bool isUnique, bool isIndex, bool isNullable, object defaultValue, out string error)
         {
+            var values = new Dictionary<string, object>();
+            var errors = new List<int>();
+            var emptys = new List<int>();
 
+            for(int i=0;i<txts.Length;i++)
+            {
+                if (i < type.Fields.Count)
+                {
+                    var txt = txts[i];
+                    var field = type.Fields[i];
+                    if (IsInteger(field.Type) || IsFloat(field.Type) || IsBool(field.Type))
+                    {
+                        object result = null;
+                        if (TryParse(txt.Trim(), field.Type, out result))
+                            values.Add(field.Name, result);
+                        else
+                            errors.Add(i);
+                    }
+                    else if(field.TypeDefined is Model.Enum)
+                    {
+                        txt = txt.Trim();
+
+                        //按名称查找枚举
+                        var nameFound = false;
+                        foreach(var enumField in (field.TypeDefined as Model.Enum).Fields)
+                        {
+                            if(enumField.Name.Equals(txt))
+                            {
+                                values.Add(field.Name, enumField.ID);
+                                nameFound = true;
+                                break;
+                            }
+                        }
+                        if (nameFound) continue;
+
+                        //按ID查找枚举
+                        var idFound = false;
+                        var enumID = 0;
+                        if (int.TryParse(txt, out enumID))
+                        {
+                            foreach (var enumField in (field.TypeDefined as Model.Enum).Fields)
+                            {
+                                if (enumField.ID == enumID)
+                                {
+                                    values.Add(field.Name, enumField.ID);
+                                    idFound = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (idFound) continue;
+
+                        //报错
+                        errors.Add(i);
+                    }
+                    else if(field.TypeDefined is Model.Struct)
+                    {
+
+                    }
+                }
+                else
+                    emptys.Add(i);
+            }
+
+            return values;
+        }
+
+        private bool TryParse(string text,string fieldSchemaType,out object result)
+        {
+            bool success = true;
+            if (fieldSchemaType.Equals("byte") || fieldSchemaType.Equals("int8"))
+            {
+                sbyte value = 0;
+                if (!sbyte.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (fieldSchemaType.Equals("ubyte") || fieldSchemaType.Equals("uint8"))
+            {
+                byte value = 0;
+                if (!byte.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (fieldSchemaType.Equals("short") || fieldSchemaType.Equals("int16"))
+            {
+                short value = 0;
+                if (!short.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (fieldSchemaType.Equals("ushort") || fieldSchemaType.Equals("uint16"))
+            {
+                ushort value = 0;
+                if (!ushort.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (fieldSchemaType.Equals("int") || fieldSchemaType.Equals("int32"))
+            {
+                int value = 0;
+                if (!int.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (fieldSchemaType.Equals("uint") || fieldSchemaType.Equals("uint32"))
+            {
+                uint value = 0;
+                if (!uint.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (fieldSchemaType.Equals("long") || fieldSchemaType.Equals("int64"))
+            {
+                long value = 0;
+                if (!long.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (fieldSchemaType.Equals("ulong") || fieldSchemaType.Equals("uint64"))
+            {
+                ulong value = 0;
+                if (!ulong.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (fieldSchemaType.Equals("float") || fieldSchemaType.Equals("float32"))
+            {
+                float value = 0;
+                if (!float.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (fieldSchemaType.Equals("double") || fieldSchemaType.Equals("double64"))
+            {
+                double value = 0;
+                if (!double.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if(fieldSchemaType.Equals("bool"))
+            {
+                bool value = false;
+
+                double value1 = 0;
+                bool value2 = false;
+                if (double.TryParse(text, out value1))
+                    value = value1 != 0;
+                else if (bool.TryParse(text, out value2))
+                    value = value2;
+                else
+                    success = false;
+
+                result = value2;
+            }
+            else
+            {
+                result = null;
+            }
+
+            return success;
         }
 
         #endregion
