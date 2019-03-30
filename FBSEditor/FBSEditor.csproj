@@ -259,6 +259,12 @@
     <Compile Include="FlatBufferData\Editor\BuildCommand.cs" />
     <Compile Include="FlatBufferCode\Editor\BuildCommand.cs" />
     <Compile Include="BuildCommandPackage.cs" />
+    <Compile Include="FlatBufferData\Grammar\Json\JsonBaseListener.cs" />
+    <Compile Include="FlatBufferData\Grammar\Json\JsonBaseVisitor.cs" />
+    <Compile Include="FlatBufferData\Grammar\Json\JsonLexer.cs" />
+    <Compile Include="FlatBufferData\Grammar\Json\JsonListener.cs" />
+    <Compile Include="FlatBufferData\Grammar\Json\JsonParser.cs" />
+    <Compile Include="FlatBufferData\Grammar\Json\JsonVisitor.cs" />
     <Compile Include="FlatBufferData\Model\Attribute.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\ArrayLiteral.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\Nullable.cs" />
@@ -323,6 +329,10 @@
     <None Include="FlatBufferData\Flatc\test.fbs" />
     <None Include="FlatBufferData\Grammar\Build.bat" />
     <Antlr4 Include="FlatBufferData\Grammar\Flatbuffer.g4">
+      <Generator>MSBuild:Compile</Generator>
+      <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
+    </Antlr4>
+    <Antlr4 Include="FlatBufferData\Grammar\Json.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
     </Antlr4>
