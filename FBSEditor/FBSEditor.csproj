@@ -267,6 +267,7 @@
     <Compile Include="FlatBufferData\Grammar\Json\JsonVisitor.cs" />
     <Compile Include="FlatBufferData\Model\Attribute.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\ArrayLiteral.cs" />
+    <Compile Include="FlatBufferData\Model\Attributes\Json.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\Nullable.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\Index.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\StructLiteral.cs" />

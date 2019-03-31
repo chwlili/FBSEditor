@@ -885,6 +885,7 @@ namespace FlatBufferData.Build
                             case "Unique": attr = HandleUnique(info, item, owner); break;
                             case "ArrayLiteral": attr = HandleArrayLiteral(info, item, owner); break;
                             case "StructLiteral":attr = HandleStructLiteral(info, item, owner);break;
+                            case "Json":attr = HandleJson(info, item, owner);break;
                         }
 
                         if (attr != null)
@@ -1151,6 +1152,10 @@ namespace FlatBufferData.Build
 
                 if (attributes.GetAttributes<ArrayLiteral>().Length > 0)
                     ReportError("ArrayLiteral只能应用到table字段不能多次应用到同一对象。", item.key);
+                if (attributes.GetAttributes<StructLiteral>().Length > 0)
+                    ReportError("ArrayLiteral不能和StructLiteral应用到同一个对象。", item.key);
+                if (attributes.GetAttributes<Json>().Length > 0)
+                    ReportError("ArrayLiteral不能和Json应用到同一个对象。", item.key);
 
 
                 var beginning = "";
@@ -1189,6 +1194,7 @@ namespace FlatBufferData.Build
                 return new ArrayLiteral(beginning,separator,ending);
             }
 
+
             private Attribute HandleStructLiteral(AttributeInfo attributes, AttrContext item, object owner)
             {
                 if(!(owner is Struct) && !(owner is StructField) && !(owner is TableField))
@@ -1200,8 +1206,12 @@ namespace FlatBufferData.Build
                 if((owner is TableField) && !((owner as TableField).TypeDefined is Struct))
                     ReportError("StructLiteral不能应用到类型不是Struct的TableField", item.key);
 
-                if (attributes.GetAttributes<ArrayLiteral>().Length > 0)
+                if (attributes.GetAttributes<StructLiteral>().Length > 0)
                     ReportError("StructLiteral只能应用到table字段不能多次应用到同一对象。", item.key);
+                if (attributes.GetAttributes<ArrayLiteral>().Length > 0)
+                    ReportError("StructLiteral不能和ArrayLiteral应用到同一个对象。", item.key);
+                if (attributes.GetAttributes<Json>().Length > 0)
+                    ReportError("StructLiteral不能和Json应用到同一个对象。", item.key);
 
 
                 var beginning = "";
@@ -1211,7 +1221,7 @@ namespace FlatBufferData.Build
                 var fields = item.attrField();
                 if (fields.Length > 0)
                 {
-                    if (fields.Length != 3)
+                    if (fields.Length < 3)
                         ReportError("StructLiteral的参数项不对, 格式必须为 [StructLiteral(\"beginning\",\"separator\",\"ending\")]", item.key);
                     else
                     {
@@ -1238,6 +1248,32 @@ namespace FlatBufferData.Build
                 }
 
                 return new StructLiteral(beginning, separator, ending);
+            }
+            private Attribute HandleJson(AttributeInfo attributes, AttrContext item, object owner)
+            {
+                if (!(owner is Table) && !(owner is Struct) && !(owner is TableField) && !(owner is StructField))
+                    ReportError("Json只能应用到Table,Struct,TableField,StructField。", item.key);
+                if (attributes.GetAttributes<Json>().Length > 0)
+                    ReportError("Json不能重复应用到同一个对象。", item.key);
+                if (attributes.GetAttributes<ArrayLiteral>().Length > 0)
+                    ReportError("Json不能和ArrayLiteral应用到同一个对象。", item.key);
+                if (attributes.GetAttributes<StructLiteral>().Length > 0)
+                    ReportError("Json不能和StructLiteral应用到同一个对象。", item.key);
+
+                var jsonPath = "";
+                var fields = item.attrField();
+                if (fields.Length > 0)
+                {
+                    var field = fields[0];
+                    if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                        ReportError("第一个参数必须是一个有效的字符串。", field);
+                    else
+                        jsonPath = field.attrValue.vstr.Text.Trim('"');
+
+                    for (var i = 1; i < fields.Length; i++) { ReportError("多余的参数。", fields[i]); }
+                }
+
+                return new Json(jsonPath);
             }
             #endregion
 
