@@ -198,23 +198,15 @@ namespace FlatBufferData.Build
                                 if (cellText == null)
                                 {
                                     cellText = "";
-                                    fieldError = string.Format("内容无法转换成有效的{0}数组。", fieldSchemaType);
+                                    fieldError = string.Format("内容无法转换成有效的{0}。", fieldSchemaType);
                                 }
 
                                 cellText = cellText.Trim();
 
-                                var separator = ",";
-                                var structValue = fieldSchema.Attributes.GetAttribte<StructLiteral>();
-                                if (structValue != null)
-                                {
-                                    separator = structValue.separator;
-                                    if (cellText.StartsWith(structValue.beginning))
-                                        cellText = cellText.Substring(structValue.beginning.Length);
-                                    if (cellText.EndsWith(structValue.ending))
-                                        cellText = cellText.Substring(0, cellText.Length - structValue.ending.Length);
-                                }
-                                var cellTextParts = string.IsNullOrEmpty(cellText) ? new string[] { } : cellText.Split(new string[] { separator }, StringSplitOptions.None);
-
+                                var errorList = new List<string>();
+                                fieldValue = GetStruct(cellText, fieldSchema, errorList);
+                                if (errorList.Count > 0)
+                                    fieldError = string.Join("\n", errorList);
                             }
                             else
                             {
@@ -241,10 +233,6 @@ namespace FlatBufferData.Build
                                     {
                                         if (fieldSchema.TypeDefined is Model.Enum)
                                             fieldValue = GetEnum(cellData, fieldSchema.TypeDefined as Model.Enum, isUnique, isIndex, isNullable, defaultValue, out fieldError);
-                                        else if (fieldSchema.TypeDefined is Model.Struct)
-                                        {
-                                            // struct
-                                        }
                                         else
                                         {
                                             /*
@@ -678,139 +666,123 @@ namespace FlatBufferData.Build
 
         #region 结构
 
-        private object GetStruct(string[] txts, Model.Struct type, bool isUnique, bool isIndex, bool isNullable, object defaultValue, out string error)
+        private object GetStruct(string text,StructField fieldDefined,List<string> errors)
         {
-            var values = new Dictionary<string, object>();
-            var errors = new List<int>();
-            var emptys = new List<int>();
+            text = text.Trim();
 
-            for(int i=0;i<txts.Length;i++)
+            //查找自定义的分割规则
+            var separator = ",";
+            var structValue = fieldDefined.Attributes.GetAttribte<StructLiteral>();
+            if (structValue == null)
+                structValue = (fieldDefined.TypeDefined as Model.Struct).Attributes.GetAttribte<StructLiteral>();
+            if (structValue != null)
             {
+                separator = structValue.separator;
+                if (text.StartsWith(structValue.beginning))
+                    text = text.Substring(structValue.beginning.Length);
+                if (text.EndsWith(structValue.ending))
+                    text = text.Substring(0, text.Length - structValue.ending.Length);
+            }
+
+            //分割字符串
+            var texts = new string[] { };
+            if (!string.IsNullOrEmpty(text))
+                texts = text.Split(new string[] { separator }, StringSplitOptions.None);
+
+            //解析字符串
+            var values = new Dictionary<string, object>();
+            var type = fieldDefined.TypeDefined as Struct;
+            for (int i=0;i<texts.Length;i++)
+            {
+                var txt = texts[i].Trim();
                 if (i < type.Fields.Count)
                 {
-                    var txt = txts[i];
                     var field = type.Fields[i];
-                    if (IsInteger(field.Type) || IsFloat(field.Type) || IsBool(field.Type))
+                    if (field.IsInteger() || field.IsFloat() || field.IsBool() || field.IsEnum())
                     {
                         object result = null;
-                        if (TryParse(txt.Trim(), field.Type, out result))
+                        if (TryParse(txt.Trim(), field, out result))
                             values.Add(field.Name, result);
                         else
-                            errors.Add(i);
+                            errors.Add(string.Format("第{0}个元素{1}无法解析成{2}。", i, txt, field.Type));
                     }
-                    else if(field.TypeDefined is Model.Enum)
-                    {
-                        txt = txt.Trim();
-
-                        //按名称查找枚举
-                        var nameFound = false;
-                        foreach(var enumField in (field.TypeDefined as Model.Enum).Fields)
-                        {
-                            if(enumField.Name.Equals(txt))
-                            {
-                                values.Add(field.Name, enumField.ID);
-                                nameFound = true;
-                                break;
-                            }
-                        }
-                        if (nameFound) continue;
-
-                        //按ID查找枚举
-                        var idFound = false;
-                        var enumID = 0;
-                        if (int.TryParse(txt, out enumID))
-                        {
-                            foreach (var enumField in (field.TypeDefined as Model.Enum).Fields)
-                            {
-                                if (enumField.ID == enumID)
-                                {
-                                    values.Add(field.Name, enumField.ID);
-                                    idFound = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (idFound) continue;
-
-                        //报错
-                        errors.Add(i);
-                    }
-                    else if(field.TypeDefined is Model.Struct)
-                    {
-
-                    }
+                    else if (field.IsStruct())
+                        values.Add(field.Name, GetStruct(txt, field, errors));
                 }
                 else
-                    emptys.Add(i);
+                    errors.Add(string.Format("第{0}个元素将被忽略，因为{1}的字段数量只有{2}个。", i, type.Name, type.Fields.Count));
             }
+
+            for (int i = texts.Length; i < type.Fields.Count; i++)
+                errors.Add(String.Format("字段{0}没有对应的数据项，因为数据只有{1}个元素。", type.Fields[i].Name, texts.Length));
 
             return values;
         }
 
-        private bool TryParse(string text,string fieldSchemaType,out object result)
+        private bool TryParse(string text,Model.StructField field,out object result)
         {
             bool success = true;
-            if (fieldSchemaType.Equals("byte") || fieldSchemaType.Equals("int8"))
+            if (field.Type.Equals("byte") || field.Type.Equals("int8"))
             {
                 sbyte value = 0;
                 if (!sbyte.TryParse(text, out value)) success = false;
                 result = value;
             }
-            else if (fieldSchemaType.Equals("ubyte") || fieldSchemaType.Equals("uint8"))
+            else if (field.Type.Equals("ubyte") || field.Type.Equals("uint8"))
             {
                 byte value = 0;
                 if (!byte.TryParse(text, out value)) success = false;
                 result = value;
             }
-            else if (fieldSchemaType.Equals("short") || fieldSchemaType.Equals("int16"))
+            else if (field.Type.Equals("short") || field.Type.Equals("int16"))
             {
                 short value = 0;
                 if (!short.TryParse(text, out value)) success = false;
                 result = value;
             }
-            else if (fieldSchemaType.Equals("ushort") || fieldSchemaType.Equals("uint16"))
+            else if (field.Type.Equals("ushort") || field.Type.Equals("uint16"))
             {
                 ushort value = 0;
                 if (!ushort.TryParse(text, out value)) success = false;
                 result = value;
             }
-            else if (fieldSchemaType.Equals("int") || fieldSchemaType.Equals("int32"))
+            else if (field.Type.Equals("int") || field.Type.Equals("int32"))
             {
                 int value = 0;
                 if (!int.TryParse(text, out value)) success = false;
                 result = value;
             }
-            else if (fieldSchemaType.Equals("uint") || fieldSchemaType.Equals("uint32"))
+            else if (field.Type.Equals("uint") || field.Type.Equals("uint32"))
             {
                 uint value = 0;
                 if (!uint.TryParse(text, out value)) success = false;
                 result = value;
             }
-            else if (fieldSchemaType.Equals("long") || fieldSchemaType.Equals("int64"))
+            else if (field.Type.Equals("long") || field.Type.Equals("int64"))
             {
                 long value = 0;
                 if (!long.TryParse(text, out value)) success = false;
                 result = value;
             }
-            else if (fieldSchemaType.Equals("ulong") || fieldSchemaType.Equals("uint64"))
+            else if (field.Type.Equals("ulong") || field.Type.Equals("uint64"))
             {
                 ulong value = 0;
                 if (!ulong.TryParse(text, out value)) success = false;
                 result = value;
             }
-            else if (fieldSchemaType.Equals("float") || fieldSchemaType.Equals("float32"))
+            else if (field.Type.Equals("float") || field.Type.Equals("float32"))
             {
                 float value = 0;
                 if (!float.TryParse(text, out value)) success = false;
                 result = value;
             }
-            else if (fieldSchemaType.Equals("double") || fieldSchemaType.Equals("double64"))
+            else if (field.Type.Equals("double") || field.Type.Equals("double64"))
             {
                 double value = 0;
                 if (!double.TryParse(text, out value)) success = false;
                 result = value;
             }
-            else if(fieldSchemaType.Equals("bool"))
+            else if(field.Type.Equals("bool"))
             {
                 bool value = false;
 
@@ -824,6 +796,50 @@ namespace FlatBufferData.Build
                     success = false;
 
                 result = value2;
+            }
+            else if(field.Type.Equals("string"))
+            {
+                result = text;
+            }
+            else if(field.IsEnum())
+            {
+                EnumField value = null;
+                var enumType = field.TypeDefined as Model.Enum;
+
+                //按名称查找枚举
+                foreach (var enumField in enumType.Fields)
+                {
+                    if (enumField.Name.Equals(text))
+                    {
+                        value = enumField;
+                        break;
+                    }
+                }
+
+                //按ID查找枚举
+                if (value == null)
+                {
+                    var enumID = 0;
+                    if (int.TryParse(text, out enumID))
+                    {
+                        foreach (var enumField in (field.TypeDefined as Model.Enum).Fields)
+                        {
+                            if (enumField.ID == enumID)
+                            {
+                                value = enumField;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (value != null)
+                    result = value.ID;
+                else
+                {
+                    result = null;
+                    success = false;
+                }
             }
             else
             {

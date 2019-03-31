@@ -269,6 +269,7 @@
     <Compile Include="FlatBufferData\Model\Attributes\ArrayLiteral.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\Nullable.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\Index.cs" />
+    <Compile Include="FlatBufferData\Model\Attributes\StructLiteral.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\Unique.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\XLS.cs" />
     <Compile Include="FlatBufferData\Model\Enum.cs" />

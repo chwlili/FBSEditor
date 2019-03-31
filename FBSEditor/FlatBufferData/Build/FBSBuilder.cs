@@ -1191,11 +1191,14 @@ namespace FlatBufferData.Build
 
             private Attribute HandleStructLiteral(AttributeInfo attributes, AttrContext item, object owner)
             {
-                if (!(owner is TableField))
-                    ReportError("StructLiteral只能应用到table字段。", item.key);
+                if(!(owner is Struct) && !(owner is StructField) && !(owner is TableField))
+                    ReportError("StructLiteral只能应用到 Struct、StructField、TableField。", item.key);
 
-                if (!(owner as TableField).IsArray)
-                    ReportError("StructLiteral只能应用到table字段只能应用到数组字段。", item.key);
+                if ((owner is StructField) && !((owner as StructField).TypeDefined is Struct))
+                    ReportError("StructLiteral不能应用到类型不是Struct的StructField", item.key);
+
+                if((owner is TableField) && !((owner as TableField).TypeDefined is Struct))
+                    ReportError("StructLiteral不能应用到类型不是Struct的TableField", item.key);
 
                 if (attributes.GetAttributes<ArrayLiteral>().Length > 0)
                     ReportError("StructLiteral只能应用到table字段不能多次应用到同一对象。", item.key);
