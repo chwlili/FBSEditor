@@ -1,14 +1,14 @@
 grammar Json;
 
-root : array | struct;
+json : arraryValue = jsonArray | objectValue = jsonObject;
 
-array : '[' (value (',' value)*)? ']';
+jsonArray : '[' (arrayElement += jsonValue (',' arrayElement += jsonValue)*)? ']';
 
-struct : '{' (props += prop (',' props += prop)*)? '}';
+jsonObject : '{' (props += jsonProp (',' props += jsonProp)*)? '}';
 
-prop : (propName = STRING | propName = IDENT) ':' value;
+jsonProp : (propName = STRING | propName = IDENT) ':' propValue = jsonValue;
 
-value : strValue = STRING | intValue = INTEGER | floatValue = FLOAT | boolValue = BOOL | nullValue = 'null' | structValue = struct | arraryValue = array;
+jsonValue : strValue = STRING | intValue = INTEGER | floatValue = FLOAT | boolValue = BOOL | nullValue = 'null' | objectValue = jsonObject | arraryValue = jsonArray;
 
 INTEGER : '-'?[0-9]+ ;
 

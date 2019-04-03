@@ -1,4 +1,5 @@
-﻿using FlatBufferData.Model;
+﻿using Antlr4.Runtime;
+using FlatBufferData.Model;
 using FlatBufferData.Model.Attributes;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
@@ -665,6 +666,14 @@ namespace FlatBufferData.Build
 
 
         #region 结构
+
+        private object TryParse(JsonLiteral jsonLiteral, Struct structType, string text)
+        {
+            var jsonLexer = new JsonLexer(new AntlrInputStream(text));
+            var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
+
+            var json = jsonParser.root();
+        }
 
         private object GetStruct(string text,StructField fieldDefined,List<string> errors)
         {
