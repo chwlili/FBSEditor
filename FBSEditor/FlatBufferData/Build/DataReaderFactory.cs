@@ -27,7 +27,7 @@ namespace FlatBufferData.Build
         {
             if (file.RootTable == null) return;
 
-            var xls = file.RootTable.Attributes.GetAttribte<XLS>();
+            var xls = file.RootTable.GetAttribte<XLS>();
             if (xls != null)
             {
                 var reader = new XLSReader();
@@ -38,33 +38,33 @@ namespace FlatBufferData.Build
 
         public void ReadData(Table schema)
         {
-            var reader = GetReader(schema.Attributes);
+            var reader = GetReader(schema);
             if (reader != null)
                 reader.Read(schema);
         }
 
         public void ReadData(Table schema, string text)
         {
-            var reader = GetReader(schema.Attributes);
+            var reader = GetReader(schema);
             if (reader != null)
                 reader.Read(schema, text);
         }
 
         public void ReadData(Struct schema)
         {
-            var reader = GetReader(schema.Attributes);
+            var reader = GetReader(schema);
             if (reader != null)
                 reader.Read(schema);
         }
 
         public void ReadData(Struct schema, string text)
         {
-            var reader = GetReader(schema.Attributes);
+            var reader = GetReader(schema);
             if (reader != null)
                 reader.Read(schema, text);
         }
 
-        protected virtual DataReader GetReader(AttributeInfo attributes)
+        protected virtual DataReader GetReader(Base attributes)
         {
             DataReader reader = null;
             var xls = attributes.GetAttribte<XLS>();

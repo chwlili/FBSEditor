@@ -14,7 +14,7 @@ namespace FlatBufferData.Build
 
         public override void Read(Table table)
         {
-            var xls = table.Attributes.GetAttribte<XLS>();
+            var xls = table.GetAttribte<XLS>();
             var filePath = xls.filePath;
             var sheetName = xls.sheetName;
             var titleRowIndex = xls.titleRow - 1;
@@ -24,7 +24,7 @@ namespace FlatBufferData.Build
             var dataSetWidth = table.Fields.Count;
 
             var indexKeys = new HashSet<string>();
-            foreach (var index in table.Attributes.GetAttributes<Index>())
+            foreach (var index in table.GetAttributes<Index>())
             {
                 foreach (var dataKey in index.fields)
                 {
@@ -129,9 +129,9 @@ namespace FlatBufferData.Build
                         var fieldSchemaType = fieldSchema.Type;
 
                         var isArray = fieldSchema.IsArray;
-                        var isUnique = fieldSchema.Attributes.GetAttribte<Unique>() != null;
+                        var isUnique = fieldSchema.GetAttribte<Unique>() != null;
                         var isIndex = indexKeys.Contains(fieldSchema.DataField);
-                        var isNullable = fieldSchema.Attributes.GetAttribte<Model.Attributes.Nullable>() != null ? fieldSchema.Attributes.GetAttribte<Model.Attributes.Nullable>().nullable : true;
+                        var isNullable = fieldSchema.GetAttribte<Model.Attributes.Nullable>() != null ? fieldSchema.GetAttribte<Model.Attributes.Nullable>().nullable : true;
                         var defaultValue = fieldSchema.DefaultValue;
 
                         string fieldError = null;
@@ -157,7 +157,7 @@ namespace FlatBufferData.Build
                             cellText = cellText.Trim();
 
                             var separator = ",";
-                            var arrayValue = fieldSchema.Attributes.GetAttribte<ArrayLiteral>();
+                            var arrayValue = fieldSchema.GetAttribte<ArrayLiteral>();
                             if (arrayValue != null)
                             {
                                 separator = arrayValue.separator;
@@ -670,11 +670,32 @@ namespace FlatBufferData.Build
         {
             text = text.Trim();
 
+            StructLiteral structLiteral = null;
+            JsonLiteral jsonLiteral = null;
+            foreach(var attribute in fieldDefined.Attributes)
+            {
+                if (attribute is StructLiteral)
+                {
+                    structLiteral = attribute as StructLiteral;
+                    break;
+                }
+                else if(attribute is JsonLiteral)
+                {
+                    jsonLiteral = attribute as JsonLiteral;
+                    break;
+                }
+            }
+
+            if(structLiteral==null && jsonLiteral!=null)
+            {
+                //foreach(var attribute in (fieldDefined.TypeDefined))
+            }
+
             //查找自定义的分割规则
             var separator = ",";
-            var structValue = fieldDefined.Attributes.GetAttribte<StructLiteral>();
+            var structValue = fieldDefined.GetAttribte<StructLiteral>();
             if (structValue == null)
-                structValue = (fieldDefined.TypeDefined as Model.Struct).Attributes.GetAttribte<StructLiteral>();
+                structValue = (fieldDefined.TypeDefined as Model.Struct).GetAttribte<StructLiteral>();
             if (structValue != null)
             {
                 separator = structValue.separator;
@@ -719,7 +740,14 @@ namespace FlatBufferData.Build
             return values;
         }
 
-        private bool TryParse(string text,Model.StructField field,out object result)
+        /// <summary>
+        /// 尝试解析标量内容
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="field"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        private bool TryParse(string text, Model.StructField field, out object result)
         {
             bool success = true;
             if (field.Type.Equals("byte") || field.Type.Equals("int8"))
@@ -782,7 +810,7 @@ namespace FlatBufferData.Build
                 if (!double.TryParse(text, out value)) success = false;
                 result = value;
             }
-            else if(field.Type.Equals("bool"))
+            else if (field.Type.Equals("bool"))
             {
                 bool value = false;
 
@@ -797,11 +825,11 @@ namespace FlatBufferData.Build
 
                 result = value2;
             }
-            else if(field.Type.Equals("string"))
+            else if (field.Type.Equals("string"))
             {
                 result = text;
             }
-            else if(field.IsEnum())
+            else if (field.IsEnum())
             {
                 EnumField value = null;
                 var enumType = field.TypeDefined as Model.Enum;
