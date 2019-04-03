@@ -1,13 +1,13 @@
 ﻿namespace FlatBufferData.Model.Attributes
 {
-    class Json : Attribute
+    class JsonLiteral : Attribute
     {
         /// <summary>
         /// 起始符
         /// </summary>
         public string path;
 
-        public Json(string path)
+        public JsonLiteral(string path)
         {
             this.path = path;
         }

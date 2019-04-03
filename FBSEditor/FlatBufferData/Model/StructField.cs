@@ -2,7 +2,7 @@
 
 namespace FlatBufferData.Model
 {
-    public class StructField
+    public class StructField : Base
     {
         private static List<string> integerTypes = new List<string>() { "byte", "int8", "ubyte", "uint8", "short", "int16", "ushort", "uint16", "int", "int32", "uint", "uint32", "long", "int64", "ulong", "uint64" };
         private static List<string> floatTypes = new List<string>() { "float", "float32", "double", "double64" };
@@ -13,11 +13,6 @@ namespace FlatBufferData.Model
         /// 元数据列表
         /// </summary>
         public List<Meta> Metas { get; set; } = new List<Meta>();
-
-        /// <summary>
-        /// 名称
-        /// </summary>
-        public string Name { get; set; }
 
         /// <summary>
         /// 类型名称
@@ -45,17 +40,6 @@ namespace FlatBufferData.Model
 
 
         public string DataField { get; set; }
-
-        /// <summary>
-        /// 注释
-        /// </summary>
-        public string Comment { get; set; }
-
-        /// <summary>
-        /// 特性列表
-        /// </summary>
-        public AttributeInfo Attributes { get; set; }
-
 
         /// <summary>
         /// 是否是整数

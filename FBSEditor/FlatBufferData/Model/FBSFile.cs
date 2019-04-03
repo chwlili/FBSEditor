@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using static FlatbufferParser;
 
 namespace FlatBufferData.Model
 {
