@@ -273,6 +273,7 @@
     <Compile Include="FlatBufferData\Model\Attributes\StructLiteral.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\Unique.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\XLS.cs" />
+    <Compile Include="FlatBufferData\Model\Base.cs" />
     <Compile Include="FlatBufferData\Model\Enum.cs" />
     <Compile Include="FlatBufferData\Model\EnumField.cs" />
     <Compile Include="FlatBufferData\Build\FBSBuilder.cs" />
