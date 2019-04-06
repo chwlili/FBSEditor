@@ -672,7 +672,190 @@ namespace FlatBufferData.Build
             var jsonLexer = new JsonLexer(new AntlrInputStream(text));
             var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
 
-            var json = jsonParser.root();
+            var json = jsonParser.json();
+            if (json.arraryValue == null && json.objectValue == null)
+            {
+                // 无效的Json字符.
+                return null;
+            }
+
+            var jsonPath = "";
+            if (jsonLiteral != null && !string.IsNullOrEmpty(jsonLiteral.path))
+                jsonPath = jsonLiteral.path;
+
+            var error = "";
+            var rootNode = GetRootJsonNode(json, jsonPath, out error);
+            if (rootNode == null)
+            {
+                //error
+                return null;
+            }
+
+            if(rootNode is JsonParser.JsonObjectContext)
+            {
+                var keys = new Dictionary<string, JsonParser.JsonValueContext>();
+                var root = rootNode as JsonParser.JsonObjectContext;
+                for(var i=0;i<root._props.Count;i++)
+                {
+                    var prop = root._props[i];
+                    var propName = prop.propName.Text.Trim('"');
+                    if(keys.ContainsKey(propName))
+                    {
+                        //add error(sring.Format("key为{0}的Json属性已存在。",propName);
+                        continue;
+                    }
+                    keys.Add(propName, prop.propValue);
+                }
+
+                foreach (var field in structType.Fields)
+                {
+                    if(keys.ContainsKey(field.DataField))
+                    {
+                        var fieldValue = TryParse(field, field.Type, field.TypeDefined, keys[field.DataField], new List<string>());
+                    }
+                }
+            }
+            else
+            {
+                //主节点不是一个JsonObject.
+                return null;
+            }
+
+            return null;
+        }
+
+        private object TryParse(StructField field, string type, object defin, JsonParser.JsonValueContext jsonValue, List<string> errors)
+        {
+            if(field.IsInteger() || field.IsFloat())
+            {
+                if(field.IsInteger())
+                {
+
+                    object v = null;
+                    if (!TryParseLiteral(type, jsonValue.intValue.Text, v))
+                        errors.Add("");
+                }
+                else if (field.IsFloat())
+                {
+                    TryParseLiteral(type, jsonValue.floatValue);
+                }
+            }
+
+            return null;
+        }
+
+
+        private object GetRootJsonNode(JsonParser.JsonContext json,string jsonPath ,out string error)
+        { 
+            object currNode = json.arraryValue;
+            if (currNode == null)
+                currNode = json.objectValue;
+
+            var jsonPathParts = jsonPath.Trim().Trim('.').Split('.');
+            for (var i = 0; i < jsonPathParts.Length; i++)
+            {
+                var partText = jsonPathParts[i].Trim();
+                var partInt = -1;
+                var partStr = "";
+                if(partText.EndsWith("]"))
+                {
+                    var index = partText.IndexOf("[");
+                    if (index != -1)
+                    {
+                        int parsedInt = 0;
+                        partStr = partText.Substring(index + 1, partText.Length - 1 - index - 1);
+                        if (int.TryParse(partStr, out parsedInt))
+                            partInt = parsedInt;
+                        partText = partText.Substring(0, index);
+                    }
+                }
+
+                if(currNode is JsonParser.JsonObjectContext)
+                {
+                    object findedProp = null;
+                    var jsonObject = currNode as JsonParser.JsonObjectContext;
+                    for (var j = 0; j < jsonObject._props.Count; j++)
+                    {
+                        var jsonProp = jsonObject._props[j];
+                        if (jsonProp.propName.Text.Trim('"').Equals(partText))
+                        {
+                            findedProp = jsonProp;
+                            break;
+                        }
+                    }
+
+                    if (findedProp != null)
+                    {
+                        currNode = findedProp;
+
+                        if(partInt!=-1)
+                        {
+                            if(currNode is JsonParser.JsonArrayContext)
+                            {
+                                var arrayNode = currNode as JsonParser.JsonArrayContext;
+                                if (partInt >= 0 && partInt < arrayNode._arrayElement.Count)
+                                {
+                                    currNode = arrayNode._arrayElement[partInt];
+                                    break;
+                                }
+                                else
+                                {
+                                    error = "索引partInt越界";
+                                    return null;
+                                }
+                            }
+                            else
+                            {
+                                error = "无效的路径";
+                                return null;
+                            }
+                        }
+                        else if(!string.IsNullOrEmpty(partStr))
+                        {
+                            if (currNode is JsonParser.JsonObjectContext)
+                            {
+                                object selectedNode = null;
+                                var objectNode = currNode as JsonParser.JsonObjectContext;
+                                for (var j = 0; j < objectNode._props.Count; j++)
+                                {
+                                    if (objectNode._props[j].propName.Text.Trim('"').Equals(partStr))
+                                    {
+                                        selectedNode = objectNode._props[j];
+                                        break;
+                                    }
+                                }
+
+                                if (selectedNode != null)
+                                    currNode = selectedNode;
+                                else
+                                {
+                                    error = "无效的路径";
+                                    return null;
+                                }
+                            }
+                            else
+                            {
+                                error = "无效的路径";
+                                return null;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        error = "无效的路径";
+                        return null;
+                    }
+                }
+                else
+                {
+                    error = "无效的路径";
+                    return null;
+                }
+            }
+
+            error = null;
+
+            return currNode;
         }
 
         private object GetStruct(string text,StructField fieldDefined,List<string> errors)
@@ -881,6 +1064,106 @@ namespace FlatBufferData.Build
             else
             {
                 result = null;
+            }
+
+            return success;
+        }
+
+
+        /// <summary>
+        /// 尝试解析标量内容
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="field"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        private bool TryParseLiteral(string type, string text, out object result)
+        {
+            bool success = true;
+            if (type.Equals("byte") || type.Equals("int8"))
+            {
+                sbyte value = 0;
+                if (!sbyte.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (type.Equals("ubyte") || type.Equals("uint8"))
+            {
+                byte value = 0;
+                if (!byte.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (type.Equals("short") || type.Equals("int16"))
+            {
+                short value = 0;
+                if (!short.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (type.Equals("ushort") || type.Equals("uint16"))
+            {
+                ushort value = 0;
+                if (!ushort.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (type.Equals("int") || type.Equals("int32"))
+            {
+                int value = 0;
+                if (!int.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (type.Equals("uint") || type.Equals("uint32"))
+            {
+                uint value = 0;
+                if (!uint.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (type.Equals("long") || type.Equals("int64"))
+            {
+                long value = 0;
+                if (!long.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (type.Equals("ulong") || type.Equals("uint64"))
+            {
+                ulong value = 0;
+                if (!ulong.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (type.Equals("float") || type.Equals("float32"))
+            {
+                float value = 0;
+                if (!float.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (type.Equals("double") || type.Equals("double64"))
+            {
+                double value = 0;
+                if (!double.TryParse(text, out value)) success = false;
+                result = value;
+            }
+            else if (type.Equals("bool"))
+            {
+                bool value = false;
+
+                double value1 = 0;
+                bool value2 = false;
+                if (double.TryParse(text, out value1))
+                    value = value1 != 0;
+                else if (bool.TryParse(text, out value2))
+                    value = value2;
+                else
+                    success = false;
+
+                result = value2;
+            }
+            else if (type.Equals("string"))
+            {
+                result = text;
+                success = true;
+            }
+            else
+            {
+                result = null;
+                success = false;
             }
 
             return success;
