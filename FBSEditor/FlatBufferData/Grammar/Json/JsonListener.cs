@@ -31,15 +31,15 @@ using IToken = Antlr4.Runtime.IToken;
 [System.CLSCompliant(false)]
 public interface IJsonListener : IParseTreeListener {
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="JsonParser.json"/>.
+	/// Enter a parse tree produced by <see cref="JsonParser.jsonValue"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterJson([NotNull] JsonParser.JsonContext context);
+	void EnterJsonValue([NotNull] JsonParser.JsonValueContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="JsonParser.json"/>.
+	/// Exit a parse tree produced by <see cref="JsonParser.jsonValue"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitJson([NotNull] JsonParser.JsonContext context);
+	void ExitJsonValue([NotNull] JsonParser.JsonValueContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="JsonParser.jsonArray"/>.
 	/// </summary>
@@ -70,14 +70,4 @@ public interface IJsonListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitJsonProp([NotNull] JsonParser.JsonPropContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="JsonParser.jsonValue"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterJsonValue([NotNull] JsonParser.JsonValueContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="JsonParser.jsonValue"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitJsonValue([NotNull] JsonParser.JsonValueContext context);
 }

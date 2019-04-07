@@ -247,8 +247,10 @@
     <Compile Include="Antlr4\UnbufferedCharStream.cs" />
     <Compile Include="Antlr4\UnbufferedTokenStream.cs" />
     <Compile Include="Antlr4\Vocabulary.cs" />
+    <Compile Include="FlatBufferData\Build\BaseUtil.cs" />
     <Compile Include="FlatBufferData\Build\DataReader.cs" />
     <Compile Include="FlatBufferData\Build\DataReaderFactory.cs" />
+    <Compile Include="FlatBufferData\Build\JsonUtil.cs" />
     <Compile Include="FlatBufferData\Build\XLSReader.cs" />
     <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferBaseListener.cs" />
     <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferBaseVisitor.cs" />
@@ -267,7 +269,8 @@
     <Compile Include="FlatBufferData\Grammar\Json\JsonVisitor.cs" />
     <Compile Include="FlatBufferData\Model\Attribute.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\ArrayLiteral.cs" />
-    <Compile Include="FlatBufferData\Model\Attributes\Json.cs" />
+    <Compile Include="FlatBufferData\Model\Attributes\JsonFile.cs" />
+    <Compile Include="FlatBufferData\Model\Attributes\JsonLiteral.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\Nullable.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\Index.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\StructLiteral.cs" />

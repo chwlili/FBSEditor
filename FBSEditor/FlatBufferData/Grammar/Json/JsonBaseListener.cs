@@ -35,17 +35,17 @@ using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 [System.CLSCompliant(false)]
 public partial class JsonBaseListener : IJsonListener {
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="JsonParser.json"/>.
+	/// Enter a parse tree produced by <see cref="JsonParser.jsonValue"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterJson([NotNull] JsonParser.JsonContext context) { }
+	public virtual void EnterJsonValue([NotNull] JsonParser.JsonValueContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="JsonParser.json"/>.
+	/// Exit a parse tree produced by <see cref="JsonParser.jsonValue"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitJson([NotNull] JsonParser.JsonContext context) { }
+	public virtual void ExitJsonValue([NotNull] JsonParser.JsonValueContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="JsonParser.jsonArray"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -82,18 +82,6 @@ public partial class JsonBaseListener : IJsonListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitJsonProp([NotNull] JsonParser.JsonPropContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="JsonParser.jsonValue"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterJsonValue([NotNull] JsonParser.JsonValueContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="JsonParser.jsonValue"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitJsonValue([NotNull] JsonParser.JsonValueContext context) { }
 
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>

@@ -34,7 +34,7 @@ using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 [System.CLSCompliant(false)]
 public partial class JsonBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IJsonVisitor<Result> {
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="JsonParser.json"/>.
+	/// Visit a parse tree produced by <see cref="JsonParser.jsonValue"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -42,7 +42,7 @@ public partial class JsonBaseVisitor<Result> : AbstractParseTreeVisitor<Result>,
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitJson([NotNull] JsonParser.JsonContext context) { return VisitChildren(context); }
+	public virtual Result VisitJsonValue([NotNull] JsonParser.JsonValueContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="JsonParser.jsonArray"/>.
 	/// <para>
@@ -73,14 +73,4 @@ public partial class JsonBaseVisitor<Result> : AbstractParseTreeVisitor<Result>,
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitJsonProp([NotNull] JsonParser.JsonPropContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="JsonParser.jsonValue"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitJsonValue([NotNull] JsonParser.JsonValueContext context) { return VisitChildren(context); }
 }

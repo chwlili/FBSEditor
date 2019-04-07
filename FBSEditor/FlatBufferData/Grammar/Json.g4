@@ -1,14 +1,12 @@
 grammar Json;
 
-json : arraryValue = jsonArray | objectValue = jsonObject;
+jsonValue : strValue = STRING | intValue = INTEGER | floatValue = FLOAT | boolValue = BOOL | nullValue = 'null' | objectValue = jsonObject | arraryValue = jsonArray;
 
 jsonArray : '[' (arrayElement += jsonValue (',' arrayElement += jsonValue)*)? ']';
 
 jsonObject : '{' (props += jsonProp (',' props += jsonProp)*)? '}';
 
 jsonProp : (propName = STRING | propName = IDENT) ':' propValue = jsonValue;
-
-jsonValue : strValue = STRING | intValue = INTEGER | floatValue = FLOAT | boolValue = BOOL | nullValue = 'null' | objectValue = jsonObject | arraryValue = jsonArray;
 
 INTEGER : '-'?[0-9]+ ;
 

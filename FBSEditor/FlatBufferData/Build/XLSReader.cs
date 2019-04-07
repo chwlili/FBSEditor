@@ -12,7 +12,6 @@ namespace FlatBufferData.Build
 {
     public class XLSReader : DataReader
     {
-
         public override void Read(Table table)
         {
             var xls = table.GetAttribte<XLS>();
@@ -169,13 +168,13 @@ namespace FlatBufferData.Build
                             }
 
                             var cellTextParts = string.IsNullOrEmpty(cellText) ? new string[] { } : cellText.Split(new string[] { separator }, StringSplitOptions.None);
-                            if (IsInteger(fieldSchemaType))
+                            if (BaseUtil.IsInteger(fieldSchemaType))
                                 fieldValue = GetIntegerList(fieldSchemaType, cellTextParts, out fieldError);
-                            else if (IsFloat(fieldSchemaType))
+                            else if (BaseUtil.IsFloat(fieldSchemaType))
                                 fieldValue = GetFloatList(fieldSchemaType, cellTextParts, out fieldError);
-                            else if (IsBool(fieldSchemaType))
+                            else if (BaseUtil.IsBool(fieldSchemaType))
                                 fieldValue = GetBoolList(fieldSchemaType, cellTextParts, out fieldError);
-                            else if (IsString(fieldSchemaType))
+                            else if (BaseUtil.IsString(fieldSchemaType))
                                 fieldValue = GetStringList(fieldSchemaType, cellTextParts, out fieldError);
                             else
                             {
@@ -185,7 +184,11 @@ namespace FlatBufferData.Build
                         }
                         else
                         {
-                            if (fieldSchema.TypeDefined is Model.Struct)
+                            if (fieldSchema.TypeDefined is Model.Enum)
+                            {
+                                fieldValue = GetEnum(fieldSchema.TypeDefined as Model.Enum, cellData, out fieldError);
+                            }
+                            else if (fieldSchema.TypeDefined is Model.Struct)
                             {
                                 string cellText = null;
 
@@ -222,29 +225,8 @@ namespace FlatBufferData.Build
                                 }
                                 else
                                 {
-                                    if (IsInteger(fieldSchemaType))
-                                        fieldValue = GetInteger(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
-                                    else if (IsFloat(fieldSchemaType))
-                                        fieldValue = GetFloat(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
-                                    else if (IsBool(fieldSchemaType))
-                                        fieldValue = GetBool(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
-                                    else if (IsString(fieldSchemaType))
-                                        fieldValue = GetString(cellData, fieldSchemaType, isUnique, isIndex, isNullable, defaultValue, out fieldError);
-                                    else
-                                    {
-                                        if (fieldSchema.TypeDefined is Model.Enum)
-                                            fieldValue = GetEnum(cellData, fieldSchema.TypeDefined as Model.Enum, isUnique, isIndex, isNullable, defaultValue, out fieldError);
-                                        else
-                                        {
-                                            /*
-                                            if(Factory!=null)
-                                            {
-                                                //Factory.ReadData(fieldSchema.TypeDefined,cellData.)
-                                                fieldSchema.TypeDefined
-                                            }
-                                            */
-                                        }
-                                    }
+                                    if (BaseUtil.IsInteger(fieldSchemaType) || BaseUtil.IsFloat(fieldSchemaType) || BaseUtil.IsBool(fieldSchemaType) || BaseUtil.IsString(fieldSchemaType))
+                                        fieldValue = GetScalar(fieldSchemaType, cellData, out fieldError);
                                 }
                             }
                         }
@@ -289,52 +271,210 @@ namespace FlatBufferData.Build
 
         #region 整数
 
-        private List<string> integerTypes = new List<string>() { "byte", "int8", "ubyte", "uint8", "short", "int16", "ushort", "uint16", "int", "int32", "uint", "uint32", "long", "int64", "ulong", "uint64" };
-
-        private bool IsInteger(string type) { return integerTypes.Contains(type); }
-
-        private object GetInteger(ICell cellData,string fieldSchemaType,bool isUnique,bool isIndex,bool isNullable,object defaultValue,out string error)
+        /// <summary>
+        /// 标量
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="cell"></param>
+        /// <param name="error"></param>
+        /// <returns></returns>
+        private object GetScalar(string type, ICell cell, out string error)
         {
-            string fieldError = null;
-            object fieldValue = null;
-
-            if (cellData == null || cellData.CellType == CellType.Blank)
+            object result = null;
+            if (cell.CellType == CellType.Numeric)
             {
-                if (!isNullable || isUnique)
-                    fieldError = String.Format("内容不允许为空!");
-                else if (isIndex)
-                    fieldError = String.Format("索引字段不允许为空!");
+                if ((type.Equals("byte") || type.Equals("int8")) && sbyte.MinValue <= cell.NumericCellValue && cell.NumericCellValue <= sbyte.MaxValue)
+                    result = (sbyte)cell.NumericCellValue;
+                else if ((type.Equals("ubyte") || type.Equals("uint8")) && byte.MinValue <= cell.NumericCellValue && cell.NumericCellValue <= byte.MaxValue)
+                    result = (byte)cell.NumericCellValue;
+                else if ((type.Equals("short") || type.Equals("int16")) && short.MinValue <= cell.NumericCellValue && cell.NumericCellValue <= short.MaxValue)
+                    result = (short)cell.NumericCellValue;
+                else if ((type.Equals("ushort") || type.Equals("uint16")) && ushort.MinValue <= cell.NumericCellValue && cell.NumericCellValue <= ushort.MaxValue)
+                    result = (ushort)cell.NumericCellValue;
+                else if (type.Equals("int") || type.Equals("int32") && int.MinValue <= cell.NumericCellValue && cell.NumericCellValue <= int.MaxValue)
+                    result = (int)cell.NumericCellValue;
+                else if (type.Equals("uint") || type.Equals("uint32") && uint.MinValue <= cell.NumericCellValue && cell.NumericCellValue <= uint.MaxValue)
+                    result = (uint)cell.NumericCellValue;
+                else if (type.Equals("long") || type.Equals("int64") && long.MinValue <= cell.NumericCellValue && cell.NumericCellValue <= long.MaxValue)
+                    result = (long)cell.NumericCellValue;
+                else if (type.Equals("ulong") || type.Equals("uint64") && ulong.MinValue <= cell.NumericCellValue && cell.NumericCellValue <= ulong.MaxValue)
+                    result = (ulong)cell.NumericCellValue;
+                else if ((type.Equals("float") || type.Equals("float32")) && float.MinValue <= cell.NumericCellValue && cell.NumericCellValue <= float.MaxValue)
+                    result = (float)cell.NumericCellValue;
+                else if ((type.Equals("double") || type.Equals("double64")) && double.MinValue <= cell.NumericCellValue && cell.NumericCellValue > double.MaxValue)
+                    result = cell.NumericCellValue;
+                else if (type.Equals("bool"))
+                    result = cell.NumericCellValue != 0;
+                else if (type.Equals("string"))
+                    result = cell.NumericCellValue.ToString();
+            }
+            else if (cell.CellType == CellType.Boolean)
+            {
+                if (type.Equals("bool"))
+                    result = cell.BooleanCellValue;
+                else if (type.Equals("string"))
+                    result = cell.BooleanCellValue.ToString();
+            }
+            else if (cell.CellType == CellType.String)
+            {
+                if (type.Equals("string"))
+                    result = cell.StringCellValue.ToString();
+            }
+
+            error = null;
+            if (result == null)
+            {
+                if (BaseUtil.IsInteger(type) || BaseUtil.IsFloat(type))
+                    error = string.Format("内容不是一个有效的{0},或者超出了{0}的有效精度.", type);
                 else
-                    fieldValue = defaultValue != null ? defaultValue : 0;
+                    error = string.Format("内容不是一个有效的{0}.", type);
             }
-            else if (cellData.CellType == CellType.Numeric)
-            {
-                if ((fieldSchemaType.Equals("byte") || fieldSchemaType.Equals("int8")) && sbyte.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= sbyte.MaxValue)
-                    fieldValue = (sbyte)cellData.NumericCellValue;
-                else if ((fieldSchemaType.Equals("ubyte") || fieldSchemaType.Equals("uint8")) && byte.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= byte.MaxValue)
-                    fieldValue = (byte)cellData.NumericCellValue;
-                else if ((fieldSchemaType.Equals("short") || fieldSchemaType.Equals("int16")) && short.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= short.MaxValue)
-                    fieldValue = (short)cellData.NumericCellValue;
-                else if ((fieldSchemaType.Equals("ushort") || fieldSchemaType.Equals("uint16")) && ushort.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= ushort.MaxValue)
-                    fieldValue = (ushort)cellData.NumericCellValue;
-                else if (fieldSchemaType.Equals("int") || fieldSchemaType.Equals("int32") && int.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= int.MaxValue)
-                    fieldValue = (int)cellData.NumericCellValue;
-                else if (fieldSchemaType.Equals("uint") || fieldSchemaType.Equals("uint32") && uint.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= uint.MaxValue)
-                    fieldValue = (uint)cellData.NumericCellValue;
-                else if (fieldSchemaType.Equals("long") || fieldSchemaType.Equals("int64") && long.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= long.MaxValue)
-                    fieldValue = (long)cellData.NumericCellValue;
-                else if (fieldSchemaType.Equals("ulong") || fieldSchemaType.Equals("uint64") && ulong.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= ulong.MaxValue)
-                    fieldValue = (ulong)cellData.NumericCellValue;
 
-                fieldError = fieldValue == null ? "数值范围超出" + fieldSchemaType + "的范围。" : null;
-            }
-            else
-                fieldError = String.Format("内容不是一个有效的{0}", fieldSchemaType);
-
-            error = fieldError;
-
-            return fieldValue;
+            return result;
         }
+
+        /// <summary>
+        /// 枚举
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="cell"></param>
+        /// <param name="error"></param>
+        /// <returns></returns>
+        private object GetEnum(Model.Enum type, ICell cell, out string error)
+        {
+            object result = null;
+            if (cell.CellType == CellType.Numeric)
+            {
+                var field = type.FindFieldByID((int)cell.NumericCellValue);
+                if (field != null)
+                    result = field.ID;
+            }
+            else if (cell.CellType == CellType.String)
+            {
+                var field = type.FindFieldByName(cell.StringCellValue);
+                if (field != null)
+                    result = field.ID;
+            }
+
+            error = null;
+            if(result==null)
+                error = "无效的枚举值";
+
+            return result;
+        }
+
+        /// <summary>
+        /// 结构
+        /// </summary>
+        /// <param name="literal"></param>
+        /// <param name="type"></param>
+        /// <param name="cell"></param>
+        /// <param name="error"></param>
+        /// <returns></returns>
+        private object GetStruct(StructLiteral literal, Struct type, ICell cell, List<string> errors)
+        {
+            if (cell != null && cell.CellType == CellType.String)
+                return GetStruct(literal, type, cell.StringCellValue, errors);
+
+            errors.Add(string.Format("内容无法转换成有效的{0}。", type.Name));
+
+            return null;
+        }
+
+
+        private object GetStruct(StructLiteral literal, Struct type, string text,List<string> errors)
+        {
+            text = text.Trim();
+
+            //查找自定义的分割规则
+            var separator = ",";
+            if (literal != null)
+            {
+                separator = literal.separator;
+                if (text.StartsWith(literal.beginning))
+                    text = text.Substring(literal.beginning.Length);
+                if (text.EndsWith(literal.ending))
+                    text = text.Substring(0, text.Length - literal.ending.Length);
+            }
+
+            //分割字符串
+            var texts = new string[] { };
+            if (!string.IsNullOrEmpty(text))
+                texts = text.Split(new string[] { separator }, StringSplitOptions.None);
+
+            //解析字符串
+            var values = new Dictionary<string, object>();
+            for (int i = 0; i < texts.Length; i++)
+            {
+                var txt = texts[i].Trim();
+                if (i < type.Fields.Count)
+                {
+                    var field = type.Fields[i];
+                    var fieldType = field.Type;
+                    if (BaseUtil.IsInteger(fieldType) || BaseUtil.IsFloat(fieldType) || BaseUtil.IsBool(fieldType))
+                    {
+                        object value = BaseUtil.GetScalar(fieldType, txt);
+                        if (value != null)
+                            values.Add(field.Name, value);
+                        else
+                            errors.Add(string.Format("第{0}个元素{1}无法解析成{2}。", i, txt, fieldType));
+                    }
+                    else if (BaseUtil.IsString(fieldType))
+                    {
+                        values.Add(field.Name, txt);
+                    }
+                    else if (field.TypeDefined is Model.Enum)
+                    {
+                        var value = BaseUtil.GetEnum(field.TypeDefined as Model.Enum, txt);
+                        if (value != null)
+                            values.Add(field.Name, value);
+                        else
+                            errors.Add(string.Format("第{0}个元素{1}无法解析成{2}。", i, txt, fieldType));
+                    }
+                    else if (field.TypeDefined is Struct)
+                    {
+                        var targetStruct = field.TypeDefined as Struct;
+                        var literal1 = field.GetAttribte<StructLiteral>();
+                        var literal2 = targetStruct.GetAttribte<StructLiteral>();
+                        var json1 = field.GetAttribte<JsonLiteral>();
+                        var json2 = targetStruct.GetAttribte<JsonLiteral>();
+
+                        if (literal1 != null)
+                        {
+                            GetStruct(literal1, targetStruct, txt, errors);
+                        }
+                        else if (json1 != null)
+                        {
+                            JsonUtil.ParseJsonText(txt, json1.path, targetStruct, errors);
+                        }
+                        else if (literal2 != null)
+                        {
+                            GetStruct(literal1, targetStruct, txt, errors);
+                        }
+                        else if (json2 != null)
+                        {
+                            JsonUtil.ParseJsonText(txt, json2.path, targetStruct, errors);
+                        }
+
+                        values.Add(field.Name, GetStruct(txt, field, errors));
+                    }
+                }
+                else
+                    errors.Add(string.Format("第{0}个元素将被忽略，因为{1}的字段数量只有{2}个。", i, type.Name, type.Fields.Count));
+            }
+
+            for (int i = texts.Length; i < type.Fields.Count; i++)
+                errors.Add(String.Format("字段{0}没有对应的数据项，因为数据只有{1}个元素。", type.Fields[i].Name, texts.Length));
+
+            return values;
+        }
+
+
+
+        #endregion
+
+
+        #region 列表数值
 
         private object GetIntegerList(string fieldSchemaType, string[] texts, out string error)
         {
@@ -395,42 +535,6 @@ namespace FlatBufferData.Build
             return result;
         }
 
-        #endregion
-
-        #region 浮点数
-        private List<string> floatTypes = new List<string>() { "float", "float32", "double", "double64" };
-
-        private bool IsFloat(string type) { return floatTypes.Contains(type); }
-
-        private object GetFloat(ICell cellData, string fieldSchemaType, bool isUnique, bool isIndex, bool isNullable, object defaultValue, out string error)
-        {
-            string fieldError = null;
-            object fieldValue = null;
-
-            if (cellData == null || cellData.CellType == CellType.Blank)
-            {
-                if (!isNullable || isUnique)
-                    fieldError = "内容不允许为空!";
-                else if (isIndex)
-                    fieldError = "索引字段不允许为空!";
-                else
-                    fieldValue = defaultValue != null ? defaultValue : 0;
-            }
-            else if (cellData.CellType == CellType.Numeric)
-            {
-                if ((fieldSchemaType.Equals("float") || fieldSchemaType.Equals("float32")) && float.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue <= float.MaxValue)
-                    fieldValue = (float)cellData.NumericCellValue;
-                else if ((fieldSchemaType.Equals("double") || fieldSchemaType.Equals("double64")) && double.MinValue <= cellData.NumericCellValue && cellData.NumericCellValue > double.MaxValue)
-                    fieldValue = cellData.NumericCellValue;
-            }
-            else
-                fieldError = String.Format("内容不是一个有效的{0}", fieldSchemaType);
-
-            error = fieldError;
-
-            return fieldValue;
-        }
-
         private object GetFloatList(string fieldSchemaType, string[] texts, out string error)
         {
             var errors = new List<int>();
@@ -454,40 +558,6 @@ namespace FlatBufferData.Build
             return result;
         }
 
-        #endregion
-
-        #region 布尔
-
-        private bool IsBool(string type)
-        {
-            return "bool".Equals(type);
-        }
-
-        private object GetBool(ICell cellData, string fieldSchemaType, bool isUnique, bool isIndex, bool isNullable, object defaultValue, out string error)
-        {
-            string fieldError = null;
-            object fieldValue = null;
-
-            if (cellData == null || cellData.CellType == CellType.Blank)
-            {
-                if (!isNullable || isUnique)
-                    fieldError = "内容不允许为空!";
-                else if (isIndex)
-                    fieldError = "索引字段不允许为空!";
-                else
-                    fieldValue = defaultValue != null ? defaultValue : false;
-            }
-            else if (cellData.CellType == CellType.Boolean)
-                fieldValue = cellData.BooleanCellValue;
-            else if (cellData.CellType == CellType.Numeric)
-                fieldValue = cellData.NumericCellValue != 0;
-            else
-                fieldError = String.Format("内容不是一个有效的{0}", fieldSchemaType);
-
-            error = fieldError;
-
-            return fieldValue;
-        }
         private object GetBoolList(string fieldSchemaType, string[] texts, out string error)
         {
             var errors = new List<int>();
@@ -508,43 +578,6 @@ namespace FlatBufferData.Build
             return array;
         }
 
-        #endregion
-
-        #region 字符串
-
-        private bool IsString(string type)
-        {
-            return "string".Equals(type);
-        }
-
-        private object GetString(ICell cellData,string fieldSchemaType,bool isUnique,bool isIndex,bool isNullable,object defaultValue,out string error)
-        {
-            string fieldError = null;
-            object fieldValue = null;
-
-            if (cellData == null || cellData.CellType == CellType.Blank)
-            {
-                if (!isNullable || isUnique)
-                    fieldError = "内容不允许为空!";
-                else if (isIndex)
-                    fieldError = "索引字段不允许为空!";
-                else
-                    fieldValue = defaultValue != null ? defaultValue : "";
-            }
-            else if (cellData.CellType == CellType.String)
-                fieldValue = cellData.StringCellValue.ToString();
-            else if (cellData.CellType == CellType.Boolean)
-                fieldValue = cellData.BooleanCellValue.ToString();
-            else if (cellData.CellType == CellType.Numeric)
-                fieldValue = cellData.NumericCellValue.ToString();
-            else
-                fieldError = String.Format("内容不是一个有效的{0}", fieldSchemaType);
-
-            error = fieldError;
-
-            return fieldValue;
-        }
-
         private object GetStringList(string fieldSchemaType, string[] texts, out string error)
         {
             var array = new object[texts.Length];
@@ -553,76 +586,6 @@ namespace FlatBufferData.Build
             error = null;
 
             return array;
-        }
-
-        #endregion
-
-
-
-        #region 枚举
-
-        private object GetEnum(ICell cellData, Model.Enum type, bool isUnique,bool isIndex,bool isNullable,object defaultValue,out string error)
-        {
-            string fieldError = null;
-            object fieldValue = null;
-
-            if (cellData == null || cellData.CellType == CellType.Blank)
-            {
-                if (!isNullable || isUnique)
-                    fieldError = "内容不允许为空!";
-                else if (isIndex)
-                    fieldError = "索引字段不允许为空!";
-                //else
-                //fieldValue = defaultValue != null ? defaultValue : "";
-            }
-            else if (cellData.CellType == CellType.Numeric)
-            {
-                var fined = false;
-
-                var id = (int)cellData.NumericCellValue;
-                for (var i = 0; i < type.Fields.Count; i++)
-                {
-                    if (type.Fields[i].ID == id)
-                    {
-                        fieldValue = id;
-                        fined = true;
-                        break;
-                    }
-                }
-
-                if (!fined)
-                {
-                    fieldValue = 0;
-                    fieldError = "无效的枚举值!";
-                }
-            }
-            else if (cellData.CellType == CellType.String)
-            {
-                var fined = false;
-                for (var i = 0; i < type.Fields.Count; i++)
-                {
-                    if (type.Fields[i].Name.Equals(cellData.StringCellValue))
-                    {
-                        fieldValue = type.Fields[i].ID;
-                        fined = true;
-                        break;
-                    }
-                }
-                if (!fined)
-                {
-                    fieldValue = 0;
-                    fieldError = "无效的枚举值!";
-                }
-            }
-            else
-            {
-                fieldValue = 0;
-                fieldError = "无效的枚举值!";
-            }
-
-            error = fieldError;
-
-            return fieldValue;
         }
 
         private object GetEnumList(Model.Enum type, string[] texts, out string error)
@@ -667,196 +630,6 @@ namespace FlatBufferData.Build
 
         #region 结构
 
-        private object TryParse(JsonLiteral jsonLiteral, Struct structType, string text)
-        {
-            var jsonLexer = new JsonLexer(new AntlrInputStream(text));
-            var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
-
-            var json = jsonParser.json();
-            if (json.arraryValue == null && json.objectValue == null)
-            {
-                // 无效的Json字符.
-                return null;
-            }
-
-            var jsonPath = "";
-            if (jsonLiteral != null && !string.IsNullOrEmpty(jsonLiteral.path))
-                jsonPath = jsonLiteral.path;
-
-            var error = "";
-            var rootNode = GetRootJsonNode(json, jsonPath, out error);
-            if (rootNode == null)
-            {
-                //error
-                return null;
-            }
-
-            if(rootNode is JsonParser.JsonObjectContext)
-            {
-                var keys = new Dictionary<string, JsonParser.JsonValueContext>();
-                var root = rootNode as JsonParser.JsonObjectContext;
-                for(var i=0;i<root._props.Count;i++)
-                {
-                    var prop = root._props[i];
-                    var propName = prop.propName.Text.Trim('"');
-                    if(keys.ContainsKey(propName))
-                    {
-                        //add error(sring.Format("key为{0}的Json属性已存在。",propName);
-                        continue;
-                    }
-                    keys.Add(propName, prop.propValue);
-                }
-
-                foreach (var field in structType.Fields)
-                {
-                    if(keys.ContainsKey(field.DataField))
-                    {
-                        var fieldValue = TryParse(field, field.Type, field.TypeDefined, keys[field.DataField], new List<string>());
-                    }
-                }
-            }
-            else
-            {
-                //主节点不是一个JsonObject.
-                return null;
-            }
-
-            return null;
-        }
-
-        private object TryParse(StructField field, string type, object defin, JsonParser.JsonValueContext jsonValue, List<string> errors)
-        {
-            if(field.IsInteger() || field.IsFloat())
-            {
-                if(field.IsInteger())
-                {
-
-                    object v = null;
-                    if (!TryParseLiteral(type, jsonValue.intValue.Text, v))
-                        errors.Add("");
-                }
-                else if (field.IsFloat())
-                {
-                    TryParseLiteral(type, jsonValue.floatValue);
-                }
-            }
-
-            return null;
-        }
-
-
-        private object GetRootJsonNode(JsonParser.JsonContext json,string jsonPath ,out string error)
-        { 
-            object currNode = json.arraryValue;
-            if (currNode == null)
-                currNode = json.objectValue;
-
-            var jsonPathParts = jsonPath.Trim().Trim('.').Split('.');
-            for (var i = 0; i < jsonPathParts.Length; i++)
-            {
-                var partText = jsonPathParts[i].Trim();
-                var partInt = -1;
-                var partStr = "";
-                if(partText.EndsWith("]"))
-                {
-                    var index = partText.IndexOf("[");
-                    if (index != -1)
-                    {
-                        int parsedInt = 0;
-                        partStr = partText.Substring(index + 1, partText.Length - 1 - index - 1);
-                        if (int.TryParse(partStr, out parsedInt))
-                            partInt = parsedInt;
-                        partText = partText.Substring(0, index);
-                    }
-                }
-
-                if(currNode is JsonParser.JsonObjectContext)
-                {
-                    object findedProp = null;
-                    var jsonObject = currNode as JsonParser.JsonObjectContext;
-                    for (var j = 0; j < jsonObject._props.Count; j++)
-                    {
-                        var jsonProp = jsonObject._props[j];
-                        if (jsonProp.propName.Text.Trim('"').Equals(partText))
-                        {
-                            findedProp = jsonProp;
-                            break;
-                        }
-                    }
-
-                    if (findedProp != null)
-                    {
-                        currNode = findedProp;
-
-                        if(partInt!=-1)
-                        {
-                            if(currNode is JsonParser.JsonArrayContext)
-                            {
-                                var arrayNode = currNode as JsonParser.JsonArrayContext;
-                                if (partInt >= 0 && partInt < arrayNode._arrayElement.Count)
-                                {
-                                    currNode = arrayNode._arrayElement[partInt];
-                                    break;
-                                }
-                                else
-                                {
-                                    error = "索引partInt越界";
-                                    return null;
-                                }
-                            }
-                            else
-                            {
-                                error = "无效的路径";
-                                return null;
-                            }
-                        }
-                        else if(!string.IsNullOrEmpty(partStr))
-                        {
-                            if (currNode is JsonParser.JsonObjectContext)
-                            {
-                                object selectedNode = null;
-                                var objectNode = currNode as JsonParser.JsonObjectContext;
-                                for (var j = 0; j < objectNode._props.Count; j++)
-                                {
-                                    if (objectNode._props[j].propName.Text.Trim('"').Equals(partStr))
-                                    {
-                                        selectedNode = objectNode._props[j];
-                                        break;
-                                    }
-                                }
-
-                                if (selectedNode != null)
-                                    currNode = selectedNode;
-                                else
-                                {
-                                    error = "无效的路径";
-                                    return null;
-                                }
-                            }
-                            else
-                            {
-                                error = "无效的路径";
-                                return null;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        error = "无效的路径";
-                        return null;
-                    }
-                }
-                else
-                {
-                    error = "无效的路径";
-                    return null;
-                }
-            }
-
-            error = null;
-
-            return currNode;
-        }
 
         private object GetStruct(string text,StructField fieldDefined,List<string> errors)
         {
@@ -881,6 +654,11 @@ namespace FlatBufferData.Build
             if(structLiteral==null && jsonLiteral!=null)
             {
                 //foreach(var attribute in (fieldDefined.TypeDefined))
+            }
+
+            if(jsonLiteral!=null)
+            {
+                return TryParse(jsonLiteral, fieldDefined.TypeDefined as Model.Struct, text, errors);
             }
 
             //查找自定义的分割规则
@@ -1069,105 +847,10 @@ namespace FlatBufferData.Build
             return success;
         }
 
+        #endregion
 
-        /// <summary>
-        /// 尝试解析标量内容
-        /// </summary>
-        /// <param name="text"></param>
-        /// <param name="field"></param>
-        /// <param name="result"></param>
-        /// <returns></returns>
-        private bool TryParseLiteral(string type, string text, out object result)
-        {
-            bool success = true;
-            if (type.Equals("byte") || type.Equals("int8"))
-            {
-                sbyte value = 0;
-                if (!sbyte.TryParse(text, out value)) success = false;
-                result = value;
-            }
-            else if (type.Equals("ubyte") || type.Equals("uint8"))
-            {
-                byte value = 0;
-                if (!byte.TryParse(text, out value)) success = false;
-                result = value;
-            }
-            else if (type.Equals("short") || type.Equals("int16"))
-            {
-                short value = 0;
-                if (!short.TryParse(text, out value)) success = false;
-                result = value;
-            }
-            else if (type.Equals("ushort") || type.Equals("uint16"))
-            {
-                ushort value = 0;
-                if (!ushort.TryParse(text, out value)) success = false;
-                result = value;
-            }
-            else if (type.Equals("int") || type.Equals("int32"))
-            {
-                int value = 0;
-                if (!int.TryParse(text, out value)) success = false;
-                result = value;
-            }
-            else if (type.Equals("uint") || type.Equals("uint32"))
-            {
-                uint value = 0;
-                if (!uint.TryParse(text, out value)) success = false;
-                result = value;
-            }
-            else if (type.Equals("long") || type.Equals("int64"))
-            {
-                long value = 0;
-                if (!long.TryParse(text, out value)) success = false;
-                result = value;
-            }
-            else if (type.Equals("ulong") || type.Equals("uint64"))
-            {
-                ulong value = 0;
-                if (!ulong.TryParse(text, out value)) success = false;
-                result = value;
-            }
-            else if (type.Equals("float") || type.Equals("float32"))
-            {
-                float value = 0;
-                if (!float.TryParse(text, out value)) success = false;
-                result = value;
-            }
-            else if (type.Equals("double") || type.Equals("double64"))
-            {
-                double value = 0;
-                if (!double.TryParse(text, out value)) success = false;
-                result = value;
-            }
-            else if (type.Equals("bool"))
-            {
-                bool value = false;
+        #region 字段类型判断函数
 
-                double value1 = 0;
-                bool value2 = false;
-                if (double.TryParse(text, out value1))
-                    value = value1 != 0;
-                else if (bool.TryParse(text, out value2))
-                    value = value2;
-                else
-                    success = false;
-
-                result = value2;
-            }
-            else if (type.Equals("string"))
-            {
-                result = text;
-                success = true;
-            }
-            else
-            {
-                result = null;
-                success = false;
-            }
-
-            return success;
-        }
 
         #endregion
 

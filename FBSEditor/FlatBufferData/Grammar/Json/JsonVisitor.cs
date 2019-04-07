@@ -32,11 +32,11 @@ using IToken = Antlr4.Runtime.IToken;
 [System.CLSCompliant(false)]
 public interface IJsonVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="JsonParser.json"/>.
+	/// Visit a parse tree produced by <see cref="JsonParser.jsonValue"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitJson([NotNull] JsonParser.JsonContext context);
+	Result VisitJsonValue([NotNull] JsonParser.JsonValueContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="JsonParser.jsonArray"/>.
 	/// </summary>
@@ -55,10 +55,4 @@ public interface IJsonVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitJsonProp([NotNull] JsonParser.JsonPropContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="JsonParser.jsonValue"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitJsonValue([NotNull] JsonParser.JsonValueContext context);
 }
