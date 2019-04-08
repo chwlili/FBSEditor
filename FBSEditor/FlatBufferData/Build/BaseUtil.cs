@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using FlatBufferData.Model;
+using FlatBufferData.Model.Attributes;
+using System;
+using System.Collections.Generic;
 
 namespace FlatBufferData.Build
 {
@@ -47,6 +50,16 @@ namespace FlatBufferData.Build
         public static bool IsString(string Type)
         {
             return stringTypes.Contains(Type);
+        }
+
+        /// <summary>
+        /// 是否是基础类型
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static bool IsBaseType(string type)
+        {
+            return IsInteger(type) || IsFloat(type) || IsBool(type) || IsString(type);
         }
 
 
@@ -128,75 +141,53 @@ namespace FlatBufferData.Build
             return null;
         }
 
+
         /// <summary>
-        /// 获取枚举值
+        /// 获取标量数组
         /// </summary>
         /// <param name="type"></param>
-        /// <param name="text"></param>
+        /// <param name="texts"></param>
+        /// <param name="errors"></param>
         /// <returns></returns>
-        public static object GetEnum(Model.Enum type,string text)
-        {
-            var field = type.FindFieldByName(text);
-            if (field != null)
-                return field.ID;
-
-            int intID = 0;
-            if (int.TryParse(text, out intID))
-            {
-                field = type.FindFieldByID(intID);
-                if (field != null)
-                    return field.ID;
-            }
-
-            double doubleID = 0;
-            if(double.TryParse(text,out doubleID))
-            {
-                field = type.FindFieldByID((int)doubleID);
-                if (field != null)
-                    return field.ID;
-            }
-
-            return null;
-        }
-
-
-
-
         public static object GetScalarArray(string type, string[] texts, List<string> errors)
         {
             if (type.Equals("byte") || type.Equals("int8"))
-                return GetNumberArray<sbyte>(type, texts, errors);
+                return GetScalarArray<sbyte>(type, texts, errors);
             else if (type.Equals("ubyte") || type.Equals("uint8"))
-                return GetNumberArray<byte>(type, texts, errors);
+                return GetScalarArray<byte>(type, texts, errors);
             else if (type.Equals("short") || type.Equals("int16"))
-                return GetNumberArray<short>(type, texts, errors);
+                return GetScalarArray<short>(type, texts, errors);
             else if (type.Equals("ushort") || type.Equals("uint16"))
-                return GetNumberArray<ushort>(type, texts, errors);
+                return GetScalarArray<ushort>(type, texts, errors);
             else if (type.Equals("int") || type.Equals("int32"))
-                return GetNumberArray<int>(type, texts, errors);
+                return GetScalarArray<int>(type, texts, errors);
             else if (type.Equals("uint") || type.Equals("uint32"))
-                return GetNumberArray<uint>(type, texts, errors);
+                return GetScalarArray<uint>(type, texts, errors);
             else if (type.Equals("long") || type.Equals("int64"))
-                return GetNumberArray<long>(type, texts, errors);
+                return GetScalarArray<long>(type, texts, errors);
             else if (type.Equals("ulong") || type.Equals("uint64"))
-                return GetNumberArray<ulong>(type, texts, errors);
+                return GetScalarArray<ulong>(type, texts, errors);
             else if (type.Equals("float") || type.Equals("float32"))
-                return GetNumberArray<float>(type, texts, errors);
+                return GetScalarArray<float>(type, texts, errors);
             else if (type.Equals("double") || type.Equals("double64"))
-                return GetNumberArray<double>(type, texts, errors);
+                return GetScalarArray<double>(type, texts, errors);
+            else if (type.Equals("bool"))
+                return GetScalarArray<bool>(type, texts, errors);
+            else if (type.Equals("string"))
+                return GetScalarArray<string>(type, texts, errors);
 
             return null;
         }
 
         /// <summary>
-        /// 获取数字数组
+        /// 获取标量数组
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="type"></param>
         /// <param name="texts"></param>
         /// <param name="errors"></param>
         /// <returns></returns>
-        private static T[] GetNumberArray<T>(string type, string[] texts, List<string> errors)
+        private static T[] GetScalarArray<T>(string type, string[] texts, List<string> errors)
         {
             var list = new List<T>();
 
@@ -214,6 +205,200 @@ namespace FlatBufferData.Build
                 errors.Add(string.Format("列表的第{0}个元素不合法,或不在{1}的数值范围内.", string.Join(",", errorIndexList), type));
 
             return list.ToArray();
+        }
+
+
+
+        /// <summary>
+        /// 枚举值
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static object GetEnum(Model.Enum type, string text)
+        {
+            var field = type.FindFieldByName(text);
+            if (field != null)
+                return field.ID;
+
+            int intID = 0;
+            if (int.TryParse(text, out intID))
+            {
+                field = type.FindFieldByID(intID);
+                if (field != null)
+                    return field.ID;
+            }
+
+            double doubleID = 0;
+            if (double.TryParse(text, out doubleID))
+            {
+                field = type.FindFieldByID((int)doubleID);
+                if (field != null)
+                    return field.ID;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 枚举值列表
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="texts"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
+        public static object GetEnumArray(Model.Enum type,string[] texts,List<string> errors)
+        {
+            var list = new List<bool>();
+
+            var errorIndexList = new List<int>();
+            for (var i = 0; i < texts.Length; i++)
+            {
+                var value = GetEnum(type, texts[i]);
+                if (value != null)
+                    list.Add((bool)value);
+                else
+                    errorIndexList.Add(i);
+            }
+
+            if (errorIndexList.Count > 0)
+                errors.Add(string.Format("列表的第{0}个元素不合法,无法解析成枚举:{1}.", string.Join(",", errorIndexList), type.Name));
+
+            return list.ToArray();
+        }
+
+
+        /// <summary>
+        /// 获取结构
+        /// </summary>
+        /// <param name="attributes"></param>
+        /// <param name="type"></param>
+        /// <param name="text"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
+        public static object GetStruct(AttributeTable attributes, Struct type, string text, List<string> errors)
+        {
+            var format = type.Attributes.GetAttribute<JsonLiteral, StructLiteral>();
+            if (format == null)
+                format = type.Attributes.GetAttribute<JsonLiteral, StructLiteral>();
+            if (format == null)
+                format = JsonLiteral.NORMAL;
+
+            if (format is JsonLiteral)
+                return GetStruct(format as JsonLiteral, type, text, errors);
+            else if (format is StructLiteral)
+                return GetStruct(format as StructLiteral, type, text, errors);
+            else
+                return null;
+        }
+
+        /// <summary>
+        /// 获取列表格式的结构
+        /// </summary>
+        /// <param name="literal"></param>
+        /// <param name="type"></param>
+        /// <param name="text"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
+        private static object GetStruct(StructLiteral literal, Model.Struct type, string text, List<string> errors)
+        {
+            text = text.Trim();
+
+            //查找自定义的分割规则
+            var separator = ",";
+            if (literal != null)
+            {
+                separator = literal.separator;
+                if (text.StartsWith(literal.beginning))
+                    text = text.Substring(literal.beginning.Length);
+                if (text.EndsWith(literal.ending))
+                    text = text.Substring(0, text.Length - literal.ending.Length);
+            }
+
+            //分割字符串
+            var texts = new string[] { };
+            if (!string.IsNullOrEmpty(text))
+                texts = text.Split(new string[] { separator }, StringSplitOptions.None);
+
+            //解析字符串
+            var values = new Dictionary<string, object>();
+            for (int i = 0; i < texts.Length; i++)
+            {
+                var txt = texts[i].Trim();
+                if (i < type.Fields.Count)
+                {
+                    var field = type.Fields[i];
+                    var fieldType = field.Type;
+                    if (BaseUtil.IsInteger(fieldType) || BaseUtil.IsFloat(fieldType) || BaseUtil.IsBool(fieldType))
+                    {
+                        object value = BaseUtil.GetScalar(fieldType, txt);
+                        if (value != null)
+                            values.Add(field.Name, value);
+                        else
+                            errors.Add(string.Format("第{0}个元素{1}无法解析成{2}。", i, txt, fieldType));
+                    }
+                    else if (BaseUtil.IsString(fieldType))
+                    {
+                        values.Add(field.Name, txt);
+                    }
+                    else if (field.TypeDefined is Model.Enum)
+                    {
+                        var value = BaseUtil.GetEnum(field.TypeDefined as Model.Enum, txt);
+                        if (value != null)
+                            values.Add(field.Name, value);
+                        else
+                            errors.Add(string.Format("第{0}个元素{1}无法解析成{2}。", i, txt, fieldType));
+                    }
+                    else if (field.TypeDefined is Model.Struct)
+                    {
+                        var value = GetStruct(field.Attributes, field.TypeDefined as Model.Struct, txt, errors);
+                        if (value != null)
+                            values.Add(field.Name, value);
+                    }
+                }
+                else
+                    errors.Add(string.Format("第{0}个元素将被忽略，因为{1}的字段数量只有{2}个。", i, type.Name, type.Fields.Count));
+            }
+
+            for (int i = texts.Length; i < type.Fields.Count; i++)
+                errors.Add(String.Format("字段{0}没有对应的数据项，因为数据只有{1}个元素。", type.Fields[i].Name, texts.Length));
+
+            return values;
+        }
+
+        /// <summary>
+        /// 获取Json格式的结构
+        /// </summary>
+        /// <param name="literal"></param>
+        /// <param name="type"></param>
+        /// <param name="text"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
+        private static object GetStruct(JsonLiteral literal, Struct type, string text, List<string> errors)
+        {
+            return JsonUtil.ParseJsonText(text, literal.path, type, errors);
+        }
+
+        /// <summary>
+        /// 获取结构数组
+        /// </summary>
+        /// <param name="attributes"></param>
+        /// <param name="type"></param>
+        /// <param name="texts"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
+        public static object GetStructArray(AttributeTable attributes, Model.Struct type, string[] texts, List<string> errors)
+        {
+            var list = new List<Dictionary<string, object>>();
+
+            for (var i = 0; i < texts.Length; i++)
+            {
+                var value = GetStruct(attributes, type, texts[i], errors);
+                if (value != null)
+                    list.Add((Dictionary<string, object>)value);
+            }
+
+            return list;
         }
     }
 }
