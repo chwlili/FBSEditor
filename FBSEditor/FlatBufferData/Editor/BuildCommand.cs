@@ -145,7 +145,7 @@ namespace FlatBufferData.Editor
                     {
                         if (file.RootTable != null)
                         {
-                            var xls = file.RootTable.GetAttribte<XLS>();
+                            var xls = file.RootTable.Attributes.GetAttribute<XLS>();
                             if (xls != null)
                                 factory.ReadData(file.RootTable);
                         }

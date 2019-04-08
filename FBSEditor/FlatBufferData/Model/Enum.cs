@@ -2,8 +2,18 @@
 
 namespace FlatBufferData.Model
 {
-    public class Enum : Base
+    public class Enum
     {
+        /// <summary>
+        /// 名称
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// 注释
+        /// </summary>
+        public string Comment { get; set; }
+
         /// <summary>
         /// 基础类型
         /// </summary>
@@ -18,6 +28,11 @@ namespace FlatBufferData.Model
         /// 字段列表
         /// </summary>
         public List<EnumField> Fields { get; } = new List<EnumField>();
+
+        /// <summary>
+        /// 特性列表
+        /// </summary>
+        public AttributeTable Attributes { get; } = new AttributeTable();
 
         public EnumField FindFieldByName(string fieldName)
         {

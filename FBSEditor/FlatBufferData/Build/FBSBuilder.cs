@@ -835,36 +835,36 @@ namespace FlatBufferData.Build
                 //处理附加特性
                 foreach (var data in file.Tables)
                 {
-                    ParseAttribute((data2context[data] as TableContext).attr(), data);
+                    ParseAttribute((data2context[data] as TableContext).attr(), data, data.Attributes);
                     foreach (var field in data.Fields)
-                        ParseAttribute((data2context[field] as TableFieldContext).attr(), field);
+                        ParseAttribute((data2context[field] as TableFieldContext).attr(), field, field.Attributes);
                 }
                 foreach (var data in file.Structs)
                 {
-                    ParseAttribute((data2context[data] as StructContext).attr(), data);
+                    ParseAttribute((data2context[data] as StructContext).attr(), data, data.Attributes);
                     foreach (var field in data.Fields)
-                        ParseAttribute((data2context[field] as StructFieldContext).attr(), field);
+                        ParseAttribute((data2context[field] as StructFieldContext).attr(), field, field.Attributes);
                 }
                 foreach (var data in file.Enums)
                 {
-                    ParseAttribute((data2context[data] as EnumContext).attr(), data);
+                    ParseAttribute((data2context[data] as EnumContext).attr(), data, data.Attributes);
                     foreach (var field in data.Fields)
-                        ParseAttribute((data2context[field] as EnumFieldContext).attr(), field);
+                        ParseAttribute((data2context[field] as EnumFieldContext).attr(), field, field.Attributes);
                 }
                 foreach (var data in file.Unions)
                 {
-                    ParseAttribute((data2context[data] as UnionContext).attr(), data);
+                    ParseAttribute((data2context[data] as UnionContext).attr(), data, data.Attributes);
                     foreach (var field in data.Fields)
-                        ParseAttribute((data2context[field] as UnionFieldContext).attr(), field);
+                        ParseAttribute((data2context[field] as UnionFieldContext).attr(), field, field.Attributes);
                 }
                 foreach (var data in file.Rpcs)
                 {
-                    ParseAttribute((data2context[data] as RpcContext).attr(), data);
+                    ParseAttribute((data2context[data] as RpcContext).attr(), data, data.Attributes);
                     foreach (var field in data.Fields)
-                        ParseAttribute((data2context[field] as RpcFieldContext).attr(), field);
+                        ParseAttribute((data2context[field] as RpcFieldContext).attr(), field, field.Attributes);
                 }
             }
-            private void ParseAttribute(AttrContext[] context, Base owner)
+            private void ParseAttribute(AttrContext[] context, object owner,AttributeTable attributes)
             {
                 foreach (var item in context)
                 {
@@ -876,27 +876,27 @@ namespace FlatBufferData.Build
                         Attribute attr = null;
                         switch (name)
                         {
-                            case "XLS": attr = HandleXLS(item, owner); break;
-                            case "Index": attr = HandleIndex(item, owner); break;
-                            case "Nullable": attr = HandleNullable(item, owner); break;
-                            case "Unique": attr = HandleUnique(item, owner); break;
-                            case "ArrayLiteral": attr = HandleArrayLiteral(item, owner); break;
-                            case "StructLiteral": attr = HandleStructLiteral(item, owner); break;
-                            case "JsonLiteral": attr = HandleJsonLiteral(item, owner); break;
+                            case "XLS": attr = HandleXLS(item, owner, attributes); break;
+                            case "Index": attr = HandleIndex(item, owner, attributes); break;
+                            case "Nullable": attr = HandleNullable(item, owner, attributes); break;
+                            case "Unique": attr = HandleUnique(item, owner, attributes); break;
+                            case "ArrayLiteral": attr = HandleArrayLiteral(item, owner, attributes); break;
+                            case "StructLiteral": attr = HandleStructLiteral(item, owner, attributes); break;
+                            case "JsonLiteral": attr = HandleJsonLiteral(item, owner, attributes); break;
                         }
 
                         if (attr != null)
-                            owner.Attributes.Add(attr);
+                            attributes.Add(attr);
                     }
                 }
             }
             
-            private Attribute HandleXLS(AttrContext item, Base owner)
+            private Attribute HandleXLS(AttrContext item, object owner, AttributeTable attributes)
             {
                 if (!(owner is Table))
                     ReportError("XLS标记只能应用到table", item);
                 
-                if (owner.GetAttributes<XLS>().Length > 0)
+                if (attributes.GetAttributes<XLS>().Length > 0)
                     ReportError("Nullable不能多次应用到同一对象。", item.key);
 
                 var fields = item.attrField();
@@ -991,7 +991,7 @@ namespace FlatBufferData.Build
                 else
                     return null;
             }
-            private Attribute HandleIndex(AttrContext item, Base owner)
+            private Attribute HandleIndex(AttrContext item, object owner, AttributeTable attributes)
             {
                 if (!(owner is Table))
                     ReportError("此标记只能应用到table", item);
@@ -1019,7 +1019,7 @@ namespace FlatBufferData.Build
                     var name = field.attrValue.vstr.Text.Trim('"');
 
                     var finded = false;
-                    var indexList = owner.GetAttributes<Index>();
+                    var indexList = attributes.GetAttributes<Index>();
                     foreach (var index in indexList)
                     {
                         if (index.name.Equals(name))
@@ -1062,12 +1062,12 @@ namespace FlatBufferData.Build
 
                 return null;
             }
-            private Attribute HandleNullable(AttrContext item, Base owner)
+            private Attribute HandleNullable(AttrContext item, object owner, AttributeTable attributes)
             {
                 if (!(owner is TableField))
                     ReportError("Nullable只能应用到table字段。", item.key);
 
-                if (owner.GetAttributes<Nullable>().Length > 0)
+                if (attributes.GetAttributes<Nullable>().Length > 0)
                     ReportError("Nullable不能多次应用到同一对象。", item.key);
 
                 var fields = item.attrField();
@@ -1094,12 +1094,12 @@ namespace FlatBufferData.Build
                 else
                     return new Nullable(true);
             }
-            private Attribute HandleUnique(AttrContext item, Base owner)
+            private Attribute HandleUnique(AttrContext item, object owner, AttributeTable attributes)
             {
                 if (!(owner is TableField))
                     ReportError("Unique只能应用到table字段。", item.key);
 
-                if (owner.GetAttributes<Unique>().Length > 0)
+                if (attributes.GetAttributes<Unique>().Length > 0)
                     ReportError("Unique不能多次应用到同一对象。", item.key);
 
                 var fields = item.attrField();
@@ -1115,7 +1115,7 @@ namespace FlatBufferData.Build
                     return new Unique();
             }
 
-            private Attribute HandleArrayLiteral(AttrContext item, Base owner)
+            private Attribute HandleArrayLiteral(AttrContext item, object owner, AttributeTable attributes)
             {
                 if (!(owner is TableField))
                     ReportError("ArrayLiteral只能应用到table字段。", item.key);
@@ -1123,11 +1123,11 @@ namespace FlatBufferData.Build
                 if(!(owner as TableField).IsArray)
                     ReportError("ArrayLiteral只能应用到table字段只能应用到数组字段。", item.key);
 
-                if (owner.GetAttributes<ArrayLiteral>().Length > 0)
+                if (attributes.GetAttributes<ArrayLiteral>().Length > 0)
                     ReportError("ArrayLiteral只能应用到table字段不能多次应用到同一对象。", item.key);
-                if (owner.GetAttributes<StructLiteral>().Length > 0)
+                if (attributes.GetAttributes<StructLiteral>().Length > 0)
                     ReportError("ArrayLiteral不能和StructLiteral应用到同一个对象。", item.key);
-                if (owner.GetAttributes<JsonLiteral>().Length > 0)
+                if (attributes.GetAttributes<JsonLiteral>().Length > 0)
                     ReportError("ArrayLiteral不能和JsonLiteral应用到同一个对象。", item.key);
 
 
@@ -1166,7 +1166,7 @@ namespace FlatBufferData.Build
 
                 return new ArrayLiteral(beginning,separator,ending);
             }
-            private Attribute HandleStructLiteral(AttrContext item, Base owner)
+            private Attribute HandleStructLiteral(AttrContext item, object owner, AttributeTable attributes)
             {
                 if(!(owner is Struct) && !(owner is StructField) && !(owner is TableField))
                     ReportError("StructLiteral只能应用到 Struct、StructField、TableField。", item.key);
@@ -1177,11 +1177,11 @@ namespace FlatBufferData.Build
                 if((owner is TableField) && !((owner as TableField).TypeDefined is Struct))
                     ReportError("StructLiteral不能应用到类型不是Struct的TableField", item.key);
 
-                if (owner.GetAttributes<StructLiteral>().Length > 0)
+                if (attributes.GetAttributes<StructLiteral>().Length > 0)
                     ReportError("StructLiteral只能应用到table字段不能多次应用到同一对象。", item.key);
-                if (owner.GetAttributes<ArrayLiteral>().Length > 0)
+                if (attributes.GetAttributes<ArrayLiteral>().Length > 0)
                     ReportError("StructLiteral不能和ArrayLiteral应用到同一个对象。", item.key);
-                if (owner.GetAttributes<JsonLiteral>().Length > 0)
+                if (attributes.GetAttributes<JsonLiteral>().Length > 0)
                     ReportError("StructLiteral不能和JsonLiteral应用到同一个对象。", item.key);
 
 
@@ -1220,15 +1220,15 @@ namespace FlatBufferData.Build
 
                 return new StructLiteral(beginning, separator, ending);
             }
-            private Attribute HandleJsonLiteral(AttrContext item, Base owner)
+            private Attribute HandleJsonLiteral(AttrContext item, object owner, AttributeTable attributes)
             {
                 if (!(owner is Table) && !(owner is Struct) && !(owner is TableField) && !(owner is StructField))
                     ReportError("JsonLiteral只能应用到Table,Struct,TableField,StructField。", item.key);
-                if (owner.GetAttributes<JsonLiteral>().Length > 0)
+                if (attributes.GetAttributes<JsonLiteral>().Length > 0)
                     ReportError("JsonLiteral不能重复应用到同一个对象。", item.key);
-                if (owner.GetAttributes<ArrayLiteral>().Length > 0)
+                if (attributes.GetAttributes<ArrayLiteral>().Length > 0)
                     ReportError("JsonLiteral不能和ArrayLiteral应用到同一个对象。", item.key);
-                if (owner.GetAttributes<StructLiteral>().Length > 0)
+                if (attributes.GetAttributes<StructLiteral>().Length > 0)
                     ReportError("JsonLiteral不能和StructLiteral应用到同一个对象。", item.key);
 
                 var jsonPath = "";

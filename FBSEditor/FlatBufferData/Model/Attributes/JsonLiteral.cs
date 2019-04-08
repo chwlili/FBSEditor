@@ -2,6 +2,8 @@
 {
     class JsonLiteral : Attribute
     {
+        public static JsonLiteral NORMAL = new JsonLiteral(null);
+
         /// <summary>
         /// 起始符
         /// </summary>

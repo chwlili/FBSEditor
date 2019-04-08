@@ -68,47 +68,47 @@ namespace FlatBufferData.Build
             else if (type.Equals("ubyte") || type.Equals("uint8"))
             {
                 byte value = 0;
-                if (!byte.TryParse(text, out value)) return value;
+                if (byte.TryParse(text, out value)) return value;
             }
             else if (type.Equals("short") || type.Equals("int16"))
             {
                 short value = 0;
-                if (!short.TryParse(text, out value)) return value;
+                if (short.TryParse(text, out value)) return value;
             }
             else if (type.Equals("ushort") || type.Equals("uint16"))
             {
                 ushort value = 0;
-                if (!ushort.TryParse(text, out value)) return value;
+                if (ushort.TryParse(text, out value)) return value;
             }
             else if (type.Equals("int") || type.Equals("int32"))
             {
                 int value = 0;
-                if (!int.TryParse(text, out value)) return value;
+                if (int.TryParse(text, out value)) return value;
             }
             else if (type.Equals("uint") || type.Equals("uint32"))
             {
                 uint value = 0;
-                if (!uint.TryParse(text, out value)) return value;
+                if (uint.TryParse(text, out value)) return value;
             }
             else if (type.Equals("long") || type.Equals("int64"))
             {
                 long value = 0;
-                if (!long.TryParse(text, out value)) return value;
+                if (long.TryParse(text, out value)) return value;
             }
             else if (type.Equals("ulong") || type.Equals("uint64"))
             {
                 ulong value = 0;
-                if (!ulong.TryParse(text, out value)) return value;
+                if (ulong.TryParse(text, out value)) return value;
             }
             else if (type.Equals("float") || type.Equals("float32"))
             {
                 float value = 0;
-                if (!float.TryParse(text, out value)) return value;
+                if (float.TryParse(text, out value)) return value;
             }
             else if (type.Equals("double") || type.Equals("double64"))
             {
                 double value = 0;
-                if (!double.TryParse(text, out value)) return value;
+                if (double.TryParse(text, out value)) return value;
             }
             else if (type.Equals("bool"))
             {
@@ -159,5 +159,63 @@ namespace FlatBufferData.Build
             return null;
         }
 
+
+
+
+        public static object GetScalarArray(string type, string[] texts, List<string> errorList)
+        {
+            var errors = new List<int>();
+
+            if (type.Equals("byte") || type.Equals("int8"))
+                return GetNumberArray<sbyte>(type, texts, errorList);
+            else if (type.Equals("ubyte") || type.Equals("uint8"))
+                return GetNumberArray<byte>(type, texts, errorList);
+            else if (type.Equals("short") || type.Equals("int16"))
+                return GetNumberArray<short>(type, texts, errorList);
+            else if (type.Equals("ushort") || type.Equals("uint16"))
+                return GetNumberArray<ushort>(type, texts, errorList);
+            else if (type.Equals("int") || type.Equals("int32"))
+                return GetNumberArray<int>(type, texts, errorList);
+            else if (type.Equals("uint") || type.Equals("uint32"))
+                return GetNumberArray<uint>(type, texts, errorList);
+            else if (type.Equals("long") || type.Equals("int64"))
+                return GetNumberArray<long>(type, texts, errorList);
+            else if (type.Equals("ulong") || type.Equals("uint64"))
+                return GetNumberArray<ulong>(type, texts, errorList);
+            else if (type.Equals("float") || type.Equals("float32"))
+                return GetNumberArray<float>(type, texts, errorList);
+            else if (type.Equals("double") || type.Equals("double64"))
+                return GetNumberArray<double>(type, texts, errorList);
+
+            return null;
+        }
+
+        /// <summary>
+        /// 获取数字数组
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="type"></param>
+        /// <param name="texts"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
+        private static T[] GetNumberArray<T>(string type, string[] texts, List<string> errors)
+        {
+            var list = new List<T>();
+
+            var errorIndexList = new List<int>();
+            for (var i = 0; i < texts.Length; i++)
+            {
+                var value = GetScalar(type, texts[i]);
+                if (value != null)
+                    list.Add((T)value);
+                else
+                    errorIndexList.Add(i);
+            }
+
+            if (errorIndexList.Count > 0)
+                errors.Add(string.Format("列表的第{0}个元素不合法,或不在{1}的数值范围内.", string.Join(",", errorIndexList), type));
+
+            return list.ToArray();
+        }
     }
 }

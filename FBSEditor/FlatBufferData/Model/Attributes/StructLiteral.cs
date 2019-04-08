@@ -2,6 +2,8 @@
 {
     class StructLiteral : Attribute
     {
+        public static StructLiteral NORMAL = new StructLiteral(null, ",", null);
+
         /// <summary>
         /// 起始符
         /// </summary>

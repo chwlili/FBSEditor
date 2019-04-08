@@ -2,8 +2,18 @@
 
 namespace FlatBufferData.Model
 {
-    public class RpcMethod : Base
+    public class RpcMethod
     {
+        /// <summary>
+        /// 名称
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// 注释
+        /// </summary>
+        public string Comment { get; set; }
+
         /// <summary>
         /// 参数值
         /// </summary>
@@ -28,5 +38,10 @@ namespace FlatBufferData.Model
         /// 元数据列表
         /// </summary>
         public List<Meta> Metas { get; set; } = new List<Meta>();
+
+        /// <summary>
+        /// 特性列表
+        /// </summary>
+        public AttributeTable Attributes { get; } = new AttributeTable();
     }
 }
