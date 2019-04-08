@@ -162,30 +162,28 @@ namespace FlatBufferData.Build
 
 
 
-        public static object GetScalarArray(string type, string[] texts, List<string> errorList)
+        public static object GetScalarArray(string type, string[] texts, List<string> errors)
         {
-            var errors = new List<int>();
-
             if (type.Equals("byte") || type.Equals("int8"))
-                return GetNumberArray<sbyte>(type, texts, errorList);
+                return GetNumberArray<sbyte>(type, texts, errors);
             else if (type.Equals("ubyte") || type.Equals("uint8"))
-                return GetNumberArray<byte>(type, texts, errorList);
+                return GetNumberArray<byte>(type, texts, errors);
             else if (type.Equals("short") || type.Equals("int16"))
-                return GetNumberArray<short>(type, texts, errorList);
+                return GetNumberArray<short>(type, texts, errors);
             else if (type.Equals("ushort") || type.Equals("uint16"))
-                return GetNumberArray<ushort>(type, texts, errorList);
+                return GetNumberArray<ushort>(type, texts, errors);
             else if (type.Equals("int") || type.Equals("int32"))
-                return GetNumberArray<int>(type, texts, errorList);
+                return GetNumberArray<int>(type, texts, errors);
             else if (type.Equals("uint") || type.Equals("uint32"))
-                return GetNumberArray<uint>(type, texts, errorList);
+                return GetNumberArray<uint>(type, texts, errors);
             else if (type.Equals("long") || type.Equals("int64"))
-                return GetNumberArray<long>(type, texts, errorList);
+                return GetNumberArray<long>(type, texts, errors);
             else if (type.Equals("ulong") || type.Equals("uint64"))
-                return GetNumberArray<ulong>(type, texts, errorList);
+                return GetNumberArray<ulong>(type, texts, errors);
             else if (type.Equals("float") || type.Equals("float32"))
-                return GetNumberArray<float>(type, texts, errorList);
+                return GetNumberArray<float>(type, texts, errors);
             else if (type.Equals("double") || type.Equals("double64"))
-                return GetNumberArray<double>(type, texts, errorList);
+                return GetNumberArray<double>(type, texts, errors);
 
             return null;
         }
