@@ -7,79 +7,64 @@ namespace FlatBufferData.Build
 {
     public class JsonUtil
     {
+        /// <summary>
+        /// 解析Json文件
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="rootPath"></param>
+        /// <param name="type"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
         public static object ParseJsonFile(string filePath, string rootPath, Table type, List<string> errors)
         {
             var jsonLexer = new JsonLexer(new AntlrFileStream(filePath));
             var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
 
-            var jsonValue = jsonParser.jsonValue();
-
-            var jsonPath = "";
-            if(!string.IsNullOrEmpty(rootPath))
-                jsonPath = rootPath;
-
-            var error = "";
-            var rootNode = GetRootJsonNode(jsonValue, jsonPath, out error);
-            if (rootNode == null)
-            {
-                errors.Add("无效的jsonPath:" + jsonPath);
-                return null;
-            }
-
-            return ParseJsonNode(type.Name, type, rootNode, errors);
+            return Parse(type.Name, type, jsonParser.jsonValue(), rootPath, errors);
         }
 
-        public static object ParseJsonFile(string filePath, string rootPath, Struct type, List<string> errors)
-        {
-            var jsonLexer = new JsonLexer(new AntlrFileStream(filePath));
-            var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
-
-            var jsonValue = jsonParser.jsonValue();
-
-            var jsonPath = "";
-            if (!string.IsNullOrEmpty(rootPath))
-                jsonPath = rootPath;
-
-            var error = "";
-            var rootNode = GetRootJsonNode(jsonValue, jsonPath, out error);
-            if (rootNode == null)
-            {
-                errors.Add("无效的jsonPath:" + jsonPath);
-                return null;
-            }
-
-            return ParseJsonNode(type.Name, type, rootNode, errors);
-        }
-
+        /// <summary>
+        /// 解析Json文本
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="rootPath"></param>
+        /// <param name="type"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
         public static object ParseJsonText(string text, string rootPath, Table type, List<string> errors)
         {
             var jsonLexer = new JsonLexer(new AntlrInputStream(text));
             var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
 
-            var jsonValue = jsonParser.jsonValue();
-
-            var jsonPath = "";
-            if (!string.IsNullOrEmpty(rootPath))
-                jsonPath = rootPath;
-
-            var error = "";
-            var rootNode = GetRootJsonNode(jsonValue, jsonPath, out error);
-            if (rootNode == null)
-            {
-                errors.Add("无效的jsonPath:" + jsonPath);
-                return null;
-            }
-
-            return ParseJsonNode(type.Name, type, rootNode, errors);
+            return Parse(type.Name, type, jsonParser.jsonValue(), rootPath, errors);
         }
 
+        /// <summary>
+        /// 解析Json文本
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="rootPath"></param>
+        /// <param name="type"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
         public static object ParseJsonText(string text, string rootPath, Struct type, List<string> errors)
         {
             var jsonLexer = new JsonLexer(new AntlrInputStream(text));
             var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
 
-            var jsonValue = jsonParser.jsonValue();
+            return Parse(type.Name, type, jsonParser.jsonValue(), rootPath, errors);
+        }
 
+        /// <summary>
+        /// 解析
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="jsonValue"></param>
+        /// <param name="rootPath"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
+        private static object Parse(string typeName, object type, JsonParser.JsonValueContext jsonValue, string rootPath, List<string> errors)
+        {
             var jsonPath = "";
             if (!string.IsNullOrEmpty(rootPath))
                 jsonPath = rootPath;
@@ -92,166 +77,218 @@ namespace FlatBufferData.Build
                 return null;
             }
 
-            return ParseJsonNode(type.Name, type, rootNode, errors);
+            return ParseJson(typeName, type, false, rootNode, errors);
         }
 
-
         /// <summary>
-        /// 尝试解析JsonValue
+        /// 解析Json
         /// </summary>
         /// <param name="type"></param>
         /// <param name="typeDefined"></param>
+        /// <param name="isArray"></param>
         /// <param name="jsonValue"></param>
         /// <param name="errors"></param>
         /// <returns></returns>
-        private static object ParseJsonNode(string type, object typeDefined, JsonParser.JsonValueContext jsonValue, List<string> errors)
+        private static object ParseJson(string type, object typeDefined, bool isArray, JsonParser.JsonValueContext jsonValue, List<string> errors)
         {
-            var isInteger = BaseUtil.IsInteger(type);
-            var isFloat = BaseUtil.IsFloat(type);
-            var isBool = BaseUtil.IsBool(type);
-            var isString = BaseUtil.IsString(type);
-            var isBase = isInteger || isFloat || isBool || isString;
-
-            var isEnum = typeDefined is Model.Enum;
-            var isTable = typeDefined is Model.Table;
-            var isStruct = typeDefined is Model.Struct;
-
-            if (jsonValue.nullValue != null)
+            if (isArray)
             {
-                errors.Add(string.Format("null无法转换成{1}.({2}:{3})", jsonValue.nullValue.Text, type, jsonValue.nullValue.Line, jsonValue.nullValue.Column));
-                return null;
-            }
-            if (jsonValue.arraryValue != null && (isBase || isEnum))
-            {
-                errors.Add(string.Format("数组无法转换成{0}.({1}:{2})", type, jsonValue.arraryValue.Start.Line, jsonValue.arraryValue.Start.Column));
-                return null;
-            }
-            if (jsonValue.objectValue != null && (isBase || isEnum))
-            {
-                errors.Add(string.Format("对象无法转换成{0}.({1}:{2}).", type, jsonValue.objectValue.Start.Line, jsonValue.objectValue.Start.Column));
-                return null;
-            }
-
-            if (isBase)
-            {
-                var error = isInteger || isFloat ? "值\"{0}\"无法转换成{1},或超出{1}的精度范围.({2}:{3})" : "值\"{0}\"无法转换成{1}.({2}:{3})";
-
-                if (jsonValue.boolValue != null && (isInteger || isFloat))
+                var arrayValue = new List<object>();
+                if (jsonValue.arraryValue == null)
                 {
-                    errors.Add(string.Format(error, jsonValue.boolValue.Text.Trim('"'), type, jsonValue.boolValue.Line, jsonValue.boolValue.Column));
-                    return null;
+                    errors.Add(string.Format("{0}无法转换成{1}数组.({2}:{3})", jsonValue.GetText(), type, jsonValue.Start.Line, jsonValue.Start.Column));
                 }
-
-                if (jsonValue.strValue != null && isBool)
+                else
                 {
-                    errors.Add(string.Format(error, jsonValue.strValue.Text.Trim('"'), type, jsonValue.strValue.Line, jsonValue.strValue.Column));
-                    return null;
+                    foreach (var arrayElementJson in jsonValue.arraryValue._arrayElement)
+                    {
+                        var parsedValue = ParseJson(type, typeDefined, false, arrayElementJson, errors);
+                        if (parsedValue != null)
+                            arrayValue.Add(parsedValue);
+                    }
                 }
+                return arrayValue;
+            }
+            else
+            {
+                if (BaseUtil.IsInteger(type) || BaseUtil.IsFloat(type) || BaseUtil.IsBool(type) || BaseUtil.IsString(type))
+                {
+                    return ParseScalar(type, jsonValue, errors);
+                }
+                else if (typeDefined is Model.Enum)
+                {
+                    return ParseEnum(typeDefined as Model.Enum, jsonValue, errors);
+                }
+                else if (typeDefined is Model.Struct)
+                {
+                    return ParseStruct(typeDefined as Model.Struct, jsonValue, errors);
+                }
+                else if (typeDefined is Model.Table)
+                {
+                    return ParseTable(typeDefined as Model.Table, jsonValue, errors);
+                }
+            }
+            return null;
+        }
 
-                IToken token = null;
-                if (jsonValue.boolValue != null)
-                    token = jsonValue.boolValue;
-                else if (jsonValue.intValue != null)
-                    token = jsonValue.intValue;
-                else if (jsonValue.floatValue != null)
-                    token = jsonValue.floatValue;
-                else if (jsonValue.strValue != null)
-                    token = jsonValue.strValue;
-
+        /// <summary>
+        /// 解析标量
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="jsonValue"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
+        private static object ParseScalar(string type, JsonParser.JsonValueContext jsonValue, List<string> errors)
+        {
+            IToken token = jsonValue.boolValue ?? jsonValue.intValue ?? jsonValue.floatValue ?? jsonValue.strValue ?? null;
+            if (token != null)
+            {
                 object result = BaseUtil.GetScalar(type, token.Text.Trim('"'));
                 if (result != null)
                     return result;
                 else
-                    errors.Add(string.Format(error, token.Text.Trim('"'), type, token.Line, token.Column));
+                {
+                    if(BaseUtil.IsInteger(type) || BaseUtil.IsFloat(type))
+                        errors.Add(string.Format("值\"{0}\"无法转换成{1},或超出{1}的精度范围.({2}:{3})", token.Text.Trim('"'), type, token.Line, token.Column));
+                    else
+                        errors.Add(string.Format("值\"{0}\"无法转换成{1}.({2}:{3})", token.Text.Trim('"'), type, token.Line, token.Column));
+                }
             }
-            else if (isEnum)
-            {
-                IToken token = null;
-                if (jsonValue.strValue != null)
-                    token = jsonValue.strValue;
-                else if (jsonValue.intValue != null)
-                    token = jsonValue.intValue;
-                else if (jsonValue.floatValue != null)
-                    token = jsonValue.floatValue;
+            else
+                errors.Add(string.Format("\"{0}\"无法转换成{1}.({2}:{3})", jsonValue.GetText(), type, token.Line, token.Column));
 
-                var text = token.Text.Trim('"');
-                object result = BaseUtil.GetEnum(typeDefined as Model.Enum, text);
+            return null;
+        }
+
+        /// <summary>
+        /// 解析枚举
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="jsonValue"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
+        private static object ParseEnum(Model.Enum type, JsonParser.JsonValueContext jsonValue, List<string> errors)
+        {
+            IToken token = jsonValue.strValue ?? jsonValue.intValue ?? jsonValue.floatValue;
+            if(token!=null)
+            {
+                object result = BaseUtil.GetEnum(type, token.Text.Trim('"'));
                 if (result != null)
                     return result;
-
-                errors.Add(string.Format("值\"{0}\"无法转换成枚举{1}.({2}:{3})", text, type, token.Line, token.Column));
-                return null;
+                else
+                    errors.Add(string.Format("值\"{0}\"无法转换成枚举{1}.({2}:{3})", token.Text.Trim('"'), type, token.Line, token.Column));
             }
-            else if (isStruct)
-            {
-                if (jsonValue.nullValue != null || jsonValue.boolValue != null || jsonValue.intValue != null || jsonValue.floatValue != null)
-                {
-                    errors.Add(string.Format("值\"{0}\"无法转换成结构{1}.({2},{3})", jsonValue.GetText(), type, jsonValue.Start.Line, jsonValue.Start.Column));
-                    return null;
-                }
-                else if (jsonValue.arraryValue != null)
-                {
-                    errors.Add(string.Format("数组无法转换成结构{0}.({1}:{2})", type, jsonValue.Start.Line, jsonValue.Start.Column));
-                    return null;
-                }
-                else if (jsonValue.objectValue != null)
-                {
-                    var name2jsonNode = new Dictionary<string, JsonParser.JsonValueContext>();
-                    foreach (var jsonNode in jsonValue.objectValue._props)
-                    {
-                        var name = jsonNode.propName.Text.Trim('"');
-                        if (name2jsonNode.ContainsKey(name))
-                            errors.Add(string.Format("key为{0}的Json属性已存在.({1}:{2})", name, jsonNode.propName.Line, jsonNode.propName.Column));
-                        else
-                            name2jsonNode.Add(jsonNode.propName.Text.Trim('"'), jsonNode.propValue);
-                    }
+            else
+                errors.Add(string.Format("\"{0}\"无法转换成枚举{1}.({2}:{3})", jsonValue.GetText(), type, token.Line, token.Column));
 
-                    var values = new Dictionary<string, object>();
-                    var structType = typeDefined as Model.Struct;
-                    foreach (var structField in structType.Fields)
-                    {
-                        var jsonKey = structField.DataField;
-                        if (name2jsonNode.ContainsKey(jsonKey))
-                        {
-                            var value = ParseJsonNode(structField.Type, structField.TypeDefined, name2jsonNode[jsonKey], errors);
-                            if (value != null)
-                                values.Add(structField.Name, value);
-                        }
-                        else
-                        {
-                            errors.Add(String.Format("找不到名为{0}的json字段。", jsonKey));
-                        }
-                    }
-                    return values;
-                }
-            }
-            else if (isTable)
+            return null;
+        }
+
+        /// <summary>
+        /// 解析结构
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="jsonValue"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
+        private static object ParseStruct(Struct type, JsonParser.JsonValueContext jsonValue, List<string> errors)
+        {
+            if (jsonValue.objectValue != null)
             {
-                if (jsonValue.nullValue != null || jsonValue.boolValue != null || jsonValue.intValue != null || jsonValue.floatValue != null)
+                var name2jsonNode = new Dictionary<string, JsonParser.JsonValueContext>();
+                foreach (var jsonNode in jsonValue.objectValue._props)
                 {
-                    errors.Add(string.Format("值\"{0}\"无法转换成{1}结构.({2},{3})", jsonValue.GetText(), type, jsonValue.Start.Line, jsonValue.Start.Column));
-                    return null;
-                }
-                else if (jsonValue.objectValue != null)
-                {
-                    errors.Add(string.Format("结构无法转换成{0}数组.({1}:{2})", type, jsonValue.Start.Line, jsonValue.Start.Column));
-                    return null;
+                    var name = jsonNode.propName.Text.Trim('"');
+                    if (name2jsonNode.ContainsKey(name))
+                        errors.Add(string.Format("key为{0}的Json属性已存在.({1}:{2})", name, jsonNode.propName.Line, jsonNode.propName.Column));
+                    else
+                        name2jsonNode.Add(name, jsonNode.propValue);
                 }
 
-                var values = new List<object>();
-                foreach (var jsonNode in jsonValue.arraryValue._arrayElement)
+                var values = new Dictionary<string, object>();
+                foreach (var field in type.Fields)
                 {
-                    var value = ParseJsonNode(type, typeDefined, jsonNode, errors);
-                    if (value != null)
-                        values.Add(value);
+                    var jsonKey = field.DataField;
+                    if(name2jsonNode.ContainsKey(jsonKey))
+                    {
+                        values.Add(field.Name, ParseJson(field.Type, field.TypeDefined, field.IsArray, name2jsonNode[jsonKey], errors));
+                    }
+                    else
+                    {
+                        values.Add(field.Name, null);
+                        errors.Add(string.Format("\"{0}\"找不到名为{1}的属性.({2}:{3})", jsonValue.GetText(), jsonKey, jsonValue.Start.Line, jsonValue.Start.Column));
+                    }
                 }
                 return values;
+            }
+            else
+            {
+                errors.Add(string.Format("\"{0}\"无法转换成结构{1}.({2}:{3})", jsonValue.GetText(), type, jsonValue.Start.Line, jsonValue.Start.Column));
             }
 
             return null;
         }
 
+        /// <summary>
+        /// 解析表
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="jsonValue"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
+        private static object ParseTable(Table type, JsonParser.JsonValueContext jsonValue, List<string> errors)
+        {
+            if (jsonValue.arraryValue == null)
+            {
+                errors.Add(string.Format("\"{0}\"无法转换成表{1}.({2}:{3})", jsonValue.GetText(), type.Name, jsonValue.Start.Line, jsonValue.Start.Column));
+                return null;
+            }
 
+            var tableRows = new List<object>();
+            foreach (var childNode in jsonValue.arraryValue._arrayElement)
+            {
+                if (childNode.objectValue == null)
+                {
+                    errors.Add(string.Format("\"{0}\"无法转换成表{1}.({2}:{3})", jsonValue.GetText(), type.Name, jsonValue.Start.Line, jsonValue.Start.Column));
+                    continue;
+                }
+
+                var name2jsonNode = new Dictionary<string, JsonParser.JsonValueContext>();
+                foreach (var jsonNode in childNode.objectValue._props)
+                {
+                    var name = jsonNode.propName.Text.Trim('"');
+                    if (name2jsonNode.ContainsKey(name))
+                        errors.Add(string.Format("key为{0}的Json属性已存在.({1}:{2})", name, jsonNode.propName.Line, jsonNode.propName.Column));
+                    else
+                        name2jsonNode.Add(name, jsonNode.propValue);
+                }
+
+                var singleRow = new Dictionary<string, object>();
+                foreach (var field in type.Fields)
+                {
+                    var jsonKey = field.DataField;
+                    if (name2jsonNode.ContainsKey(jsonKey))
+                    {
+                        singleRow.Add(field.Name, ParseJson(field.Type, field.TypeDefined, field.IsArray, name2jsonNode[jsonKey], errors));
+                    }
+                    else
+                    {
+                        singleRow.Add(field.Name, null);
+                        errors.Add(string.Format("\"{0}\"找不到名为{1}的属性.({2}:{3})", childNode.GetText(), jsonKey, childNode.Start.Line, childNode.Start.Column));
+                    }
+                }
+                tableRows.Add(singleRow);
+            }
+            return tableRows;
+        }
+
+        /// <summary>
+        /// 按路径查找Json节点
+        /// </summary>
+        /// <param name="json"></param>
+        /// <param name="jsonPath"></param>
+        /// <param name="error"></param>
+        /// <returns></returns>
         private static JsonParser.JsonValueContext GetRootJsonNode(JsonParser.JsonValueContext json, string jsonPath, out string error)
         {
             if (string.IsNullOrEmpty(jsonPath))
@@ -362,7 +399,5 @@ namespace FlatBufferData.Build
 
             return json;
         }
-
-
     }
 }

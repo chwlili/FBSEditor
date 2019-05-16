@@ -882,6 +882,7 @@ namespace FlatBufferData.Build
                             case "Unique": attr = HandleUnique(item, owner, attributes); break;
                             case "ArrayLiteral": attr = HandleArrayLiteral(item, owner, attributes); break;
                             case "StructLiteral": attr = HandleStructLiteral(item, owner, attributes); break;
+                            case "JsonFile": attr = HandleJsonFile(item, owner, attributes); break;
                             case "JsonLiteral": attr = HandleJsonLiteral(item, owner, attributes); break;
                         }
 
@@ -890,14 +891,14 @@ namespace FlatBufferData.Build
                     }
                 }
             }
-            
+
             private Attribute HandleXLS(AttrContext item, object owner, AttributeTable attributes)
             {
                 if (!(owner is Table))
                     ReportError("XLS标记只能应用到table", item);
                 
                 if (attributes.GetAttributes<XLS>().Length > 0)
-                    ReportError("Nullable不能多次应用到同一对象。", item.key);
+                    ReportError("XLS不能多次应用到同一对象。", item.key);
 
                 var fields = item.attrField();
 
@@ -1219,6 +1220,56 @@ namespace FlatBufferData.Build
                 }
 
                 return new StructLiteral(beginning, separator, ending);
+            }
+            private Attribute HandleJsonFile(AttrContext item, object owner, AttributeTable attributes)
+            {
+                if (!(owner is Table))
+                    ReportError("JsonFIle标记只能应用到table", item);
+
+                if (attributes.GetAttributes<JsonFile>().Length > 0)
+                    ReportError("JsonFile不能多次应用到同一对象。", item.key);
+
+                var fields = item.attrField();
+
+                string filePath = null;
+                string rootPath = null;
+
+                //文件路径
+                if (fields.Length > 0)
+                {
+                    var field = fields[0];
+                    if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                        ReportError("第一个参数必须是字符串表示的文件路径", field);
+                    else
+                    {
+                        var path = field.attrValue.vstr.Text.Trim('"');
+                        if (!File.Exists(path))
+                            ReportError(path + "不是一个有效的文件", field.attrValue.vstr);
+                        else
+                            filePath = path;
+                    }
+                }
+                else
+                    ReportError("需要指定文件路径", item);
+
+                //表名
+                if (fields.Length > 1)
+                {
+                    var field = fields[1];
+                    if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                        ReportError("第二个参数必须是字符串表示的JsonPath", field);
+                    else
+                        rootPath = field.attrValue.vstr.Text.Trim('"');
+                }
+
+                if (!string.IsNullOrEmpty(filePath))
+                {
+                    return new JsonFile(filePath, rootPath);
+                }
+                else
+                {
+                    return null;
+                }
             }
             private Attribute HandleJsonLiteral(AttrContext item, object owner, AttributeTable attributes)
             {

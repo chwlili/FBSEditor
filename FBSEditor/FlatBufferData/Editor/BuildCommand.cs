@@ -110,7 +110,21 @@ namespace FlatBufferData.Editor
                 if (errorCount <= 0)
                 {
                     if (file.RootTable != null)
-                        new DataReaderFactory(selectedProject.Name, ErrorHandler).ReadData(file.RootTable);
+                    {
+                        var xls = file.RootTable.Attributes.GetAttribute<XLS>();
+                        var json = file.RootTable.Attributes.GetAttribute<JsonFile>();
+                        if (json != null)
+                        {
+                            List<string> errors = new List<string>();
+                            var obj = JsonUtil.ParseJsonFile(json.filePath, json.rootNodePath, file.RootTable, errors);
+                            foreach(var error in errors)
+                            {
+                                errorCount++;
+                                package.AddError(json.filePath, json.filePath, error, 0, 0);
+                            }
+                        }
+                        //new DataReaderFactory(selectedProject.Name, ErrorHandler).ReadData(file.RootTable);
+                    }
                 }
                 else
                 {
