@@ -883,6 +883,7 @@ namespace FlatBufferData.Build
                             case "ArrayLiteral": attr = HandleArrayLiteral(item, owner, attributes); break;
                             case "StructLiteral": attr = HandleStructLiteral(item, owner, attributes); break;
                             case "JsonFile": attr = HandleJsonFile(item, owner, attributes); break;
+                            case "JsonPath":attr = HandleJsonPath(item, owner, attributes);break;
                             case "JsonLiteral": attr = HandleJsonLiteral(item, owner, attributes); break;
                         }
 
@@ -1232,7 +1233,6 @@ namespace FlatBufferData.Build
                 var fields = item.attrField();
 
                 string filePath = null;
-                string rootPath = null;
 
                 //文件路径
                 if (fields.Length > 0)
@@ -1251,25 +1251,37 @@ namespace FlatBufferData.Build
                 }
                 else
                     ReportError("需要指定文件路径", item);
-
-                //表名
-                if (fields.Length > 1)
-                {
-                    var field = fields[1];
-                    if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
-                        ReportError("第二个参数必须是字符串表示的JsonPath", field);
-                    else
-                        rootPath = field.attrValue.vstr.Text.Trim('"');
-                }
-
+                
                 if (!string.IsNullOrEmpty(filePath))
+                    return new JsonFile(filePath);
+                else
+                    return null;
+            }
+            private Attribute HandleJsonPath(AttrContext item, object owner, AttributeTable attributes)
+            {
+                if (attributes.GetAttributes<JsonFile>().Length > 0)
+                    ReportError("JsonPath不能多次应用到同一对象。", item.key);
+
+                var fields = item.attrField();
+
+                string filePath = null;
+
+                //文件路径
+                if (fields.Length > 0)
                 {
-                    return new JsonFile(filePath, rootPath);
+                    var field = fields[0];
+                    if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                        ReportError("第一个参数必须是字符串表示的JsonPath", field);
+                    else
+                        filePath = field.attrValue.vstr.Text.Trim('"');
                 }
                 else
-                {
+                    ReportError("需要指定JsonPath", item);
+
+                if (!string.IsNullOrEmpty(filePath))
+                    return new JsonPath(filePath);
+                else
                     return null;
-                }
             }
             private Attribute HandleJsonLiteral(AttrContext item, object owner, AttributeTable attributes)
             {

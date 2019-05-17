@@ -116,7 +116,7 @@ namespace FlatBufferData.Editor
                         if (json != null)
                         {
                             List<string> errors = new List<string>();
-                            var obj = JsonUtil.ParseJsonFile(json.filePath, json.rootNodePath, file.RootTable, errors);
+                            var obj = JsonUtil.ParseJsonFile(json.filePath, file.RootTable, file.RootTable.Attributes, errors);
                             foreach(var error in errors)
                             {
                                 errorCount++;

@@ -1,21 +1,28 @@
 ﻿namespace FlatBufferData.Model.Attributes
 {
-    class JsonFile : Attribute
+    public class JsonFile : Attribute
     {
         /// <summary>
         /// 文件路径
         /// </summary>
         public string filePath;
 
+        public JsonFile(string filePath)
+        {
+            this.filePath = filePath;
+        }
+    }
+
+    public class JsonPath : Attribute
+    {
         /// <summary>
         /// 根节点路径
         /// </summary>
-        public string rootNodePath;
+        public string path;
 
-        public JsonFile(string filePath, string rootNodePath)
+        public JsonPath(string path)
         {
-            this.filePath = filePath;
-            this.rootNodePath = rootNodePath;
+            this.path = path;
         }
     }
 }

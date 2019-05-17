@@ -1,5 +1,6 @@
 ﻿using Antlr4.Runtime;
 using FlatBufferData.Model;
+using FlatBufferData.Model.Attributes;
 using System;
 using System.Collections.Generic;
 
@@ -15,12 +16,12 @@ namespace FlatBufferData.Build
         /// <param name="type"></param>
         /// <param name="errors"></param>
         /// <returns></returns>
-        public static object ParseJsonFile(string filePath, string rootPath, Table type, List<string> errors)
+        public static object ParseJsonFile(string filePath, Table type, AttributeTable attributes, List<string> errors)
         {
             var jsonLexer = new JsonLexer(new AntlrFileStream(filePath));
             var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
 
-            return Parse(type.Name, type, jsonParser.jsonValue(), rootPath, errors);
+            return Parse(type.Name, type, attributes, jsonParser.jsonValue(), errors);
         }
 
         /// <summary>
@@ -31,12 +32,12 @@ namespace FlatBufferData.Build
         /// <param name="type"></param>
         /// <param name="errors"></param>
         /// <returns></returns>
-        public static object ParseJsonText(string text, string rootPath, Table type, List<string> errors)
+        public static object ParseJsonText(string text, Table type, AttributeTable attributes, List<string> errors)
         {
             var jsonLexer = new JsonLexer(new AntlrInputStream(text));
             var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
 
-            return Parse(type.Name, type, jsonParser.jsonValue(), rootPath, errors);
+            return Parse(type.Name, type, attributes, jsonParser.jsonValue(), errors);
         }
 
         /// <summary>
@@ -47,12 +48,12 @@ namespace FlatBufferData.Build
         /// <param name="type"></param>
         /// <param name="errors"></param>
         /// <returns></returns>
-        public static object ParseJsonText(string text, string rootPath, Struct type, List<string> errors)
+        public static object ParseJsonText(string text, Struct type, AttributeTable attributes, List<string> errors)
         {
             var jsonLexer = new JsonLexer(new AntlrInputStream(text));
             var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
 
-            return Parse(type.Name, type, jsonParser.jsonValue(), rootPath, errors);
+            return Parse(type.Name, type, attributes, jsonParser.jsonValue(), errors);
         }
 
         /// <summary>
@@ -63,21 +64,20 @@ namespace FlatBufferData.Build
         /// <param name="rootPath"></param>
         /// <param name="errors"></param>
         /// <returns></returns>
-        private static object Parse(string typeName, object type, JsonParser.JsonValueContext jsonValue, string rootPath, List<string> errors)
+        private static object Parse(string typeName, object type, AttributeTable attributes, JsonParser.JsonValueContext jsonValue, List<string> errors)
         {
-            var jsonPath = "";
-            if (!string.IsNullOrEmpty(rootPath))
-                jsonPath = rootPath;
+            var jsonPath = attributes.GetAttribute<JsonPath>();
+            var rootPath = jsonPath != null ? jsonPath.path : "";
 
             var error = "";
-            var rootNode = GetRootJsonNode(jsonValue, jsonPath, out error);
+            var rootNode = GetRootJsonNode(jsonValue, rootPath, out error);
             if (rootNode == null)
             {
                 errors.Add("无效的jsonPath:" + jsonPath);
                 return null;
             }
 
-            return ParseJson(typeName, type, false, rootNode, errors);
+            return ParseJson(typeName, type, false, attributes, rootNode, errors);
         }
 
         /// <summary>
@@ -89,18 +89,29 @@ namespace FlatBufferData.Build
         /// <param name="jsonValue"></param>
         /// <param name="errors"></param>
         /// <returns></returns>
-        private static object ParseJson(string type, object typeDefined, bool isArray, JsonParser.JsonValueContext jsonValue, List<string> errors)
+        private static object ParseJson(string type, object typeDefined, bool isArray, AttributeTable attributes, JsonParser.JsonValueContext jsonValue, List<string> errors)
         {
+            var jsonPath = attributes.GetAttribute<JsonPath>();
+            var rootPath = jsonPath != null ? jsonPath.path : "";
+
+            var error = "";
+            var rootNode = GetRootJsonNode(jsonValue, rootPath, out error);
+            if (rootNode == null)
+            {
+                errors.Add("无效的jsonPath:" + jsonPath);
+                return null;
+            }
+
             if (isArray)
             {
                 var arrayValue = new List<object>();
-                if (jsonValue.arraryValue == null)
+                if (rootNode.arraryValue == null)
                 {
-                    errors.Add(string.Format("{0}无法转换成{1}数组.({2}:{3})", jsonValue.GetText(), type, jsonValue.Start.Line, jsonValue.Start.Column));
+                    errors.Add(string.Format("{0}无法转换成{1}数组.({2}:{3})", rootNode.GetText(), type, rootNode.Start.Line, rootNode.Start.Column));
                 }
                 else
                 {
-                    foreach (var arrayElementJson in jsonValue.arraryValue._arrayElement)
+                    foreach (var arrayElementJson in rootNode.arraryValue._arrayElement)
                     {
                         var parsedValue = ParseJson(type, typeDefined, false, arrayElementJson, errors);
                         if (parsedValue != null)
@@ -113,19 +124,19 @@ namespace FlatBufferData.Build
             {
                 if (BaseUtil.IsInteger(type) || BaseUtil.IsFloat(type) || BaseUtil.IsBool(type) || BaseUtil.IsString(type))
                 {
-                    return ParseScalar(type, jsonValue, errors);
+                    return ParseScalar(type, rootNode, errors);
                 }
                 else if (typeDefined is Model.Enum)
                 {
-                    return ParseEnum(typeDefined as Model.Enum, jsonValue, errors);
+                    return ParseEnum(typeDefined as Model.Enum, rootNode, errors);
                 }
                 else if (typeDefined is Model.Struct)
                 {
-                    return ParseStruct(typeDefined as Model.Struct, jsonValue, errors);
+                    return ParseStruct(typeDefined as Model.Struct, rootNode, errors);
                 }
                 else if (typeDefined is Model.Table)
                 {
-                    return ParseTable(typeDefined as Model.Table, jsonValue, errors);
+                    return ParseTable(typeDefined as Model.Table, rootNode, errors);
                 }
             }
             return null;
