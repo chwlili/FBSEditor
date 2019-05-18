@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace FlatBufferData.Model
 {
     public class Attribute
     {
+        public static List<Type> AvailableTypes = new List<Type>();
+
         /// <summary>
         /// 名称
         /// </summary>

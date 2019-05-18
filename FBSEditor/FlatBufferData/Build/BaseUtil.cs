@@ -376,7 +376,7 @@ namespace FlatBufferData.Build
         /// <returns></returns>
         private static object GetStruct(JsonLiteral literal, Struct type, string text, List<string> errors)
         {
-            return JsonUtil.ParseJsonText(text, literal.path, type, errors);
+            return JsonUtil.ParseJsonText(text, type, null, errors);
         }
 
         /// <summary>

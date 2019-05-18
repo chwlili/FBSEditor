@@ -885,6 +885,7 @@ namespace FlatBufferData.Build
                             case "JsonFile": attr = HandleJsonFile(item, owner, attributes); break;
                             case "JsonPath":attr = HandleJsonPath(item, owner, attributes);break;
                             case "JsonLiteral": attr = HandleJsonLiteral(item, owner, attributes); break;
+                            case "JsonFileRef":attr = HandlJsonFileRef(item, owner, attributes);break;
                         }
 
                         if (attr != null)
@@ -1259,7 +1260,7 @@ namespace FlatBufferData.Build
             }
             private Attribute HandleJsonPath(AttrContext item, object owner, AttributeTable attributes)
             {
-                if (attributes.GetAttributes<JsonFile>().Length > 0)
+                if (attributes.GetAttributes<JsonPath>().Length > 0)
                     ReportError("JsonPath不能多次应用到同一对象。", item.key);
 
                 var fields = item.attrField();
@@ -1308,6 +1309,35 @@ namespace FlatBufferData.Build
                 }
 
                 return new JsonLiteral(jsonPath);
+            }
+            private Attribute HandlJsonFileRef(AttrContext item, object owner, AttributeTable attributes)
+            {
+                if (!(owner is TableField))
+                    ReportError("JsonFile标记只能应用到table", item);
+
+                if (attributes.GetAttributes<JsonFileRef>().Length > 0)
+                    ReportError("JsonFileRef不能多次应用到同一对象。", item.key);
+
+                var fields = item.attrField();
+
+                string filePath = null;
+
+                //文件路径
+                if (fields.Length > 0)
+                {
+                    var field = fields[0];
+                    if (field.attrName != null || field.attrValue == null || field.attrValue.vstr == null)
+                        ReportError("第一个参数必须是字符串表示的文件路径", field);
+                    else
+                        filePath = field.attrValue.vstr.Text.Trim('"');
+                }
+                else
+                    ReportError("需要指定文件路径", item);
+
+                if (!string.IsNullOrEmpty(filePath))
+                    return new JsonFileRef(filePath);
+                else
+                    return null;
             }
 
             #endregion

@@ -1,13 +1,31 @@
 ﻿using Antlr4.Runtime;
 using FlatBufferData.Model;
 using FlatBufferData.Model.Attributes;
-using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
 
 namespace FlatBufferData.Build
 {
     public class JsonUtil
     {
+        //UNDONE ？？？？
+        /// <summary>
+        /// 解析Json文本
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="rootPath"></param>
+        /// <param name="type"></param>
+        /// <param name="errors"></param>
+        /// <returns></returns>
+        public static object ParseJsonText(string text, Struct type, AttributeTable attributes, List<string> errors)
+        {
+            var jsonLexer = new JsonLexer(new AntlrInputStream(text));
+            var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
+
+            return ParseJson(type.Name, type, false, attributes, jsonParser.jsonValue(), errors);
+        }
+
         /// <summary>
         /// 解析Json文件
         /// </summary>
@@ -21,7 +39,7 @@ namespace FlatBufferData.Build
             var jsonLexer = new JsonLexer(new AntlrFileStream(filePath));
             var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
 
-            return Parse(type.Name, type, attributes, jsonParser.jsonValue(), errors);
+            return ParseJson(type.Name, type, false, attributes, jsonParser.jsonValue(), errors);
         }
 
         /// <summary>
@@ -37,47 +55,19 @@ namespace FlatBufferData.Build
             var jsonLexer = new JsonLexer(new AntlrInputStream(text));
             var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
 
-            return Parse(type.Name, type, attributes, jsonParser.jsonValue(), errors);
+            return ParseJson(type.Name, type, false, attributes, jsonParser.jsonValue(), errors);
         }
 
-        /// <summary>
-        /// 解析Json文本
-        /// </summary>
-        /// <param name="text"></param>
-        /// <param name="rootPath"></param>
-        /// <param name="type"></param>
-        /// <param name="errors"></param>
-        /// <returns></returns>
-        public static object ParseJsonText(string text, Struct type, AttributeTable attributes, List<string> errors)
+        private static JsonParser.JsonValueContext GetJsonFile(string filePath)
         {
-            var jsonLexer = new JsonLexer(new AntlrInputStream(text));
-            var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
-
-            return Parse(type.Name, type, attributes, jsonParser.jsonValue(), errors);
-        }
-
-        /// <summary>
-        /// 解析
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="jsonValue"></param>
-        /// <param name="rootPath"></param>
-        /// <param name="errors"></param>
-        /// <returns></returns>
-        private static object Parse(string typeName, object type, AttributeTable attributes, JsonParser.JsonValueContext jsonValue, List<string> errors)
-        {
-            var jsonPath = attributes.GetAttribute<JsonPath>();
-            var rootPath = jsonPath != null ? jsonPath.path : "";
-
-            var error = "";
-            var rootNode = GetRootJsonNode(jsonValue, rootPath, out error);
-            if (rootNode == null)
+            if(!File.Exists(filePath))
             {
-                errors.Add("无效的jsonPath:" + jsonPath);
                 return null;
             }
 
-            return ParseJson(typeName, type, false, attributes, rootNode, errors);
+            var jsonLexer = new JsonLexer(new AntlrFileStream(filePath));
+            var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
+            return jsonParser.jsonValue();
         }
 
         /// <summary>
@@ -91,11 +81,10 @@ namespace FlatBufferData.Build
         /// <returns></returns>
         private static object ParseJson(string type, object typeDefined, bool isArray, AttributeTable attributes, JsonParser.JsonValueContext jsonValue, List<string> errors)
         {
-            var jsonPath = attributes.GetAttribute<JsonPath>();
+            var jsonPath = attributes != null ? attributes.GetAttribute<JsonPath>() : null;
             var rootPath = jsonPath != null ? jsonPath.path : "";
 
-            var error = "";
-            var rootNode = GetRootJsonNode(jsonValue, rootPath, out error);
+            var rootNode = GetRootJsonNode(jsonValue, rootPath);
             if (rootNode == null)
             {
                 errors.Add("无效的jsonPath:" + jsonPath);
@@ -105,18 +94,20 @@ namespace FlatBufferData.Build
             if (isArray)
             {
                 var arrayValue = new List<object>();
-                if (rootNode.arraryValue == null)
-                {
-                    errors.Add(string.Format("{0}无法转换成{1}数组.({2}:{3})", rootNode.GetText(), type, rootNode.Start.Line, rootNode.Start.Column));
-                }
-                else
+                if (rootNode.arraryValue != null)
                 {
                     foreach (var arrayElementJson in rootNode.arraryValue._arrayElement)
                     {
-                        var parsedValue = ParseJson(type, typeDefined, false, arrayElementJson, errors);
+                        var parsedValue = ParseJson(type, typeDefined, false, null, arrayElementJson, errors);
                         if (parsedValue != null)
                             arrayValue.Add(parsedValue);
                     }
+                }
+                else
+                {
+                    var parsedValue = ParseJson(type, typeDefined, false, null, rootNode, errors);
+                    if (parsedValue != null)
+                        arrayValue.Add(parsedValue);
                 }
                 return arrayValue;
             }
@@ -166,7 +157,7 @@ namespace FlatBufferData.Build
                 }
             }
             else
-                errors.Add(string.Format("\"{0}\"无法转换成{1}.({2}:{3})", jsonValue.GetText(), type, token.Line, token.Column));
+                errors.Add(string.Format("\"{0}\"无法转换成{1}.({2}:{3})", jsonValue.GetText(), type, jsonValue.Start.Line, jsonValue.Start.Column));
 
             return null;
         }
@@ -190,7 +181,7 @@ namespace FlatBufferData.Build
                     errors.Add(string.Format("值\"{0}\"无法转换成枚举{1}.({2}:{3})", token.Text.Trim('"'), type, token.Line, token.Column));
             }
             else
-                errors.Add(string.Format("\"{0}\"无法转换成枚举{1}.({2}:{3})", jsonValue.GetText(), type, token.Line, token.Column));
+                errors.Add(string.Format("\"{0}\"无法转换成枚举{1}.({2}:{3})", jsonValue.GetText(), type, jsonValue.Start.Line, jsonValue.Start.Column));
 
             return null;
         }
@@ -221,14 +212,18 @@ namespace FlatBufferData.Build
                 {
                     var jsonKey = field.DataField;
                     if(name2jsonNode.ContainsKey(jsonKey))
-                    {
-                        values.Add(field.Name, ParseJson(field.Type, field.TypeDefined, field.IsArray, name2jsonNode[jsonKey], errors));
-                    }
+                        values.Add(field.Name, ParseJson(field.Type, field.TypeDefined, field.IsArray, field.Attributes, name2jsonNode[jsonKey], errors));
+                    else if (field.Attributes.GetAttribute<JsonFileRef>() != null)
+                        values.Add(field.Name, null);
                     else
                     {
                         values.Add(field.Name, null);
                         errors.Add(string.Format("\"{0}\"找不到名为{1}的属性.({2}:{3})", jsonValue.GetText(), jsonKey, jsonValue.Start.Line, jsonValue.Start.Column));
                     }
+                }
+                foreach (var field in type.Fields)
+                {
+                    ReplaceFromRefFile(field.Name, field.Type, field.TypeDefined, field.IsArray, field.Attributes, values, errors);
                 }
                 return values;
             }
@@ -279,14 +274,18 @@ namespace FlatBufferData.Build
                 {
                     var jsonKey = field.DataField;
                     if (name2jsonNode.ContainsKey(jsonKey))
-                    {
-                        singleRow.Add(field.Name, ParseJson(field.Type, field.TypeDefined, field.IsArray, name2jsonNode[jsonKey], errors));
-                    }
+                        singleRow.Add(field.Name, ParseJson(field.Type, field.TypeDefined, field.IsArray, field.Attributes, name2jsonNode[jsonKey], errors));
+                    else if (field.Attributes.GetAttribute<JsonFileRef>() != null)
+                        singleRow.Add(field.Name, null);
                     else
                     {
                         singleRow.Add(field.Name, null);
                         errors.Add(string.Format("\"{0}\"找不到名为{1}的属性.({2}:{3})", childNode.GetText(), jsonKey, childNode.Start.Line, childNode.Start.Column));
                     }
+                }
+                foreach (var field in type.Fields)
+                {
+                    ReplaceFromRefFile(field.Name, field.Type, field.TypeDefined, field.IsArray, field.Attributes, singleRow, errors);
                 }
                 tableRows.Add(singleRow);
             }
@@ -294,120 +293,104 @@ namespace FlatBufferData.Build
         }
 
         /// <summary>
+        /// 从引用文件替换
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="type"></param>
+        /// <param name="typeDefined"></param>
+        /// <param name="isArray"></param>
+        /// <param name="attributes"></param>
+        /// <param name="values"></param>
+        /// <param name="errors"></param>
+        private static void ReplaceFromRefFile(string name, string type, object typeDefined, bool isArray, AttributeTable attributes, Dictionary<string, object> values, List<string> errors)
+        {
+            var jsonFile = attributes.GetAttribute<JsonFileRef>();
+            if (jsonFile != null)
+            {
+                var filePath = Regex.Replace(jsonFile.filePath, "\\{.*?\\}", (match) =>
+                {
+                    var key = match.Value.TrimStart('{').TrimEnd('}');
+                    if (values.ContainsKey(key))
+                        return values[key] + "";
+                    else
+                        return "null";
+                });
+
+                values[name] = null;
+
+                if (!File.Exists(filePath))
+                    errors.Add(string.Format("[JsonFileRef(\"{0}\")] 文件未找到.", filePath));
+                else
+                {
+                    var fileNode = GetJsonFile(filePath);
+                    if (fileNode != null)
+                        values[name] = ParseJson(type, typeDefined, isArray, attributes, fileNode, errors);
+                }
+            }
+        }
+
+        /// <summary>
         /// 按路径查找Json节点
         /// </summary>
         /// <param name="json"></param>
         /// <param name="jsonPath"></param>
-        /// <param name="error"></param>
         /// <returns></returns>
-        private static JsonParser.JsonValueContext GetRootJsonNode(JsonParser.JsonValueContext json, string jsonPath, out string error)
+        private static JsonParser.JsonValueContext GetRootJsonNode(JsonParser.JsonValueContext json, string jsonPath)
         {
             if (string.IsNullOrEmpty(jsonPath))
             {
-                error = null;
                 return json;
             }
+
+            jsonPath = Regex.Replace(jsonPath, @"\[(.*)\]", @".$1");
 
             var jsonPathParts = jsonPath.Trim().Trim('.').Split('.');
             for (var i = 0; i < jsonPathParts.Length; i++)
             {
                 var partText = jsonPathParts[i].Trim();
-                var partInt = -1;
-                var partStr = "";
-                if (partText.EndsWith("]"))
+                if (json.objectValue != null)
                 {
-                    var index = partText.IndexOf("[");
-                    if (index != -1)
+                    JsonParser.JsonValueContext findedNode = null;
+                    foreach (var prop in json.objectValue._props)
                     {
-                        int parsedInt = 0;
-                        partStr = partText.Substring(index + 1, partText.Length - 1 - index - 1);
-                        if (int.TryParse(partStr, out parsedInt))
-                            partInt = parsedInt;
-                        partText = partText.Substring(0, index);
-                    }
-                }
-
-                if (json.objectValue!=null)
-                {
-                    JsonParser.JsonValueContext nextNode = null;
-                    foreach(var prop in json.objectValue._props)
-                    {
-                        if(partText.Equals(prop.propName.Text.Trim('"')))
+                        if (partText.Equals(prop.propName.Text.Trim('"')))
                         {
-                            nextNode = prop.propValue;
+                            findedNode = prop.propValue;
                             break;
                         }
                     }
-
-                    if (nextNode != null)
+                    if (findedNode != null)
                     {
-                        json = nextNode;
-
-                        if (partInt != -1)
-                        {
-                            if (json.arraryValue!=null)
-                            {
-                                if (partInt >= 0 && partInt < json.arraryValue._arrayElement.Count)
-                                {
-                                    json = json.arraryValue._arrayElement[partInt];
-                                    break;
-                                }
-                                else
-                                {
-                                    error = "索引partInt越界";
-                                    return null;
-                                }
-                            }
-                            else
-                            {
-                                error = "无效的路径";
-                                return null;
-                            }
-                        }
-                        else if (!string.IsNullOrEmpty(partStr))
-                        {
-                            if (json.objectValue!=null)
-                            {
-                                JsonParser.JsonValueContext selectedNode = null;
-                                foreach (var prop in json.objectValue._props)
-                                {
-                                    if (partStr.Equals(prop.propName.Text.Trim('"')))
-                                    {
-                                        selectedNode = prop.propValue;
-                                        break;
-                                    }
-                                }
-
-                                if (selectedNode != null)
-                                    json = selectedNode;
-                                else
-                                {
-                                    error = "无效的路径";
-                                    return null;
-                                }
-                            }
-                            else
-                            {
-                                error = "无效的路径";
-                                return null;
-                            }
-                        }
+                        json = findedNode;
                     }
                     else
                     {
-                        error = "无效的路径";
-                        return null;
+                        json = null;
+                        break;
+                    }
+                }
+                else if (json.arraryValue != null)
+                {
+                    int index = -1;
+                    if (int.TryParse(partText, out index))
+                    {
+                        if (index >= 0 && index < json.arraryValue._arrayElement.Count)
+                        {
+                            json = json.arraryValue._arrayElement[index];
+                        }
+                        else
+                        {
+                            json = null;
+                            break;
+                        }
                     }
                 }
                 else
                 {
-                    error = "无效的路径";
-                    return null;
+                    json = null;
+                    break;
                 }
             }
-
-            error = null;
-
             return json;
         }
     }
