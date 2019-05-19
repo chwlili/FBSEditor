@@ -18,27 +18,32 @@ namespace FlatBufferData.Model.Attributes
         RpcMethod = 512,
     }
 
-    public class AllowOwnerAttribute : System.Attribute
+    public class AllowOwner : System.Attribute
     {
         public TargetTypeID targetType;
 
-        public AllowOwnerAttribute(TargetTypeID targetType)
+        public AllowOwner(TargetTypeID targetType)
         {
             this.targetType = targetType;
         }
     }
 
-    public class AllowMultipleAttribute : System.Attribute
+    public class AllowMultiple : System.Attribute
     {
         public bool allowMultiple;
 
-        public AllowMultipleAttribute(bool allowMultiple)
+        public AllowMultiple(bool allowMultiple)
         {
             this.allowMultiple = allowMultiple;
         }
     }
 
-    public class RequiredIsArray : System.Attribute
+    public class RequiredArrayField : System.Attribute
+    {
+
+    }
+
+    public class RequiredStructField : System.Attribute
     {
 
     }

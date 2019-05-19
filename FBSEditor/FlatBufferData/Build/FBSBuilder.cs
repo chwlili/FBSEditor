@@ -832,6 +832,8 @@ namespace FlatBufferData.Build
 
             #region 处理附加特性
 
+            private Dictionary<string, System.Type> typeTable;
+
             private void ParseAllAttributes()
             {
                 //处理附加特性
@@ -866,143 +868,118 @@ namespace FlatBufferData.Build
                         ParseAttribute((data2context[field] as RpcFieldContext).attr(), field, field.Attributes);
                 }
             }
-            private void ParseAttribute(AttrContext[] context, object owner,AttributeTable attributes)
+            private void ParseAttribute(AttrContext[] contexts, object owner,AttributeTable attributes)
             {
-                foreach (var item in context)
+                foreach (var context in contexts)
                 {
-                    CheckSchema(item, owner, attributes);
-
-                    /*
-                    var name = item.key != null ? item.key.Text : null;
-                    if (string.IsNullOrEmpty(name))
-                        ReportError("特性名称不能为空", item);
-                    else
+                    var attributeName = context.key != null ? context.key.Text : null;
+                    if (string.IsNullOrEmpty(attributeName))
                     {
-
-                        Attribute attr = null;
-                        switch (name)
-                        {
-                            case "XLS": attr = HandleXLS(item, owner, attributes); break;
-                            case "Index": attr = HandleIndex(item, owner, attributes); break;
-                            case "Nullable": attr = HandleNullable(item, owner, attributes); break;
-                            case "Unique": attr = HandleUnique(item, owner, attributes); break;
-                            case "ArrayLiteral": attr = HandleArrayLiteral(item, owner, attributes); break;
-                            case "StructLiteral": attr = HandleStructLiteral(item, owner, attributes); break;
-                            case "JsonFile": attr = HandleJsonFile(item, owner, attributes); break;
-                            case "JsonPath":attr = HandleJsonPath(item, owner, attributes);break;
-                            case "JsonLiteral": attr = HandleJsonLiteral(item, owner, attributes); break;
-                            case "JsonFileRef":attr = HandlJsonFileRef(item, owner, attributes);break;
-                        }
-
-                        if (attr != null)
-                            attributes.Add(attr);
-                    }*/
-                }
-            }
-
-            private System.Type GetAttributeSchema(string name)
-            {
-                System.Type[] typeList = new System.Type[] { typeof(XLS), typeof(JsonFile), typeof(JsonFileRef), typeof(JsonPath), typeof(JsonLexer), typeof(JsonLiteral), typeof(ArrayLiteral), typeof(StructLiteral), typeof(Index),typeof(Nullable),typeof(Unique) };
-                foreach(var typeItem in typeList)
-                {
-                    if(typeItem.Name.Equals(name))
-                    {
-                        return typeItem;
+                        ReportError("特性名称不能为空", context);
+                        continue;
                     }
-                }
-                return null;
-            }
 
-            private void CheckSchema(AttrContext context, object owner, AttributeTable attributes)
-            {
-                var contextName = context.key != null ? context.key.Text : null;
-                if (string.IsNullOrEmpty(contextName))
-                    ReportError("特性名称不能为空", context);
-                else
-                {
-                    var attributeType = GetAttributeSchema(contextName);
+                    var attributeType = GetAttributeSchema(attributeName);
                     if (attributeType == null)
                         return;
 
                     bool allow = true;
                     foreach (var attributeMeta in attributeType.GetCustomAttributesData())
                     {
-                        if (typeof(AllowOwnerAttribute) == attributeMeta.AttributeType)
-                            allow = CheckOwnerType(attributeType, context, owner, attributes, (TargetTypeID)attributeMeta.ConstructorArguments[0].Value) && allow;
-                        else if (typeof(AllowMultipleAttribute) == attributeMeta.AttributeType)
-                            allow = CheckMultiple(attributeType, context, owner, attributes, (bool)attributeMeta.ConstructorArguments[0].Value) && allow;
-                        else if (typeof(RequiredIsArray) == attributeMeta.AttributeType)
-                            allow = CheckRequiredIsArray(attributeType, context, owner, attributes) && allow;
+                        if (typeof(AllowOwner) == attributeMeta.AttributeType)
+                            allow = OnAllowOwner(attributeType, context, owner, attributes, attributeMeta.ConstructorArguments as IList<CustomAttributeTypedArgument>) && allow;
+                        else if (typeof(AllowMultiple) == attributeMeta.AttributeType)
+                            allow = OnAllowMultiple(attributeType, context, owner, attributes, attributeMeta.ConstructorArguments as IList<CustomAttributeTypedArgument>) && allow;
                         else if (typeof(ConflictType) == attributeMeta.AttributeType)
-                            allow = CheckConflictType(attributeType, context, owner, attributes, attributeMeta.ConstructorArguments[0].Value as IList<CustomAttributeTypedArgument>) && allow;
-                        else if(typeof(RequiredType) == attributeMeta.AttributeType)
-                            allow = CheckRequiredType(attributeType, context, owner, attributes, attributeMeta.ConstructorArguments[0].Value as IList<CustomAttributeTypedArgument>) && allow;
+                            allow = OnConflictType(attributeType, context, owner, attributes, attributeMeta.ConstructorArguments[0].Value as IList<CustomAttributeTypedArgument>) && allow;
+                        else if (typeof(RequiredType) == attributeMeta.AttributeType)
+                            allow = OnRequiredType(attributeType, context, owner, attributes, attributeMeta.ConstructorArguments[0].Value as IList<CustomAttributeTypedArgument>) && allow;
+                        else if (typeof(RequiredArrayField) == attributeMeta.AttributeType)
+                            allow = OnRequiredArray(attributeType, context, owner, attributes) && allow;
                     }
 
-                    if(allow)
-                    {
+                    if (allow)
                         CheckAndCreateAttribute(attributeType, context, attributes);
+                }
+            }
+
+            private System.Type GetAttributeSchema(string name)
+            {
+                if(typeTable==null)
+                {
+                    typeTable = new Dictionary<string, System.Type>();
+                    typeTable.Add(typeof(XLS).Name,typeof(XLS));
+                    typeTable.Add(typeof(JsonFile).Name, typeof(JsonFile));
+                    typeTable.Add(typeof(JsonFileRef).Name, typeof(JsonFileRef));
+                    typeTable.Add(typeof(JsonLiteral).Name, typeof(JsonLiteral));
+                    typeTable.Add(typeof(JsonPath).Name, typeof(JsonPath));
+                    typeTable.Add(typeof(ArrayLiteral).Name, typeof(ArrayLiteral));
+                    typeTable.Add(typeof(StructLiteral).Name, typeof(StructLiteral));
+                    typeTable.Add(typeof(Index).Name, typeof(Index));
+                    typeTable.Add(typeof(Nullable).Name, typeof(Nullable));
+                    typeTable.Add(typeof(Unique).Name, typeof(Unique));
+                }
+
+                if(typeTable.ContainsKey(name))
+                    return typeTable[name];
+                else
+                    return null;
+            }
+
+            private bool OnAllowOwner(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes, IList<CustomAttributeTypedArgument> args)
+            {
+                if (args.Count > 0)
+                {
+                    TargetTypeID ownerTypeID = TargetTypeID.All;
+                    if (owner is Table)
+                        ownerTypeID = TargetTypeID.Table;
+                    else if (owner is TableField)
+                        ownerTypeID = TargetTypeID.TableField;
+                    else if (owner is Struct)
+                        ownerTypeID = TargetTypeID.Struct;
+                    else if (owner is StructField)
+                        ownerTypeID = TargetTypeID.StructField;
+                    else if (owner is Enum)
+                        ownerTypeID = TargetTypeID.Enum;
+                    else if (owner is EnumField)
+                        ownerTypeID = TargetTypeID.EnumField;
+                    else if (owner is Union)
+                        ownerTypeID = TargetTypeID.Union;
+                    else if (owner is UnionField)
+                        ownerTypeID = TargetTypeID.UnionField;
+                    else if (owner is Rpc)
+                        ownerTypeID = TargetTypeID.Rpc;
+                    else if (owner is RpcMethod)
+                        ownerTypeID = TargetTypeID.RpcMethod;
+
+                    var allowOwnerTypes = (TargetTypeID)args[0].Value;
+                    var value = ((int)allowOwnerTypes) & ((int)ownerTypeID);
+                    if (value == 0)
+                    {
+                        ReportError(string.Format("{0}不能应用到{1}.", context.key.Text, ownerTypeID), context.key);
+                        return false;
                     }
                 }
+
+                return true;
             }
 
-            private bool CheckOwnerType(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes, TargetTypeID allowOwnerTypes)
+            private bool OnAllowMultiple(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes, IList<CustomAttributeTypedArgument> args)
             {
-                TargetTypeID ownerTypeID = TargetTypeID.All;
-                if (owner is Table)
-                    ownerTypeID = TargetTypeID.Table;
-                else if (owner is TableField)
-                    ownerTypeID = TargetTypeID.TableField;
-                else if (owner is Struct)
-                    ownerTypeID = TargetTypeID.Struct;
-                else if (owner is StructField)
-                    ownerTypeID = TargetTypeID.StructField;
-                else if (owner is Enum)
-                    ownerTypeID = TargetTypeID.Enum;
-                else if (owner is EnumField)
-                    ownerTypeID = TargetTypeID.EnumField;
-                else if (owner is Union)
-                    ownerTypeID = TargetTypeID.Union;
-                else if (owner is UnionField)
-                    ownerTypeID = TargetTypeID.UnionField;
-                else if (owner is Rpc)
-                    ownerTypeID = TargetTypeID.Rpc;
-                else if (owner is RpcMethod)
-                    ownerTypeID = TargetTypeID.RpcMethod;
-
-                var value = ((int)allowOwnerTypes) & ((int)ownerTypeID);
-                if (value == 0)
+                if (args.Count > 0)
                 {
-                    ReportError(string.Format("{0}不能应用到{1}.", context.key.Text, ownerTypeID),context.key);
-                    return false;
+                    var allowMultiple = (bool)args[0].Value;
+                    if (allowMultiple == false && attributes.HasAttribute(attributeType))
+                    {
+                        ReportError(string.Format("同一对象不允许有多个{0}.", attributeType.Name), context.key);
+                        return false;
+                    }
                 }
 
                 return true;
             }
 
-            private bool CheckMultiple(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes, bool allowMultiple)
-            {
-                if (allowMultiple == false && attributes.HasAttribute(attributeType))
-                {
-                    ReportError(string.Format("同一对象不允许有多个{0}.", attributeType.Name), context.key);
-                    return false;
-                }
-
-                return true;
-            }
-
-            private bool CheckRequiredIsArray(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes)
-            {
-                var field = owner as TableField;
-                if (field == null || !field.IsArray)
-                {
-                    ReportError("只能应用到数组型TableField！", context.key);
-                    return false;
-                }
-                return true;
-            }
-
-            private bool CheckConflictType(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes, IList<CustomAttributeTypedArgument> args)
+            private bool OnConflictType(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes, IList<CustomAttributeTypedArgument> args)
             {
                 foreach(var arg in args)
                 {
@@ -1014,7 +991,7 @@ namespace FlatBufferData.Build
                 }
                 return true;
             }
-            private bool CheckRequiredType(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes, IList<CustomAttributeTypedArgument> args)
+            private bool OnRequiredType(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes, IList<CustomAttributeTypedArgument> args)
             {
                 bool finded = false;
                 foreach (var arg in args)
@@ -1035,6 +1012,19 @@ namespace FlatBufferData.Build
                 }
                 return true;
             }
+
+            private bool OnRequiredArray(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes)
+            {
+                var field = owner as TableField;
+                if (field == null || !field.IsArray)
+                {
+                    ReportError("只能应用到数组型TableField！", context.key);
+                    return false;
+                }
+                return true;
+            }
+
+            private enum ArgumentType { VOID, CONST, BOOL, INT, FLOAT, STRING }
 
             /// <summary>
             /// 检查并创建Attribute
@@ -1156,19 +1146,10 @@ namespace FlatBufferData.Build
                     {
                         errorInfo.Add(info.Name + " : " + info.ParameterType.Name);
                     }
-                    ReportError("格式错误, 应该是 [ " + attributeType.Name + " ( " + string.Join(" , ", errorInfo) + " )].", context);
+                    ReportError(string.Format("格式错误, 应该是 [ {0}{1} ]。", attributeType.Name, errorInfo.Count > 0 ? " ( " + string.Join(" , ", errorInfo) + " )" : ""), context);
                 }
             }
 
-            public enum ArgumentType
-            {
-                VOID,
-                CONST,
-                BOOL,
-                INT,
-                FLOAT,
-                STRING
-            }
 
 
 
