@@ -1,15 +1,10 @@
-﻿using System.Text.RegularExpressions;
-
-namespace FlatBufferData.Model.Attributes
+﻿namespace FlatBufferData.Model.Attributes
 {
+    [AllowMultiple(false)]
+    [AllowOwner(TargetTypeID.Table)]
     public class JsonFile : Attribute
     {
         public string filePath;
-
-        static JsonFile()
-        {
-
-        }
 
         public JsonFile(string filePath)
         {
@@ -17,6 +12,8 @@ namespace FlatBufferData.Model.Attributes
         }
     }
 
+    [AllowMultiple(false)]
+    [AllowOwner(TargetTypeID.TableField)]
     public class JsonFileRef : Attribute
     {
         public string filePath;
@@ -27,26 +24,22 @@ namespace FlatBufferData.Model.Attributes
         }
     }
 
+    [AllowMultiple(false)]
+    [AllowOwner(TargetTypeID.Table| TargetTypeID.Struct| TargetTypeID.TableField| TargetTypeID.StructField)]
+    public class JsonLiteral : Attribute
+    {
+        public static JsonLiteral NORMAL = new JsonLiteral();
+
+        public JsonLiteral(){}
+    }
+
+    [AllowMultiple(false)]
+    [AllowOwner(TargetTypeID.Table|TargetTypeID.TableField|TargetTypeID.StructField)]
     public class JsonPath : Attribute
     {
         public string path;
 
         public JsonPath(string path)
-        {
-            this.path = path;
-        }
-    }
-
-    public class JsonLiteral : Attribute
-    {
-        public static JsonLiteral NORMAL = new JsonLiteral(null);
-
-        /// <summary>
-        /// 起始符
-        /// </summary>
-        public string path;
-
-        public JsonLiteral(string path)
         {
             this.path = path;
         }

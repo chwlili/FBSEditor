@@ -1,8 +1,10 @@
 ﻿using Antlr4.Runtime;
+using FlatBufferData.Model.Attributes;
 using FlatBufferData.Model;
 using FlatBufferData.Model.Attributes;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using static FlatbufferParser;
 
 namespace FlatBufferData.Build
@@ -868,11 +870,15 @@ namespace FlatBufferData.Build
             {
                 foreach (var item in context)
                 {
+                    CheckSchema(item, owner, attributes);
+
+                    /*
                     var name = item.key != null ? item.key.Text : null;
                     if (string.IsNullOrEmpty(name))
                         ReportError("特性名称不能为空", item);
                     else
                     {
+
                         Attribute attr = null;
                         switch (name)
                         {
@@ -890,9 +896,281 @@ namespace FlatBufferData.Build
 
                         if (attr != null)
                             attributes.Add(attr);
+                    }*/
+                }
+            }
+
+            private System.Type GetAttributeSchema(string name)
+            {
+                System.Type[] typeList = new System.Type[] { typeof(XLS), typeof(JsonFile), typeof(JsonFileRef), typeof(JsonPath), typeof(JsonLexer), typeof(JsonLiteral), typeof(ArrayLiteral), typeof(StructLiteral), typeof(Index),typeof(Nullable),typeof(Unique) };
+                foreach(var typeItem in typeList)
+                {
+                    if(typeItem.Name.Equals(name))
+                    {
+                        return typeItem;
+                    }
+                }
+                return null;
+            }
+
+            private void CheckSchema(AttrContext context, object owner, AttributeTable attributes)
+            {
+                var contextName = context.key != null ? context.key.Text : null;
+                if (string.IsNullOrEmpty(contextName))
+                    ReportError("特性名称不能为空", context);
+                else
+                {
+                    var attributeType = GetAttributeSchema(contextName);
+                    if (attributeType == null)
+                        return;
+
+                    bool allow = true;
+                    foreach (var attributeMeta in attributeType.GetCustomAttributesData())
+                    {
+                        if (typeof(AllowOwnerAttribute) == attributeMeta.AttributeType)
+                            allow = CheckOwnerType(attributeType, context, owner, attributes, (TargetTypeID)attributeMeta.ConstructorArguments[0].Value) && allow;
+                        else if (typeof(AllowMultipleAttribute) == attributeMeta.AttributeType)
+                            allow = CheckMultiple(attributeType, context, owner, attributes, (bool)attributeMeta.ConstructorArguments[0].Value) && allow;
+                        else if (typeof(RequiredIsArray) == attributeMeta.AttributeType)
+                            allow = CheckRequiredIsArray(attributeType, context, owner, attributes) && allow;
+                        else if (typeof(ConflictType) == attributeMeta.AttributeType)
+                            allow = CheckConflictType(attributeType, context, owner, attributes, attributeMeta.ConstructorArguments[0].Value as IList<CustomAttributeTypedArgument>) && allow;
+                        else if(typeof(RequiredType) == attributeMeta.AttributeType)
+                            allow = CheckRequiredType(attributeType, context, owner, attributes, attributeMeta.ConstructorArguments[0].Value as IList<CustomAttributeTypedArgument>) && allow;
+                    }
+
+                    if(allow)
+                    {
+                        CheckAndCreateAttribute(attributeType, context, attributes);
                     }
                 }
             }
+
+            private bool CheckOwnerType(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes, TargetTypeID allowOwnerTypes)
+            {
+                TargetTypeID ownerTypeID = TargetTypeID.All;
+                if (owner is Table)
+                    ownerTypeID = TargetTypeID.Table;
+                else if (owner is TableField)
+                    ownerTypeID = TargetTypeID.TableField;
+                else if (owner is Struct)
+                    ownerTypeID = TargetTypeID.Struct;
+                else if (owner is StructField)
+                    ownerTypeID = TargetTypeID.StructField;
+                else if (owner is Enum)
+                    ownerTypeID = TargetTypeID.Enum;
+                else if (owner is EnumField)
+                    ownerTypeID = TargetTypeID.EnumField;
+                else if (owner is Union)
+                    ownerTypeID = TargetTypeID.Union;
+                else if (owner is UnionField)
+                    ownerTypeID = TargetTypeID.UnionField;
+                else if (owner is Rpc)
+                    ownerTypeID = TargetTypeID.Rpc;
+                else if (owner is RpcMethod)
+                    ownerTypeID = TargetTypeID.RpcMethod;
+
+                var value = ((int)allowOwnerTypes) & ((int)ownerTypeID);
+                if (value == 0)
+                {
+                    ReportError(string.Format("{0}不能应用到{1}.", context.key.Text, ownerTypeID),context.key);
+                    return false;
+                }
+
+                return true;
+            }
+
+            private bool CheckMultiple(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes, bool allowMultiple)
+            {
+                if (allowMultiple == false && attributes.HasAttribute(attributeType))
+                {
+                    ReportError(string.Format("同一对象不允许有多个{0}.", attributeType.Name), context.key);
+                    return false;
+                }
+
+                return true;
+            }
+
+            private bool CheckRequiredIsArray(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes)
+            {
+                var field = owner as TableField;
+                if (field == null || !field.IsArray)
+                {
+                    ReportError("只能应用到数组型TableField！", context.key);
+                    return false;
+                }
+                return true;
+            }
+
+            private bool CheckConflictType(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes, IList<CustomAttributeTypedArgument> args)
+            {
+                foreach(var arg in args)
+                {
+                    var type = arg.Value as System.Type;
+                    if(attributes.HasAttribute(type))
+                    {
+                        ReportError(string.Format("{0} 不能和 {1} 应用到同一个对象。", attributeType.Name, type.Name), context.key);
+                    }
+                }
+                return true;
+            }
+            private bool CheckRequiredType(System.Type attributeType, AttrContext context, object owner, AttributeTable attributes, IList<CustomAttributeTypedArgument> args)
+            {
+                bool finded = false;
+                foreach (var arg in args)
+                {
+                    var type = arg.Value as System.Type;
+                    if (attributes.HasAttribute(type))
+                        finded = true;
+                }
+                if(!finded)
+                {
+                    List<string> names = new List<string>();
+                    foreach(var arg in args)
+                    {
+                        names.Add((arg.Value as System.Type).Name);
+                    }
+
+                    ReportError(string.Format("{0} 需要和这些标记一起使用（{1}）。", attributeType.Name, string.Join(",", names)), context.key);
+                }
+                return true;
+            }
+
+            /// <summary>
+            /// 检查并创建Attribute
+            /// </summary>
+            /// <param name="attributeType"></param>
+            /// <param name="context"></param>
+            /// <param name="owner"></param>
+            /// <param name="attributes"></param>
+            private void CheckAndCreateAttribute(System.Type attributeType, AttrContext context, AttributeTable attributes)
+            {
+                var fields = context.attrField();
+                var constructors = attributeType.GetConstructors();
+
+                var constructorIndex = -1;
+
+                for(int i=0;i<constructors.Length;i++)
+                {
+                    var constructor = constructors[i];
+                    var infos = constructor.GetParameters();
+
+                    if (fields.Length != infos.Length)
+                        continue;
+
+                    if (constructorIndex == -1)
+                        constructorIndex = i;
+
+                    bool matched = true;
+
+                    for (int j = 0; j < infos.Length; j++)
+                    {
+                        var info = infos[j];
+                        var infoType = ArgumentType.VOID;
+                        if (info.ParameterType == typeof(bool))
+                            infoType = ArgumentType.BOOL;
+                        else if (info.ParameterType == typeof(byte) || info.ParameterType == typeof(sbyte))
+                            infoType = ArgumentType.INT;
+                        else if (info.ParameterType == typeof(short) || info.ParameterType == typeof(int) || info.ParameterType == typeof(long))
+                            infoType = ArgumentType.INT;
+                        else if (info.ParameterType == typeof(ushort) || info.ParameterType == typeof(uint) || info.ParameterType == typeof(ulong))
+                            infoType = ArgumentType.INT;
+                        else if (info.ParameterType == typeof(decimal))
+                            infoType = ArgumentType.INT;
+                        else if (info.ParameterType == typeof(float) || info.ParameterType == typeof(double))
+                            infoType = ArgumentType.FLOAT;
+                        else if (info.ParameterType == typeof(string))
+                            infoType = ArgumentType.STRING;
+
+                        var field = fields[j];
+                        var fieldType = ArgumentType.VOID;
+                        if (field.attrValue != null)
+                        {
+                            if (field.attrValue.vbool != null)
+                                fieldType = ArgumentType.BOOL;
+                            else if (field.attrValue.vint != null)
+                                fieldType = ArgumentType.INT;
+                            else if (field.attrValue.vfloat != null)
+                                fieldType = ArgumentType.FLOAT;
+                            else if (field.attrValue.vstr != null)
+                                fieldType = ArgumentType.STRING;
+                            else if (field.attrValue.vid != null)
+                                fieldType = ArgumentType.STRING;
+                        }
+
+                        if (infoType == ArgumentType.VOID || fieldType == ArgumentType.VOID || infoType != fieldType)
+                        {
+                            matched = false;
+                            break;
+                        }
+                    }
+
+                    if(matched)
+                    {
+                        List<object> values = new List<object>();
+                        for (int j = 0; j < fields.Length; j++)
+                        {
+                            var info = infos[j];
+                            var field = fields[j];
+
+                            if (info.ParameterType == typeof(bool))
+                                values.Add(bool.Parse(field.attrValue.vbool.Text));
+                            else if (info.ParameterType == typeof(byte))
+                                values.Add((byte)ulong.Parse(field.attrValue.vint.Text));
+                            else if (info.ParameterType == typeof(sbyte))
+                                values.Add((sbyte)long.Parse(field.attrValue.vint.Text));
+                            else if (info.ParameterType == typeof(short))
+                                values.Add((short)long.Parse(field.attrValue.vint.Text));
+                            else if (info.ParameterType == typeof(int))
+                                values.Add((int)long.Parse(field.attrValue.vint.Text));
+                            else if (info.ParameterType == typeof(long))
+                                values.Add(long.Parse(field.attrValue.vint.Text));
+                            else if (info.ParameterType == typeof(ushort))
+                                values.Add((ushort)ulong.Parse(field.attrValue.vint.Text));
+                            else if (info.ParameterType == typeof(uint))
+                                values.Add((uint)ulong.Parse(field.attrValue.vint.Text));
+                            else if (info.ParameterType == typeof(ulong))
+                                values.Add(ulong.Parse(field.attrValue.vint.Text));
+                            else if (info.ParameterType == typeof(decimal))
+                                values.Add(decimal.Parse(field.attrValue.vint.Text));
+                            else if (info.ParameterType == typeof(float))
+                                values.Add(float.Parse(field.attrValue.vfloat.Text));
+                            else if (info.ParameterType == typeof(double))
+                                values.Add(double.Parse(field.attrValue.vfloat.Text));
+                            else if (info.ParameterType == typeof(string))
+                                values.Add(field.attrValue.vstr != null ? field.attrValue.vstr.Text.Trim('"') : field.attrValue.vid.Text);
+                        }
+                        attributes.Add((Attribute)constructor.Invoke(values.ToArray()));
+                        return;
+                    }
+                }
+
+                //提示错误
+                if (constructors.Length > 0)
+                {
+                    constructorIndex = constructorIndex == -1 ? 0 : constructorIndex;
+
+                    var errorInfo = new List<string>();
+                    var constructor = constructors[constructorIndex != -1 ? constructorIndex : 0];
+                    foreach(var info in constructor.GetParameters())
+                    {
+                        errorInfo.Add(info.Name + " : " + info.ParameterType.Name);
+                    }
+                    ReportError("格式错误, 应该是 [ " + attributeType.Name + " ( " + string.Join(" , ", errorInfo) + " )].", context);
+                }
+            }
+
+            public enum ArgumentType
+            {
+                VOID,
+                CONST,
+                BOOL,
+                INT,
+                FLOAT,
+                STRING
+            }
+
+
 
             private Attribute HandleXLS(AttrContext item, object owner, AttributeTable attributes)
             {
@@ -1025,7 +1303,7 @@ namespace FlatBufferData.Build
                     var indexList = attributes.GetAttributes<Index>();
                     foreach (var index in indexList)
                     {
-                        if (index.name.Equals(name))
+                        if (index.IndexName.Equals(name))
                         {
                             finded = true;
                             break;
@@ -1308,7 +1586,7 @@ namespace FlatBufferData.Build
                     for (var i = 1; i < fields.Length; i++) { ReportError("多余的参数。", fields[i]); }
                 }
 
-                return new JsonLiteral(jsonPath);
+                return new JsonLiteral();
             }
             private Attribute HandlJsonFileRef(AttrContext item, object owner, AttributeTable attributes)
             {

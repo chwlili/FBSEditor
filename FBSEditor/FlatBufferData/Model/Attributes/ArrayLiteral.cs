@@ -1,5 +1,9 @@
 ﻿namespace FlatBufferData.Model.Attributes
 {
+    [AllowMultiple(false)]
+    [AllowOwnerAttribute(TargetTypeID.TableField)]
+    [RequiredIsArray]
+    [ConflictType(typeof(StructLiteral),typeof(JsonLiteral))]
     public class ArrayLiteral : Attribute
     {
         /// <summary>
@@ -16,6 +20,15 @@
         /// 分隔符
         /// </summary>
         public string ending;
+
+        public ArrayLiteral()
+        {
+        }
+
+        public ArrayLiteral(string separator)
+        {
+            this.separator = separator;
+        }
 
         public ArrayLiteral(string beginning, string separator, string ending)
         {

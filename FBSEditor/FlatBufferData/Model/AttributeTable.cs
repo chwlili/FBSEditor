@@ -45,6 +45,18 @@ namespace FlatBufferData.Model
             return null;
         }
 
+        public bool HasAttribute(System.Type type)
+        {
+            foreach (var item in attributes)
+            {
+                if (item.GetType().Equals(type))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public Attribute GetAttribute<T, K>() where T : Attribute where K : Attribute
         {
             foreach (var item in attributes)

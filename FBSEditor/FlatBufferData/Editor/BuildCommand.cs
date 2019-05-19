@@ -15,7 +15,7 @@ using System.Windows.Forms;
 
 namespace FlatBufferData.Editor
 {
-    internal sealed class BuildCommand
+    public sealed class BuildCommand
     {
         public static readonly Guid CommandSet = new Guid("04f51c64-0c0a-412c-818c-57880c441058");
 

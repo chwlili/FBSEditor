@@ -1,5 +1,7 @@
 ﻿namespace FlatBufferData.Model.Attributes
 {
+    [AllowMultiple(false)]
+    [AllowOwnerAttribute(TargetTypeID.Table|TargetTypeID.TableField)]
     public class XLS : Attribute
     {
         /// <summary>

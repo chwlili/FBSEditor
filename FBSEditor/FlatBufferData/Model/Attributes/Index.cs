@@ -1,21 +1,23 @@
 ﻿namespace FlatBufferData.Model.Attributes
 {
+    [AllowMultiple(false)]
+    [AllowOwnerAttribute(TargetTypeID.Table)]
     public class Index : Attribute
     {
         /// <summary>
         /// 索引名称
         /// </summary>
-        public string name;
+        public string IndexName;
 
         /// <summary>
         /// 索引列表
         /// </summary>
-        public string[] fields;
+        public string[] IndexFields;
 
-        public Index(string name, string[] fields)
+        public Index(string indexName, string[] indexFields)
         {
-            this.name = name;
-            this.fields = fields;
+            this.IndexName = indexName;
+            this.IndexFields = indexFields;
         }
     }
 }

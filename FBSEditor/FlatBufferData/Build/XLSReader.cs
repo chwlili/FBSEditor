@@ -25,7 +25,7 @@ namespace FlatBufferData.Build
             var indexKeys = new HashSet<string>();
             foreach (var index in table.Attributes.GetAttributes<Index>())
             {
-                foreach (var dataKey in index.fields)
+                foreach (var dataKey in index.IndexFields)
                 {
                     foreach (var field in table.Fields)
                     {

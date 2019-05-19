@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using FlatBufferData.Editor;
 
 namespace FBSEditor
 {
@@ -27,7 +28,7 @@ namespace FBSEditor
 
         protected override void Initialize()
         {
-            FlatBufferData.Editor.BuildCommand.Initialize(this);
+            BuildCommand.Initialize(this);
             FlatBufferCode.Editor.BuildCommand.Initialize(this);
 
             dte = ServiceProvider.GlobalProvider.GetService(typeof(DTE)) as DTE;

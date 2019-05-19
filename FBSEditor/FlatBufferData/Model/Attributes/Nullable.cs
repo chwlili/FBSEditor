@@ -1,5 +1,7 @@
 ﻿namespace FlatBufferData.Model.Attributes
 {
+    [AllowMultiple(false)]
+    [AllowOwnerAttribute(TargetTypeID.TableField)]
     public class Nullable : Attribute
     {
         /// <summary>
