@@ -5,7 +5,7 @@ namespace FlatBufferData.Model.Attributes
     [Flags]
     public enum TargetTypeID
     {
-        All = 0,
+        ANY = 0,
         Table = 1,
         TableField = 2,
         Struct = 4,
@@ -20,27 +20,49 @@ namespace FlatBufferData.Model.Attributes
 
     public class AllowOwner : System.Attribute
     {
-        public TargetTypeID targetType;
+        public TargetTypeID AllowTargets;
 
         public AllowOwner(TargetTypeID targetType)
         {
-            this.targetType = targetType;
+            this.AllowTargets = targetType;
         }
     }
 
     public class AllowMultiple : System.Attribute
     {
-        public bool allowMultiple;
+        public bool Allow;
 
         public AllowMultiple(bool allowMultiple)
         {
-            this.allowMultiple = allowMultiple;
+            this.Allow = allowMultiple;
         }
     }
 
     public class RequiredArrayField : System.Attribute
     {
+    }
 
+    public class RequiredFieldType : System.Attribute
+    {
+        public FieldTypeID FieldType;
+
+        public RequiredFieldType(FieldTypeID FieldType)
+        {
+            this.FieldType = FieldType;
+        }
+    }
+
+    public enum FieldTypeID
+    {
+        ANY = 0,
+        BOOL = 1,
+        INT = 2,
+        FLOAT = 4,
+        STRING = 8,
+        ENUM = 16,
+        UNION = 32,
+        STRUCT = 64,
+        TABLE = 128
     }
 
     public class RequiredStructField : System.Attribute
@@ -48,23 +70,23 @@ namespace FlatBufferData.Model.Attributes
 
     }
 
-    public class ConflictType : System.Attribute
+    public class ConflictFlag : System.Attribute
     {
-        public Type[] conflictTypes;
+        public Type[] ConflictTypes;
 
-        public ConflictType(params Type[] conflictTypes)
+        public ConflictFlag(params Type[] conflictTypes)
         {
-            this.conflictTypes = conflictTypes;
+            this.ConflictTypes = conflictTypes;
         }
     }
 
-    public class RequiredType : System.Attribute
+    public class RequiredFlag : System.Attribute
     {
-        public Type[] requiredTypes;
+        public Type[] RequiredTypes;
 
-        public RequiredType(params Type[] requiredTypes)
+        public RequiredFlag(params Type[] requiredTypes)
         {
-            this.requiredTypes = requiredTypes;
+            this.RequiredTypes = requiredTypes;
         }
     }
 }

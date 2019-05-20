@@ -1,5 +1,7 @@
 ﻿namespace FlatBufferData.Model.Attributes
 {
+#pragma warning disable CS3016 // 作为特性参数的数组不符合 CLS
+
     #region table专用
 
     [AllowMultiple(false)]
@@ -100,7 +102,7 @@
     }
 
     [AllowMultiple(false)]
-    [AllowOwner(TargetTypeID.TableField)]
+    [AllowOwner(TargetTypeID.TableField | TargetTypeID.StructField)]
     public class JsonFileRef : Attribute
     {
         public string filePath;
@@ -122,7 +124,7 @@
 
     [AllowMultiple(false)]
     [AllowOwner(TargetTypeID.Table|TargetTypeID.TableField|TargetTypeID.StructField)]
-    [RequiredType(typeof(JsonFile),typeof(JsonFileRef),typeof(JsonLiteral))]
+    //[RequiredFlag(typeof(JsonFile),typeof(JsonFileRef),typeof(JsonLiteral))]
     public class JsonPath : Attribute
     {
         public string path;
@@ -140,22 +142,11 @@
     [AllowMultiple(false)]
     [AllowOwner(TargetTypeID.TableField)]
     [RequiredArrayField]
-    [ConflictType(typeof(StructLiteral), typeof(JsonLiteral))]
+    [ConflictFlag(typeof(StructLiteral), typeof(JsonLiteral))]
     public class ArrayLiteral : Attribute
     {
-        /// <summary>
-        /// 起始符
-        /// </summary>
         public string beginning;
-
-        /// <summary>
-        /// 分隔符
-        /// </summary>
         public string separator;
-
-        /// <summary>
-        /// 分隔符
-        /// </summary>
         public string ending;
 
         public ArrayLiteral()
@@ -176,27 +167,25 @@
     }
 
     [AllowMultiple(false)]
+    [ConflictFlag(typeof(ArrayLiteral), typeof(JsonLiteral))]
     [AllowOwner(TargetTypeID.Struct|TargetTypeID.StructField|TargetTypeID.TableField)]
-    [RequiredArrayField]
-    [ConflictType(typeof(ArrayLiteral), typeof(JsonLiteral))]
+    [RequiredFieldType(FieldTypeID.STRUCT)]
     public class StructLiteral : Attribute
     {
         public static StructLiteral NORMAL = new StructLiteral(null, ",", null);
 
-        /// <summary>
-        /// 起始符
-        /// </summary>
         public string beginning;
-
-        /// <summary>
-        /// 分隔符
-        /// </summary>
         public string separator;
-
-        /// <summary>
-        /// 分隔符
-        /// </summary>
         public string ending;
+
+        public StructLiteral()
+        {
+        }
+
+        public StructLiteral(string separator)
+        {
+            this.separator = separator;
+        }
 
         public StructLiteral(string beginning, string separator, string ending)
         {
@@ -207,4 +196,7 @@
     }
 
     #endregion
+
+
+#pragma warning restore CS3016 // 作为特性参数的数组不符合 CLS
 }
