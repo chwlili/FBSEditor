@@ -2,6 +2,9 @@
 {
     public class EnumField
     {
+        //枚举索引
+        public int ID { get; set; }
+
         /// <summary>
         /// 名称
         /// </summary>
@@ -11,9 +14,6 @@
         /// 注释
         /// </summary>
         public string Comment { get; set; }
-
-        //枚举索引
-        public int ID { get; set; }
 
         /// <summary>
         /// 值

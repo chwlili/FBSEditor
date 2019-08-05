@@ -2,6 +2,9 @@
 
 namespace FlatBufferData.Model.Attributes
 {
+    /// <summary>
+    /// 目标类型ID
+    /// </summary>
     [Flags]
     public enum TargetTypeID
     {
@@ -18,16 +21,22 @@ namespace FlatBufferData.Model.Attributes
         RpcMethod = 512,
     }
 
-    public class AllowOwner : System.Attribute
+    /// <summary>
+    /// 允许应用到的目标
+    /// </summary>
+    public class AllowTarget : System.Attribute
     {
         public TargetTypeID AllowTargets;
 
-        public AllowOwner(TargetTypeID targetType)
+        public AllowTarget(TargetTypeID targetType)
         {
             this.AllowTargets = targetType;
         }
     }
 
+    /// <summary>
+    /// 是否允许多个应用到同一目标
+    /// </summary>
     public class AllowMultiple : System.Attribute
     {
         public bool Allow;
@@ -38,20 +47,9 @@ namespace FlatBufferData.Model.Attributes
         }
     }
 
-    public class RequiredArrayField : System.Attribute
-    {
-    }
-
-    public class RequiredFieldType : System.Attribute
-    {
-        public FieldTypeID FieldType;
-
-        public RequiredFieldType(FieldTypeID FieldType)
-        {
-            this.FieldType = FieldType;
-        }
-    }
-
+    /// <summary>
+    /// 字段类型ID
+    /// </summary>
     public enum FieldTypeID
     {
         ANY = 0,
@@ -65,21 +63,32 @@ namespace FlatBufferData.Model.Attributes
         TABLE = 128
     }
 
-    public class RequiredStructField : System.Attribute
+    /// <summary>
+    /// 必需是指定的字段类型
+    /// </summary>
+    public class RequiredFieldType : System.Attribute
     {
+        public FieldTypeID FieldType;
 
-    }
-
-    public class ConflictFlag : System.Attribute
-    {
-        public Type[] ConflictTypes;
-
-        public ConflictFlag(params Type[] conflictTypes)
+        public RequiredFieldType(FieldTypeID FieldType)
         {
-            this.ConflictTypes = conflictTypes;
+            this.FieldType = FieldType;
         }
     }
 
+    /// <summary>
+    /// 必须是数组字段
+    /// </summary>
+    public class RequiredArrayField : System.Attribute { }
+
+    /// <summary>
+    /// 必须是结构字段
+    /// </summary>
+    public class RequiredStructField : System.Attribute { }
+
+    /// <summary>
+    /// 必须的标记
+    /// </summary>
     public class RequiredFlag : System.Attribute
     {
         public Type[] RequiredTypes;
@@ -87,6 +96,19 @@ namespace FlatBufferData.Model.Attributes
         public RequiredFlag(params Type[] requiredTypes)
         {
             this.RequiredTypes = requiredTypes;
+        }
+    }
+
+    /// <summary>
+    /// 冲突的标记
+    /// </summary>
+    public class ConflictFlag : System.Attribute
+    {
+        public Type[] ConflictTypes;
+
+        public ConflictFlag(params Type[] conflictTypes)
+        {
+            this.ConflictTypes = conflictTypes;
         }
     }
 }

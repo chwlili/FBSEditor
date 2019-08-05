@@ -23,6 +23,5 @@ namespace FlatBufferData.Model
         /// 特性列表
         /// </summary>
         public AttributeTable Attributes { get; } = new AttributeTable();
-
     }
 }

@@ -60,7 +60,8 @@ namespace FlatBufferData.Editor
                 errorCount = 0;
                 package.ClearError();
 
-                new FBSBuilder(selectedProject.Name, ErrorHandler).Open(selectedItem.FileNames[0]);
+                var builder = new FBSBuilder(selectedProject.Name, GetAllFBSFiles(selectedProject), ErrorHandler);
+                builder.Build(selectedItem.FileNames[0]);
 
                 if (errorCount > 0)
                 {
@@ -81,11 +82,8 @@ namespace FlatBufferData.Editor
                 errorCount = 0;
                 package.ClearError();
 
-                var builder = new FBSBuilder(selectedProject.Name, ErrorHandler);
-                foreach (var path in GetAllFBSFiles(selectedProject))
-                {
-                    builder.Open(path);
-                }
+                var builder = new FBSBuilder(selectedProject.Name, GetAllFBSFiles(selectedProject), ErrorHandler);
+                builder.BuildAll();
 
                 if (errorCount > 0)
                 {
@@ -106,7 +104,8 @@ namespace FlatBufferData.Editor
                 errorCount = 0;
                 package.ClearError();
 
-                var file = new FBSBuilder(selectedProject.Name, ErrorHandler).Open(selectedItem.FileNames[0]);
+                var builder = new FBSBuilder(selectedProject.Name, GetAllFBSFiles(selectedProject), ErrorHandler);
+                var file = builder.Build(selectedItem.FileNames[0]);
                 if (errorCount <= 0)
                 {
                     if (file.RootTable != null)
@@ -145,11 +144,12 @@ namespace FlatBufferData.Editor
                 errorCount = 0;
                 package.ClearError();
 
-                var files = new List<FBSFile>();
-                var builder = new FBSBuilder(selectedProject.Name, ErrorHandler);
+                var files = new List<Model.Document>();
+                var builder = new FBSBuilder(selectedProject.Name, GetAllFBSFiles(selectedProject), ErrorHandler);
+
                 foreach (var path in GetAllFBSFiles(selectedProject))
                 {
-                    files.Add(builder.Open(path));
+                    files.Add(builder.Build(path));
                 }
 
                 if (errorCount <= 0)
@@ -188,7 +188,11 @@ namespace FlatBufferData.Editor
         }
         #endregion
 
-
+        /// <summary>
+        /// 获取所有FBS文件
+        /// </summary>
+        /// <param name="project"></param>
+        /// <returns></returns>
         private string[] GetAllFBSFiles(Project project)
         {
             var paths = new List<string>();

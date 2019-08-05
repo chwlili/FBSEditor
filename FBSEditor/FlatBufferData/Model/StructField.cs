@@ -47,6 +47,9 @@ namespace FlatBufferData.Model
         /// </summary>
         public AttributeTable Attributes { get; } = new AttributeTable();
 
+        /// <summary>
+        /// 数据字段
+        /// </summary>
         public string DataField { get; set; }
     }
 }

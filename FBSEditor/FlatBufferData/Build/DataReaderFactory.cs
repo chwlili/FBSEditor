@@ -23,7 +23,7 @@ namespace FlatBufferData.Build
         }
 
 
-        public void ReadData(FBSFile file)
+        public void ReadData(Document file)
         {
             if (file.RootTable == null) return;
 

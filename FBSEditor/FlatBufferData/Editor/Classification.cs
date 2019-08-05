@@ -151,7 +151,8 @@ namespace FlatBufferData.Editor
             {
                 filePath = (dom as ITextDocument).FilePath;
 
-                new FBSBuilder("", ErrorReport).Open(filePath, snapshot.GetText());
+                FBSBuilder builder = new FBSBuilder("", new string[] { filePath }, ErrorReport);
+                builder.Build(filePath, snapshot.GetText());
             }
             
             ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(snapshot, 0, snapshot.Length)));

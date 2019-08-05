@@ -34,24 +34,33 @@ namespace FlatBufferData.Model
         /// </summary>
         public AttributeTable Attributes { get; } = new AttributeTable();
 
+
+        /// <summary>
+        /// 按ID查找字段
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public EnumField FindFieldByID(int id)
+        {
+            foreach (var field in Fields)
+            {
+                if (field.ID == id)
+                    return field;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 按名称查找字段
+        /// </summary>
+        /// <param name="fieldName"></param>
+        /// <returns></returns>
         public EnumField FindFieldByName(string fieldName)
         {
             foreach(var field in Fields)
             {
                 if (field.Name.Equals(fieldName))
                     return field;
-            }
-            return null;
-        }
-
-        public EnumField FindFieldByID(int id)
-        {
-            foreach (var field in Fields)
-            {
-                if (field.ID == id)
-                {
-                    return field;
-                }
             }
             return null;
         }

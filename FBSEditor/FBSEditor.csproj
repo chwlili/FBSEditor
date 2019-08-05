@@ -268,13 +268,13 @@
     <Compile Include="FlatBufferData\Grammar\Json\JsonParser.cs" />
     <Compile Include="FlatBufferData\Grammar\Json\JsonVisitor.cs" />
     <Compile Include="FlatBufferData\Model\Attribute.cs" />
+    <Compile Include="FlatBufferData\Model\Attributes\AttributeFactory.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\AttributeSchema.cs" />
     <Compile Include="FlatBufferData\Model\Attributes\AttributeTypes.cs" />
-    <Compile Include="FlatBufferData\Model\Base.cs" />
     <Compile Include="FlatBufferData\Model\Enum.cs" />
     <Compile Include="FlatBufferData\Model\EnumField.cs" />
     <Compile Include="FlatBufferData\Build\FBSBuilder.cs" />
-    <Compile Include="FlatBufferData\Model\FBSFile.cs" />
+    <Compile Include="FlatBufferData\Model\Document.cs" />
     <Compile Include="FlatBufferData\Model\Meta.cs" />
     <Compile Include="FlatBufferData\Model\AttributeTable.cs" />
     <Compile Include="FlatBufferData\Model\Rpc.cs" />

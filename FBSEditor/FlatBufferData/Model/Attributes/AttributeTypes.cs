@@ -5,7 +5,7 @@
     #region table专用
 
     [AllowMultiple(false)]
-    [AllowOwner(TargetTypeID.Table)]
+    [AllowTarget(TargetTypeID.Table)]
     public class Index : Attribute
     {
         /// <summary>
@@ -18,15 +18,33 @@
         /// </summary>
         public string[] IndexFields;
 
-        public Index(string indexName, string[] indexFields)
+        public Index(string indexName, string fieldName1)
         {
             this.IndexName = indexName;
-            this.IndexFields = indexFields;
+            this.IndexFields = new string[] { fieldName1 };
+        }
+
+        public Index(string indexName, string fieldName1, string fieldName2)
+        {
+            this.IndexName = indexName;
+            this.IndexFields = new string[] { fieldName1, fieldName2 };
+        }
+
+        public Index(string indexName, string fieldName1, string fieldName2, string fieldName3)
+        {
+            this.IndexName = indexName;
+            this.IndexFields = new string[] { fieldName1, fieldName2, fieldName3 };
+        }
+
+        public Index(string indexName, string fieldName1, string fieldName2, string fieldName3, string fieldName4)
+        {
+            this.IndexName = indexName;
+            this.IndexFields = new string[] { fieldName1, fieldName2, fieldName3, fieldName4 };
         }
     }
 
     [AllowMultiple(false)]
-    [AllowOwner(TargetTypeID.TableField)]
+    [AllowTarget(TargetTypeID.TableField)]
     public class Nullable : Attribute
     {
         /// <summary>
@@ -41,7 +59,7 @@
     }
 
     [AllowMultiple(false)]
-    [AllowOwner(TargetTypeID.TableField)]
+    [AllowTarget(TargetTypeID.TableField)]
     public class Unique : Attribute
     {
     }
@@ -52,7 +70,7 @@
 
 
     [AllowMultiple(false)]
-    [AllowOwner(TargetTypeID.Table | TargetTypeID.TableField)]
+    [AllowTarget(TargetTypeID.Table | TargetTypeID.TableField)]
     public class XLS : Attribute
     {
         public string filePath;
@@ -90,7 +108,7 @@
     #region Json相关
 
     [AllowMultiple(false)]
-    [AllowOwner(TargetTypeID.Table)]
+    [AllowTarget(TargetTypeID.Table)]
     public class JsonFile : Attribute
     {
         public string filePath;
@@ -102,7 +120,7 @@
     }
 
     [AllowMultiple(false)]
-    [AllowOwner(TargetTypeID.TableField | TargetTypeID.StructField)]
+    [AllowTarget(TargetTypeID.TableField | TargetTypeID.StructField)]
     public class JsonFileRef : Attribute
     {
         public string filePath;
@@ -114,7 +132,7 @@
     }
 
     [AllowMultiple(false)]
-    [AllowOwner(TargetTypeID.Table| TargetTypeID.Struct| TargetTypeID.TableField| TargetTypeID.StructField)]
+    [AllowTarget(TargetTypeID.Table| TargetTypeID.Struct| TargetTypeID.TableField| TargetTypeID.StructField)]
     public class JsonLiteral : Attribute
     {
         public static JsonLiteral NORMAL = new JsonLiteral();
@@ -123,7 +141,7 @@
     }
 
     [AllowMultiple(false)]
-    [AllowOwner(TargetTypeID.Table|TargetTypeID.TableField|TargetTypeID.StructField)]
+    [AllowTarget(TargetTypeID.Table|TargetTypeID.TableField|TargetTypeID.StructField)]
     //[RequiredFlag(typeof(JsonFile),typeof(JsonFileRef),typeof(JsonLiteral))]
     public class JsonPath : Attribute
     {
@@ -140,7 +158,7 @@
     #region 字面量
 
     [AllowMultiple(false)]
-    [AllowOwner(TargetTypeID.TableField)]
+    [AllowTarget(TargetTypeID.TableField)]
     [RequiredArrayField]
     [ConflictFlag(typeof(StructLiteral), typeof(JsonLiteral))]
     public class ArrayLiteral : Attribute
@@ -168,7 +186,7 @@
 
     [AllowMultiple(false)]
     [ConflictFlag(typeof(ArrayLiteral), typeof(JsonLiteral))]
-    [AllowOwner(TargetTypeID.Struct|TargetTypeID.StructField|TargetTypeID.TableField)]
+    [AllowTarget(TargetTypeID.Struct|TargetTypeID.StructField|TargetTypeID.TableField)]
     [RequiredFieldType(FieldTypeID.STRUCT)]
     public class StructLiteral : Attribute
     {
