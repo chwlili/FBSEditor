@@ -2,7 +2,7 @@
 
 namespace FlatBufferData.Model
 {
-    public class StructField
+    public class StructField : Node
     {
         /// <summary>
         /// 名称

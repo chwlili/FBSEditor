@@ -45,21 +45,15 @@
 
     [AllowMultiple(false)]
     [AllowTarget(TargetTypeID.TableField)]
+    [ConflictFlag(typeof(Unique))]
     public class Nullable : Attribute
     {
-        /// <summary>
-        /// 是否可以为空
-        /// </summary>
-        public bool nullable;
-
-        public Nullable(bool nullable)
-        {
-            this.nullable = nullable;
-        }
     }
 
     [AllowMultiple(false)]
     [AllowTarget(TargetTypeID.TableField)]
+    [ConflictFlag(typeof(Nullable))]
+    [RequiredFieldType(FieldTypeID.BOOL| FieldTypeID.INT| FieldTypeID.FLOAT| FieldTypeID.STRING| FieldTypeID.ENUM)]
     public class Unique : Attribute
     {
     }

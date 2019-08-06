@@ -1,6 +1,6 @@
 ﻿namespace FlatBufferData.Model
 {
-    public class Meta
+    public class Meta : Node
     {
         public Meta(string name,string value)
         {

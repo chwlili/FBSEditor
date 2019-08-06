@@ -1,6 +1,6 @@
 ﻿namespace FlatBufferData.Model
 {
-    public class EnumField
+    public class EnumField : Node
     {
         //枚举索引
         public int ID { get; set; }

@@ -142,7 +142,7 @@ namespace FlatBufferData.Build
                             else if(isBaseType)
                             {
                                 var isIndex = indexKeys.Contains(field.DataField);
-                                var isNullable = field.Attributes.GetAttribute<Model.Attributes.Nullable>() != null ? field.Attributes.GetAttribute<Model.Attributes.Nullable>().nullable : true;
+                                var isNullable = field.Attributes.HasAttribute<Model.Attributes.Nullable>();
                                 var defaultValue = field.DefaultValue;
 
                                 if (cellData == null || cellData.CellType == CellType.Blank)

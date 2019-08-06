@@ -1,6 +1,6 @@
 ﻿namespace FlatBufferData.Model
 {
-    public class UnionField
+    public class UnionField : Node
     {
         /// <summary>
         /// 名称

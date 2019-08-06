@@ -45,6 +45,16 @@ namespace FlatBufferData.Model
             return null;
         }
 
+        /// <summary>
+        /// 是否包含指定的特性
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public bool HasAttribute<T>() where T :Attribute
+        {
+            return GetAttribute<T>() != null;
+        }
+
         public bool HasAttribute(System.Type type)
         {
             foreach (var item in attributes)

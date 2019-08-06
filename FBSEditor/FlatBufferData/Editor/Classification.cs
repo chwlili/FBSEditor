@@ -151,7 +151,7 @@ namespace FlatBufferData.Editor
             {
                 filePath = (dom as ITextDocument).FilePath;
 
-                FBSBuilder builder = new FBSBuilder("", new string[] { filePath }, ErrorReport);
+                FBSProject builder = new FBSProject("", new string[] { filePath }, ErrorReport);
                 builder.Build(filePath, snapshot.GetText());
             }
             

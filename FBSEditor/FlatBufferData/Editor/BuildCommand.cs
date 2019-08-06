@@ -60,7 +60,7 @@ namespace FlatBufferData.Editor
                 errorCount = 0;
                 package.ClearError();
 
-                var builder = new FBSBuilder(selectedProject.Name, GetAllFBSFiles(selectedProject), ErrorHandler);
+                var builder = new FBSProject(selectedProject.Name, GetAllFBSFiles(selectedProject), ErrorHandler);
                 builder.Build(selectedItem.FileNames[0]);
 
                 if (errorCount > 0)
@@ -82,7 +82,7 @@ namespace FlatBufferData.Editor
                 errorCount = 0;
                 package.ClearError();
 
-                var builder = new FBSBuilder(selectedProject.Name, GetAllFBSFiles(selectedProject), ErrorHandler);
+                var builder = new FBSProject(selectedProject.Name, GetAllFBSFiles(selectedProject), ErrorHandler);
                 builder.BuildAll();
 
                 if (errorCount > 0)
@@ -104,7 +104,7 @@ namespace FlatBufferData.Editor
                 errorCount = 0;
                 package.ClearError();
 
-                var builder = new FBSBuilder(selectedProject.Name, GetAllFBSFiles(selectedProject), ErrorHandler);
+                var builder = new FBSProject(selectedProject.Name, GetAllFBSFiles(selectedProject), ErrorHandler);
                 var file = builder.Build(selectedItem.FileNames[0]);
                 if (errorCount <= 0)
                 {
@@ -144,8 +144,8 @@ namespace FlatBufferData.Editor
                 errorCount = 0;
                 package.ClearError();
 
-                var files = new List<Model.Document>();
-                var builder = new FBSBuilder(selectedProject.Name, GetAllFBSFiles(selectedProject), ErrorHandler);
+                var files = new List<Model.FBSFile>();
+                var builder = new FBSProject(selectedProject.Name, GetAllFBSFiles(selectedProject), ErrorHandler);
 
                 foreach (var path in GetAllFBSFiles(selectedProject))
                 {

@@ -2,7 +2,7 @@
 
 namespace FlatBufferData.Model
 {
-    public class Table
+    public class Table : Node
     {
         /// <summary>
         /// 名称

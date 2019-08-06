@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace FlatBufferData.Model
 {
-    public class Attribute
+    public class Attribute : Node
     {
         public static List<Type> AvailableTypes = new List<Type>();
 

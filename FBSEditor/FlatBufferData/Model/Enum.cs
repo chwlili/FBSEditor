@@ -2,7 +2,7 @@
 
 namespace FlatBufferData.Model
 {
-    public class Enum
+    public class Enum : Node
     {
         /// <summary>
         /// 名称

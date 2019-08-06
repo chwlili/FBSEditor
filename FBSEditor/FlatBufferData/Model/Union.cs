@@ -2,7 +2,7 @@
 
 namespace FlatBufferData.Model
 {
-    public class Union
+    public class Union : Node
     {
         /// <summary>
         /// 名称

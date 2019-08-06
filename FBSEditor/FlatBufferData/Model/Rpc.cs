@@ -2,7 +2,7 @@
 
 namespace FlatBufferData.Model
 {
-    public class Rpc
+    public class Rpc : Node
     {
         /// <summary>
         /// 名称

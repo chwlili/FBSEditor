@@ -2,9 +2,9 @@
 
 namespace FlatBufferData.Model
 {
-    public class Document
+    public class FBSFile
     {
-        public Document(string path)
+        public FBSFile(string path)
         {
             this.Path = path;
         }
@@ -12,7 +12,7 @@ namespace FlatBufferData.Model
         /// <summary>
         /// 导入的文件
         /// </summary>
-        public Document[] Includes { get; set; }
+        public FBSFile[] Includes { get; set; }
 
         /// <summary>
         /// 路径
