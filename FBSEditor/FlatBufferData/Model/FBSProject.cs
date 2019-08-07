@@ -160,6 +160,7 @@ namespace FlatBufferData.Build
                 data.Name = context.name != null ? context.name.Text : null;
                 data.Metas = ParseMetaDatas(fbsFile, context.metaList);
                 data.Fields = new List<TableField>();
+                data.Location = GetLocation(fbsFile, context.name);
 
                 var fieldNameSet = new HashSet<string>();
                 foreach (var fieldContext in context.tableField())
@@ -172,6 +173,7 @@ namespace FlatBufferData.Build
                     field.DefaultValue = ParseDefaultValue(fbsFile, field.Type, field.IsArray, fieldContext.fieldValue);
                     field.Metas = ParseMetaDatas(fbsFile, fieldContext.metaList);
                     field.DataField = fieldContext.fieldMap != null && fieldContext.fieldMap.StartIndex != -1 ? fieldContext.fieldMap.Text.Trim('"') : field.Name;
+                    field.Location = GetLocation(fbsFile, fieldContext.fieldName);
 
                     if (string.IsNullOrEmpty(field.Name))
                     {
@@ -206,6 +208,7 @@ namespace FlatBufferData.Build
                 data.Name = context.name != null ? context.name.Text : null;
                 data.Metas = ParseMetaDatas(fbsFile, context.metaList);
                 data.Fields = new List<StructField>();
+                data.Location = GetLocation(fbsFile, context.name);
 
                 var fieldNameSet = new HashSet<string>();
                 foreach (var fieldContext in context.structField())
@@ -218,6 +221,7 @@ namespace FlatBufferData.Build
                     field.DefaultValue = null;
                     field.Metas = ParseMetaDatas(fbsFile, fieldContext.metaList);
                     field.DataField = fieldContext.fieldMap != null && fieldContext.fieldMap.StartIndex != -1 ? fieldContext.fieldMap.Text.Trim('"') : field.Name;
+                    field.Location = GetLocation(fbsFile, fieldContext.fieldName);
 
                     if (string.IsNullOrEmpty(field.Name))
                     {
@@ -260,6 +264,7 @@ namespace FlatBufferData.Build
                 data.Name = context.name != null ? context.name.Text : null;
                 data.Metas = ParseMetaDatas(fbsFile, context.metaList);
                 data.BaseType = "int";
+                data.Location = GetLocation(fbsFile, context.name);
 
                 var fieldIDSet = new HashSet<int>();
                 var fieldNameSet = new HashSet<string>();
@@ -269,6 +274,7 @@ namespace FlatBufferData.Build
                     field.Name = fieldContext.fieldName != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldName.Text : null;
                     field.Value = fieldContext.fieldValue != null && fieldContext.fieldValue.StartIndex != -1 ? fieldContext.fieldValue.Text : null;
                     field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
+                    field.Location = GetLocation(fbsFile, fieldContext.fieldName);
 
                     var enumIDValidate = false;
                     if (!string.IsNullOrEmpty(field.Value))
@@ -342,6 +348,7 @@ namespace FlatBufferData.Build
                 data.Comment = GetComment(comments, context, context.name);
                 data.Name = context.name != null ? context.name.Text : null;
                 data.Metas = ParseMetaDatas(fbsFile, context.metaList);
+                data.Location = GetLocation(fbsFile, context.name);
 
                 var fieldNameSet = new HashSet<string>();
                 foreach (var fieldContext in context.unionField())
@@ -350,6 +357,7 @@ namespace FlatBufferData.Build
                     field.Name = fieldContext.fieldName != null && fieldContext.fieldName.StartIndex != -1 ? fieldContext.fieldName.Text : null;
                     field.Type = fieldContext.fieldType != null ? fieldContext.fieldType.GetText() : null;
                     field.Comment = GetComment(comments, fieldContext, fieldContext.fieldName);
+                    field.Location = GetLocation(fbsFile, fieldContext.fieldName);
 
                     if (string.IsNullOrEmpty(field.Name))
                     {
@@ -382,6 +390,7 @@ namespace FlatBufferData.Build
                 var data = new Rpc();
                 data.Comment = GetComment(comments, context, context.name);
                 data.Name = context.name != null ? context.name.Text : null;
+                data.Location = GetLocation(fbsFile, context.name);
 
                 var fieldNameSet = new HashSet<string>();
                 foreach (var fieldContext in context.rpcField())
@@ -392,6 +401,7 @@ namespace FlatBufferData.Build
                     field.Param = fieldContext.fieldParam != null && fieldContext.fieldParam.StartIndex != -1 ? fieldContext.fieldParam.Text : null;
                     field.Return = fieldContext.fieldReturn != null && fieldContext.fieldReturn.StartIndex != -1 ? fieldContext.fieldReturn.Text : null;
                     field.Metas = ParseMetaDatas(fbsFile, fieldContext.metaList);
+                    field.Location = GetLocation(fbsFile, fieldContext.fieldName);
 
                     if (string.IsNullOrEmpty(field.Name))
                     {
@@ -472,6 +482,20 @@ namespace FlatBufferData.Build
             data2context.Clear();
 
             return fbsFile;
+        }
+
+        private Location GetLocation(FBSFile file, IToken token)
+        {
+            Location location = new Location();
+            location.file = file.Path;
+            if (token != null)
+            {
+                location.begin = token.StartIndex;
+                location.end = token.StopIndex;
+                location.row = token.Line;
+                location.col = token.Column;
+            }
+            return location;
         }
 
         /// <summary>
@@ -1259,16 +1283,8 @@ namespace FlatBufferData.Build
                     }
 
                     Attribute attribute = (Attribute)constructor.Invoke(values.ToArray());
-                    attribute.Location = new Location() { file=fbs.Path };
-                    if (context.key != null)
-                    {
-                        attribute.Location.row = context.key.Line;
-                        attribute.Location.col = context.key.Column;
-                        attribute.Location.begin = context.key.StartIndex;
-                        attribute.Location.end = context.key.StopIndex;
-                    }
-
-                    attributes.Add((Attribute)constructor.Invoke(values.ToArray()));
+                    attribute.Location = GetLocation(fbs, context.key);
+                    attributes.Add(attribute);
                     return;
                 }
             }

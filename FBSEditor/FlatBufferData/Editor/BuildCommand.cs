@@ -115,7 +115,7 @@ namespace FlatBufferData.Editor
                         if (json != null)
                         {
                             List<string> errors = new List<string>();
-                            var obj = JsonUtil.ParseJsonFile(json.filePath, file.RootTable, file.RootTable.Attributes, errors);
+                            var obj = JsonUtil.ParseJsonFile(json.filePath, file.RootTable, file.RootTable.Attributes, ErrorHandler);
                             foreach(var error in errors)
                             {
                                 errorCount++;
@@ -238,6 +238,11 @@ namespace FlatBufferData.Editor
         {
             errorCount++;
             package.AddError(projectName, path, text, line, column);
+        }
+        private void ErrorHandler(string path, string text, int line, int column, int begin, int count)
+        {
+            errorCount++;
+            package.AddError("", path, text, line, column);
         }
     }
 }
