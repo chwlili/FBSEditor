@@ -21,7 +21,10 @@ namespace FlatBufferData.Build
                 this.path = path;
                 this.report = report;
             }
-
+            public void OnError(string text)
+            {
+                OnError(text, 0, 0, 0, 0);
+            }
             public void OnError(string text, int row,int col,int begin,int end)
             {
                 report?.Invoke(path, text, row, col, begin, end);
@@ -47,57 +50,50 @@ namespace FlatBufferData.Build
             }
         }
 
-        public static object ParseJsonFile(string filePath, Struct type, AttributeTable attributes, ErrorReport report)
-        {
-            var jsonLexer = new JsonLexer(new AntlrInputStream(File.ReadAllText(filePath)));
-            var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
+        #region 解析Json文件
 
-            return ParseSingleValue(type.Name, type, attributes, jsonParser.jsonValue(), new ReportWrap(filePath, report));
+        public static object ParseJson(string filePath, Struct type, AttributeTable attributes, ErrorReport errorReport)
+        {
+            return ParseJson(filePath, File.ReadAllText(filePath), type.Name, type, attributes, errorReport);
         }
 
-        public static object ParseJsonText(string filePath, string text, Struct type, AttributeTable attributes, ErrorReport report)
+        public static object ParseJson(string filePath, string text, Struct type, AttributeTable attributes, ErrorReport errorReport)
         {
-            var jsonLexer = new JsonLexer(new AntlrInputStream(text));
-            var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
-
-            return ParseSingleValue(type.Name, type, attributes, jsonParser.jsonValue(), new ReportWrap(filePath, report));
+            return ParseJson(filePath, text, type.Name, type, attributes, errorReport);
         }
 
-        public static object ParseJsonFile(string filePath, Table type, AttributeTable attributes, ErrorReport report)
+        public static object ParseJson(string filePath, Table type, AttributeTable attributes, ErrorReport errorReport)
         {
-            var jsonLexer = new JsonLexer(new AntlrInputStream(File.ReadAllText(filePath)));
-            var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
-
-            return ParseSingleValue(type.Name, type, attributes, jsonParser.jsonValue(), new ReportWrap(filePath,report));
+            return ParseJson(filePath, File.ReadAllText(filePath), type.Name, type, attributes, errorReport);
         }
 
-        public static object ParseJsonText(string filePath, string text, Table type, AttributeTable attributes, ErrorReport report)
+        public static object ParseJson(string filePath, string text, Table type, AttributeTable attributes, ErrorReport errorReport)
         {
-            var jsonLexer = new JsonLexer(new AntlrInputStream(text));
-            var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
-
-            return ParseSingleValue(type.Name, type, attributes, jsonParser.jsonValue(), new ReportWrap(filePath, report));
+            return ParseJson(filePath, text, type.Name, type, attributes, errorReport);
         }
+
+        private static object ParseJson(string filePath, string text, string typeName, object type, AttributeTable attributes, ErrorReport errorReport)
+        {
+            var report = new ReportWrap(filePath, errorReport);
+
+            var jsonNode = ParseJsonNode(filePath, text, attributes, report);
+            if (jsonNode != null)
+                return ParseSingleValue(typeName, type, attributes, jsonNode, report);
+
+            return null;
+        }
+
+        #endregion
 
         /// <summary>
         /// 解析数组值
         /// </summary>
         private static List<object> ParseArrayValue(string type, object typeDefined, AttributeTable attributes, JsonParser.JsonValueContext jsonValue, ReportWrap report)
         {
-            var jsonPath = attributes != null ? attributes.GetAttribute<JsonPath>() : null;
-            var rootPath = jsonPath != null ? jsonPath.path : "";
-            var rootNode = GetRootJsonNode(jsonValue, rootPath);
-
-            if (rootNode == null)
-            {
-                report.OnJsonPathError(rootPath, jsonValue);
-                return null;
-            }
-
             var arrayValue = new List<object>();
-            if (rootNode.arraryValue != null)
+            if (jsonValue.arraryValue != null)
             {
-                foreach (var arrayElementJson in rootNode.arraryValue._arrayElement)
+                foreach (var arrayElementJson in jsonValue.arraryValue._arrayElement)
                 {
                     var parsedValue = ParseSingleValue(type, typeDefined, attributes, arrayElementJson, report);
                     if (parsedValue != null)
@@ -106,7 +102,7 @@ namespace FlatBufferData.Build
             }
             else
             {
-                var parsedValue = ParseSingleValue(type, typeDefined, attributes, rootNode, report);
+                var parsedValue = ParseSingleValue(type, typeDefined, attributes, jsonValue, report);
                 if (parsedValue != null)
                     arrayValue.Add(parsedValue);
             }
@@ -125,23 +121,14 @@ namespace FlatBufferData.Build
         /// <returns></returns>
         private static object ParseSingleValue(string type, object typeDefined, AttributeTable attributes, JsonParser.JsonValueContext jsonValue, ReportWrap report)
         {
-            var jsonPath = attributes != null ? attributes.GetAttribute<JsonPath>() : null;
-            var rootPath = jsonPath != null ? jsonPath.path : "";
-
-            var rootNode = GetRootJsonNode(jsonValue, rootPath);
-            if (rootNode == null)
-                report.OnJsonPathError(rootPath, jsonValue);
-            else
-            {
-                if (typeDefined is Enum)
-                    return ParseEnum(typeDefined as Enum, rootNode, report);
-                else if (typeDefined is Struct)
-                    return ParseStruct(typeDefined as Struct, rootNode, report);
-                else if (typeDefined is Table)
-                    return ParseTable(typeDefined as Table, rootNode, report);
-                else if (BaseUtil.IsBaseType(type))
-                    return ParseScalar(type, rootNode, report);
-            }
+            if (typeDefined is Enum)
+                return ParseEnum(typeDefined as Enum, jsonValue, report);
+            else if (typeDefined is Struct)
+                return ParseStruct(typeDefined as Struct, jsonValue, report);
+            else if (typeDefined is Table)
+                return ParseTable(typeDefined as Table, jsonValue, report);
+            else if (BaseUtil.IsBaseType(type))
+                return ParseScalar(type, jsonValue, report);
 
             return null;
         }
@@ -179,99 +166,97 @@ namespace FlatBufferData.Build
         /// <returns></returns>
         private static object ParseStruct(Struct type, JsonParser.JsonValueContext jsonValue, ReportWrap report)
         {
-            if (jsonValue.objectValue != null)
-            {
-                var name2jsonNode = new Dictionary<string, JsonParser.JsonValueContext>();
-                foreach (var jsonNode in jsonValue.objectValue._props)
-                {
-                    var name = jsonNode.propName.Text.Trim('"');
-                    if (name2jsonNode.ContainsKey(name))
-                        report.OnError(string.Format("key为{0}的Json属性已存在.", name), jsonNode.propName);
-                    else
-                        name2jsonNode.Add(name, jsonNode.propValue);
-                }
-
-                var valid = true;
-                var values = new Dictionary<string, object>();
-                foreach (var field in type.Fields)
-                {
-                    var jsonKey = field.DataField;
-
-                    object value = null;
-                    if (name2jsonNode.ContainsKey(jsonKey))
-                    {
-                        if (field.IsArray)
-                            value = ParseArrayValue(field.Type, field.TypeDefined, field.Attributes, name2jsonNode[jsonKey], report);
-                        else
-                            value = ParseSingleValue(field.Type, field.TypeDefined, field.Attributes, name2jsonNode[jsonKey], report);
-                    }
-
-                    values.Add(field.Name, value);
-                    
-                    if (field.Attributes.HasAttribute<JsonFileRef>())
-                        continue;
-
-                    if (value == null)
-                    {
-                        valid = false;
-                        report.OnError(string.Format("找不到名为{0}的属性. '{1}'", jsonKey, jsonValue.GetText()), jsonValue);
-                    }
-                }
-
-                if (!valid) return null;
-
-                //JsonFileRef
-                foreach (var field in type.Fields)
-                {
-                    var jsonFile = field.Attributes.GetAttribute<JsonFileRef>();
-                    if (jsonFile == null) continue;
-
-                    var filePath = Regex.Replace(jsonFile.filePath, "\\{.*?\\}", (match) =>
-                    {
-                        var key = match.Value.TrimStart('{').TrimEnd('}');
-                        return values.ContainsKey(key) ? values[key].ToString() : "???";
-                    });
-
-                    if (!File.Exists(filePath))
-                    {
-                        valid = false;
-                        report.OnError(string.Format("\"{0}\" 文件未找到.", filePath), field.Location);
-                        continue;
-                    }
-
-                    var jsonLexer = new JsonLexer(new AntlrFileStream(filePath));
-                    var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
-                    var fileNode = jsonParser.jsonValue();
-                    if (fileNode != null)
-                    {
-                        object value = null;
-                        if (field.IsArray)
-                            value = ParseArrayValue(field.Type, field.TypeDefined, field.Attributes, fileNode, new ReportWrap(filePath, report.report));
-                        else
-                            value = ParseSingleValue(field.Type, field.TypeDefined, field.Attributes, fileNode, new ReportWrap(filePath, report.report));
-
-                        if (value != null)
-                            values[field.Name] = value;
-                        else
-                            valid = false;
-                    }
-                    else
-                    {
-                        valid = false;
-                        report.OnError(string.Format("\"{0}\" 无法解析成一个Json.", filePath), field.Location);
-                    }
-                }
-
-                if (!valid) return null;
-
-                return values;
-            }
-            else
+            if (jsonValue.objectValue == null)
             {
                 report.OnError(string.Format("\"{0}\" 无法转换成结构{1}.", jsonValue.GetText(), type), jsonValue);
+                return null;
             }
 
-            return null;
+            var name2jsonNode = new Dictionary<string, JsonParser.JsonValueContext>();
+            foreach (var jsonNode in jsonValue.objectValue._props)
+            {
+                var name = jsonNode.propName.Text.Trim('"');
+                if (name2jsonNode.ContainsKey(name))
+                    report.OnError(string.Format("key为{0}的Json属性已存在.", name), jsonNode.propName);
+                else
+                    name2jsonNode.Add(name, jsonNode.propValue);
+            }
+
+            var valid = true;
+            var values = new Dictionary<string, object>();
+            foreach (var field in type.Fields)
+            {
+                var jsonKey = field.DataField;
+                var jsonNode = name2jsonNode.ContainsKey(jsonKey) ? FindJsonNode(name2jsonNode[jsonKey], field.Attributes, report) : null;
+
+                object value = null;
+                if (jsonNode != null)
+                {
+                    if (field.IsArray)
+                        value = ParseArrayValue(field.Type, field.TypeDefined, field.Attributes, jsonNode, report);
+                    else
+                        value = ParseSingleValue(field.Type, field.TypeDefined, field.Attributes, jsonNode, report);
+                }
+
+                values.Add(field.Name, value);
+
+                if (field.Attributes.HasAttribute<JsonFileRef>())
+                    continue;
+
+                if (value == null)
+                {
+                    valid = false;
+                    report.OnError(string.Format("找不到名为{0}的属性. '{1}'", jsonKey, jsonValue.GetText()), jsonValue);
+                }
+            }
+
+            if (!valid) return null;
+
+            //JsonFileRef
+            foreach (var field in type.Fields)
+            {
+                var jsonFile = field.Attributes.GetAttribute<JsonFileRef>();
+                if (jsonFile == null) continue;
+
+                var filePath = Regex.Replace(jsonFile.filePath, "\\{.*?\\}", (match) =>
+                {
+                    var key = match.Value.TrimStart('{').TrimEnd('}');
+                    return values.ContainsKey(key) ? values[key].ToString() : "???";
+                });
+
+                if (!File.Exists(filePath))
+                {
+                    valid = false;
+                    report.OnError(string.Format("\"{0}\" 文件未找到.", filePath), field.Location);
+                    continue;
+                }
+
+                var fileNode = ParseJsonNode(filePath, File.ReadAllText(filePath), field.Attributes, report);
+                if (fileNode == null)
+                {
+                    valid = false;
+                    continue;
+                }
+
+                object value = null;
+
+                if (field.IsArray)
+                    value = ParseArrayValue(field.Type, field.TypeDefined, field.Attributes, fileNode, new ReportWrap(filePath, report.report));
+                else
+                    value = ParseSingleValue(field.Type, field.TypeDefined, field.Attributes, fileNode, new ReportWrap(filePath, report.report));
+
+                if (value == null)
+                {
+                    valid = false;
+                    continue;
+                }
+
+                values[field.Name] = value;
+            }
+
+            if (!valid) return null;
+
+            return values;
         }
 
         /// <summary>
@@ -283,12 +268,13 @@ namespace FlatBufferData.Build
         /// <returns></returns>
         private static object ParseTable(Table type, JsonParser.JsonValueContext jsonValue, ReportWrap report)
         {
-            if(jsonValue.arraryValue==null && jsonValue.objectValue==null)
+            if (jsonValue.arraryValue == null && jsonValue.objectValue == null)
             {
                 report.OnError(string.Format("\"{0}\"无法转换成表{1}.", jsonValue.GetText(), type.Name), jsonValue);
                 return null;
             }
 
+            //节点列表
             List<JsonParser.JsonObjectContext> nodes = new List<JsonParser.JsonObjectContext>();
             if (jsonValue.arraryValue != null)
             {
@@ -309,6 +295,7 @@ namespace FlatBufferData.Build
             var uniqueFields = new Dictionary<string, List<object>>();
             //Nullable
             var nullableFields = new HashSet<string>();
+
             foreach (var field in type.Fields)
             {
                 if (field.Attributes.HasAttribute<Unique>())
@@ -336,51 +323,59 @@ namespace FlatBufferData.Build
                 var values = new Dictionary<string, object>();
                 foreach (var field in type.Fields)
                 {
+                    object value = null;
+
                     var jsonKey = field.DataField;
                     var jsonNode = name2jsonNode.ContainsKey(jsonKey) ? name2jsonNode[jsonKey] : null;
 
-                    object value = null;
-                    if (jsonNode!=null)
+                    if (jsonNode != null)
+                        jsonNode = FindJsonNode(jsonNode, field.Attributes, report);
+
+                    if (jsonNode == null)
+                    {
+                        if (!field.Attributes.HasAttribute<JsonFileRef>())
+                        {
+                            if (uniqueFields.ContainsKey(field.Name) || !nullableFields.Contains(field.Name))
+                            {
+                                valid = false;
+
+                                if (!name2jsonNode.ContainsKey(jsonKey))
+                                    report.OnError(string.Format("找不到名为{0}的属性. '{1}'", jsonKey, childNode.GetText()), childNode);
+                            }
+                            else
+                            {
+                                //value = 默认值
+                            }
+                        }
+                    }
+                    else
                     {
                         if (field.IsArray)
                             value = ParseArrayValue(field.Type, field.TypeDefined, field.Attributes, jsonNode, report);
                         else
                             value = ParseSingleValue(field.Type, field.TypeDefined, field.Attributes, jsonNode, report);
-                    }
 
-                    values.Add(field.Name, value);
-
-                    if (field.Attributes.HasAttribute<JsonFileRef>())
-                        continue;
-
-                    if (value == null)
-                    {
-                        if (uniqueFields.ContainsKey(field.Name) || !nullableFields.Contains(field.Name))
+                        if (value != null)
                         {
-                            valid = false;
-                            if (jsonNode == null)
-                                report.OnError(string.Format("找不到名为{0}的属性. '{1}'", jsonKey, childNode.GetText()), childNode);
+                            if (uniqueFields.ContainsKey(field.Name) && !field.Attributes.HasAttribute<JsonFileRef>())
+                            {
+                                if (uniqueFields[field.Name].Contains(value))
+                                {
+                                    valid = false;
+                                    report.OnError(string.Format("字段{0}被标记为Unique,内容不允许重复。", field.Name), jsonNode);
+                                }
+                                else
+                                {
+                                    uniqueFields[field.Name].Add(value);
+                                }
+                            }
                         }
                         else
                         {
-                            //默认值
+                            valid = false;
                         }
                     }
-                    else
-                    {
-                        if (uniqueFields.ContainsKey(field.Name))
-                        {
-                            if(uniqueFields[field.Name].Contains(value))
-                            {
-                                valid = false;
-                                report.OnError(string.Format("字段{0}被标记为Unique,内容不允许重复。", field.Name), jsonNode);
-                            }
-                            else
-                            {
-                                uniqueFields[field.Name].Add(value);
-                            }
-                        }
-                    }
+                    values.Add(field.Name, value);
                 }
 
                 if (!valid) continue;
@@ -404,49 +399,40 @@ namespace FlatBufferData.Build
                         break;
                     }
 
-                    var jsonLexer = new JsonLexer(new AntlrFileStream(filePath));
-                    var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
-                    var fileNode = jsonParser.jsonValue();
-                    if (fileNode != null)
-                    {
-                        object value = null;
-
-                        if (field.IsArray)
-                            value = ParseArrayValue(field.Type, field.TypeDefined, field.Attributes, fileNode, new ReportWrap(filePath, report.report));
-                        else
-                            value = ParseSingleValue(field.Type, field.TypeDefined, field.Attributes, fileNode, new ReportWrap(filePath, report.report));
-
-                        values[field.Name] = value;
-
-                        if (value == null)
-                        {
-                            if (uniqueFields.ContainsKey(field.Name) || !nullableFields.Contains(field.Name))
-                            {
-                                valid = false;
-                                //ParseValue里已经报过错。
-                            }
-                        }
-                        else
-                        {
-                            if(uniqueFields.ContainsKey(field.Name))
-                            {
-                                if (uniqueFields[field.Name].Contains(value))
-                                {
-                                    valid = false;
-                                    report.OnError(string.Format("字段{0}被标记为Unique,内容不允许重复。", field.Name), fileNode);
-                                }
-                                else
-                                {
-                                    uniqueFields[field.Name].Add(value);
-                                }
-                            }
-                        }
-                    }
-                    else
+                    var fileNode = ParseJsonNode(filePath, File.ReadAllText(filePath), field.Attributes, report);
+                    if (fileNode == null)
                     {
                         valid = false;
-                        report.OnError(string.Format("\"{0}\" 无法解析成一个Json.", filePath), field.Location);
+                        continue;
                     }
+
+                    object value = null;
+
+                    if (field.IsArray)
+                        value = ParseArrayValue(field.Type, field.TypeDefined, field.Attributes, fileNode, new ReportWrap(filePath, report.report));
+                    else
+                        value = ParseSingleValue(field.Type, field.TypeDefined, field.Attributes, fileNode, new ReportWrap(filePath, report.report));
+
+                    if (value == null)
+                    {
+                        valid = false;
+                        continue;
+                    }
+
+                    if (uniqueFields.ContainsKey(field.Name))
+                    {
+                        if (uniqueFields[field.Name].Contains(value))
+                        {
+                            valid = false;
+                            report.OnError(string.Format("字段{0}被标记为Unique,内容不允许重复。", field.Name), fileNode);
+                        }
+                        else
+                        {
+                            uniqueFields[field.Name].Add(value);
+                        }
+                    }
+
+                    values[field.Name] = value;
                 }
 
                 if (!valid) continue;
@@ -486,18 +472,63 @@ namespace FlatBufferData.Build
             return null;
         }
 
+
+        private static JsonParser.JsonValueContext ParseJsonNode(string filePath, string text, AttributeTable attributes, ReportWrap errorReport)
+        {
+            var report = new ReportWrap(filePath, errorReport.report);
+
+            var jsonLexer = new JsonLexer(new AntlrInputStream(text));
+            var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
+
+            var jsonValue = jsonParser.jsonValue();
+            if (jsonValue == null)
+            {
+                report.OnError(string.Format("无法解析成一个Json."));
+                return null;
+            }
+
+            var jsonPathAttribute = attributes.GetAttribute<JsonPath>();
+            if (jsonPathAttribute == null)
+                return jsonValue;
+
+            var jsonPath = jsonPathAttribute.path;
+            if (string.IsNullOrEmpty(jsonPath))
+                return jsonValue;
+
+            var jsonNode = FindJsonNode(jsonValue, jsonPath);
+            if (jsonNode == null)
+                report.OnError(string.Format("\"{0}\" 无法过滤出有效的Json节点", jsonPath), jsonValue);
+
+            return jsonNode;
+        }
+
+        private static JsonParser.JsonValueContext FindJsonNode(JsonParser.JsonValueContext jsonValue, AttributeTable attributes, ReportWrap report)
+        {
+            var jsonPathAttribute = attributes.GetAttribute<JsonPath>();
+            if (jsonPathAttribute == null)
+                return jsonValue;
+
+            var jsonPath = jsonPathAttribute.path;
+            if (string.IsNullOrEmpty(jsonPath))
+                return jsonValue;
+
+            var jsonNode = FindJsonNode(jsonValue, jsonPath);
+            if (jsonNode == null)
+                report.OnJsonPathError(jsonPath, jsonValue);
+
+            return jsonNode;
+        }
+
         /// <summary>
         /// 按路径查找Json节点
         /// </summary>
         /// <param name="json"></param>
         /// <param name="jsonPath"></param>
         /// <returns></returns>
-        private static JsonParser.JsonValueContext GetRootJsonNode(JsonParser.JsonValueContext json, string jsonPath)
+        private static JsonParser.JsonValueContext FindJsonNode(JsonParser.JsonValueContext json, string jsonPath)
         {
             if (string.IsNullOrEmpty(jsonPath))
-            {
                 return json;
-            }
 
             jsonPath = Regex.Replace(jsonPath, @"\[(.*)\]", @".$1");
 
