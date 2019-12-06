@@ -112,15 +112,20 @@ namespace FlatBufferData.Editor
                     {
                         var xls = file.RootTable.Attributes.GetAttribute<XLS>();
                         var json = file.RootTable.Attributes.GetAttribute<JsonFile>();
+                        var csv = file.RootTable.Attributes.GetAttribute<CSV>();
                         if (json != null)
                         {
                             List<string> errors = new List<string>();
                             var obj = JsonUtil.ParseJson(json.filePath, file.RootTable, file.RootTable.Attributes, ErrorHandler);
-                            foreach(var error in errors)
+                            foreach (var error in errors)
                             {
                                 errorCount++;
                                 package.AddError(json.filePath, json.filePath, error, 0, 0);
                             }
+                        }
+                        else if (csv != null)
+                        {
+                            CsvUtil.ParseCSV(csv.filePath, file.RootTable, file.RootTable.Attributes, ErrorHandler);
                         }
                         //new DataReaderFactory(selectedProject.Name, ErrorHandler).ReadData(file.RootTable);
                     }

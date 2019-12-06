@@ -20,6 +20,7 @@ namespace FlatBufferData.Model.Attributes
             {
                 name2schema = new Dictionary<string, System.Type>();
                 name2schema.Add(typeof(XLS).Name, typeof(XLS));
+                name2schema.Add(typeof(CSV).Name, typeof(CSV));
                 name2schema.Add(typeof(JsonFile).Name, typeof(JsonFile));
                 name2schema.Add(typeof(JsonFileRef).Name, typeof(JsonFileRef));
                 name2schema.Add(typeof(JsonLiteral).Name, typeof(JsonLiteral));

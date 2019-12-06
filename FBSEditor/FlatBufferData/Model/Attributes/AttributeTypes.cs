@@ -99,6 +99,35 @@
 
     #endregion
 
+    #region CSV相关
+
+    [AllowMultiple(false)]
+    [AllowTarget(TargetTypeID.Table|TargetTypeID.TableField)]
+    public class CSV : Attribute
+    {
+        public string filePath;
+        public int titleRow;
+        public int dataBeginRow;
+
+        public CSV(string filePath)
+        {
+            this.filePath = filePath;
+        }
+        public CSV(string filePath, int titleRow)
+        {
+            this.filePath = filePath;
+            this.titleRow = titleRow;
+        }
+        public CSV(string filePath,int titleRow,int dataBeginRow)
+        {
+            this.filePath = filePath;
+            this.titleRow = titleRow;
+            this.dataBeginRow = dataBeginRow;
+        }
+    }
+
+    #endregion
+
     #region Json相关
 
     [AllowMultiple(false)]

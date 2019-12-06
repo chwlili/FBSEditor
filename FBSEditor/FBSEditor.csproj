@@ -248,10 +248,17 @@
     <Compile Include="Antlr4\UnbufferedTokenStream.cs" />
     <Compile Include="Antlr4\Vocabulary.cs" />
     <Compile Include="FlatBufferData\Build\BaseUtil.cs" />
+    <Compile Include="FlatBufferData\Build\CsvUtil.cs" />
     <Compile Include="FlatBufferData\Build\DataReader.cs" />
     <Compile Include="FlatBufferData\Build\DataReaderFactory.cs" />
     <Compile Include="FlatBufferData\Build\JsonUtil.cs" />
     <Compile Include="FlatBufferData\Build\XLSReader.cs" />
+    <Compile Include="FlatBufferData\Grammar\Csv\CsvBaseListener.cs" />
+    <Compile Include="FlatBufferData\Grammar\Csv\CsvBaseVisitor.cs" />
+    <Compile Include="FlatBufferData\Grammar\Csv\CsvLexer.cs" />
+    <Compile Include="FlatBufferData\Grammar\Csv\CsvListener.cs" />
+    <Compile Include="FlatBufferData\Grammar\Csv\CsvParser.cs" />
+    <Compile Include="FlatBufferData\Grammar\Csv\CsvVisitor.cs" />
     <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferBaseListener.cs" />
     <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferBaseVisitor.cs" />
     <Compile Include="FlatBufferData\Grammar\Flatbuffer\FlatbufferLexer.cs" />
@@ -371,6 +378,10 @@
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>FBSEditor.Grammar.Template</CustomToolNamespace>
     </AntlrTokens>
+    <Antlr4 Include="FlatBufferData\Grammar\Csv.g4">
+      <Generator>MSBuild:Compile</Generator>
+      <CustomToolNamespace>FBSEditor.Grammar</CustomToolNamespace>
+    </Antlr4>
     <None Include="Key.snk" />
     <None Include="packages.config" />
     <None Include="source.extension.vsixmanifest">
@@ -549,6 +560,7 @@
       <ManifestResourceName>VSPackage</ManifestResourceName>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
