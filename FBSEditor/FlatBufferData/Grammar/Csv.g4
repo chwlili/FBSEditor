@@ -1,11 +1,32 @@
 grammar Csv;
-csvTab : ( rows += csvRow (ROWEND rows += csvRow )* )?;
-csvRow : ( cols += csvCol (COLEND cols += csvCol)* )? '\r'? '\n';//( cols += CsvCol (COLEND cols += CsvCol)* )?;
-csvCol : TEXT | STRING | ;
 
-ROWEND : '\n';
-COLEND : [,;\t];
+@members
+{
+	public string separators = ",";
+	public bool IsSeparator(string ch)
+	{
+		return  !string.IsNullOrEmpty(separators) && !string.IsNullOrEmpty(ch) ? separators.Contains(ch):false;
+	}
+}
+
+csvTab : (rows += csvRow (ROWEND|EOF))*;
+
+csvRow : cols += csvCol (COLEND cols += csvCol)*;
+csvCol : txtField | strField | WS+;
+txtField : WS? txt+=TEXT (txt+=TEXT|txt+=WS)*?  WS?;
+strField : WS? txt = STRING WS?;
+
+ROWEND : '\r'? '\n';
+
+COLEND :   ','{IsSeparator(",")}?
+		 | ';'{IsSeparator(";")}?
+		 | '\t' {IsSeparator("\t")}?;
+
 STRING : '"'( '""'| ~'"')* '"' ;
-TEXT   : ~[ ] ~[,;\t\r\n"]+? ~[ ];
-WS : [ ]+ -> skip;
+
+TEXT   :   ~[ ,\r\n]+ {IsSeparator(",")}?
+		 | ~[ ;\r\n]+ {IsSeparator(";")}?
+		 | ~[ \t\r\n]+ {IsSeparator("\t")}?
+		 ;
+WS : [ ]+;
 

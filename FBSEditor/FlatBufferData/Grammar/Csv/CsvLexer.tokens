@@ -3,4 +3,3 @@ COLEND=2
 STRING=3
 TEXT=4
 WS=5
-'\n'=1

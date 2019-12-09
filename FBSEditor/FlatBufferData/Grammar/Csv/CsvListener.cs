@@ -60,4 +60,24 @@ public interface ICsvListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitCsvCol([NotNull] CsvParser.CsvColContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="CsvParser.txtField"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterTxtField([NotNull] CsvParser.TxtFieldContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="CsvParser.txtField"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitTxtField([NotNull] CsvParser.TxtFieldContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="CsvParser.strField"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterStrField([NotNull] CsvParser.StrFieldContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="CsvParser.strField"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitStrField([NotNull] CsvParser.StrFieldContext context);
 }

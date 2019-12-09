@@ -70,6 +70,30 @@ public partial class CsvBaseListener : ICsvListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitCsvCol([NotNull] CsvParser.CsvColContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="CsvParser.txtField"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterTxtField([NotNull] CsvParser.TxtFieldContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="CsvParser.txtField"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitTxtField([NotNull] CsvParser.TxtFieldContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="CsvParser.strField"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterStrField([NotNull] CsvParser.StrFieldContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="CsvParser.strField"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitStrField([NotNull] CsvParser.StrFieldContext context) { }
 
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>

@@ -38,13 +38,13 @@ public partial class CsvParser : Parser {
 	public const int
 		ROWEND=1, COLEND=2, STRING=3, TEXT=4, WS=5;
 	public const int
-		RULE_csvTab = 0, RULE_csvRow = 1, RULE_csvCol = 2;
+		RULE_csvTab = 0, RULE_csvRow = 1, RULE_csvCol = 2, RULE_txtField = 3, 
+		RULE_strField = 4;
 	public static readonly string[] ruleNames = {
-		"csvTab", "csvRow", "csvCol"
+		"csvTab", "csvRow", "csvCol", "txtField", "strField"
 	};
 
 	private static readonly string[] _LiteralNames = {
-		null, "'\n'"
 	};
 	private static readonly string[] _SymbolicNames = {
 		null, "ROWEND", "COLEND", "STRING", "TEXT", "WS"
@@ -73,6 +73,13 @@ public partial class CsvParser : Parser {
 		}
 	}
 
+
+		public string separators = ",";
+		public bool IsSeparator(string ch)
+		{
+			return  !string.IsNullOrEmpty(separators) && !string.IsNullOrEmpty(ch) ? separators.Contains(ch):false;
+		}
+
 		public CsvParser(ITokenStream input) : this(input, Console.Out, Console.Error) { }
 
 		public CsvParser(ITokenStream input, TextWriter output, TextWriter errorOutput)
@@ -92,6 +99,10 @@ public partial class CsvParser : Parser {
 		public ITerminalNode[] ROWEND() { return GetTokens(CsvParser.ROWEND); }
 		public ITerminalNode ROWEND(int i) {
 			return GetToken(CsvParser.ROWEND, i);
+		}
+		public ITerminalNode[] Eof() { return GetTokens(CsvParser.Eof); }
+		public ITerminalNode Eof(int i) {
+			return GetToken(CsvParser.Eof, i);
 		}
 		public CsvTabContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -121,30 +132,28 @@ public partial class CsvParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 14;
+			State = 15;
 			ErrorHandler.Sync(this);
-			switch ( Interpreter.AdaptivePredict(TokenStream,1,Context) ) {
-			case 1:
+			_la = TokenStream.LA(1);
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << STRING) | (1L << TEXT) | (1L << WS))) != 0)) {
 				{
-				State = 6; _localctx._csvRow = csvRow();
+				{
+				State = 10; _localctx._csvRow = csvRow();
 				_localctx._rows.Add(_localctx._csvRow);
 				State = 11;
+				_la = TokenStream.LA(1);
+				if ( !(_la==Eof || _la==ROWEND) ) {
+				ErrorHandler.RecoverInline(this);
+				}
+				else {
+					ErrorHandler.ReportMatch(this);
+				    Consume();
+				}
+				}
+				}
+				State = 17;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
-				while (_la==ROWEND) {
-					{
-					{
-					State = 7; Match(ROWEND);
-					State = 8; _localctx._csvRow = csvRow();
-					_localctx._rows.Add(_localctx._csvRow);
-					}
-					}
-					State = 13;
-					ErrorHandler.Sync(this);
-					_la = TokenStream.LA(1);
-				}
-				}
-				break;
 			}
 			}
 		}
@@ -200,31 +209,23 @@ public partial class CsvParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 24;
+			State = 18; _localctx._csvCol = csvCol();
+			_localctx._cols.Add(_localctx._csvCol);
+			State = 23;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if (_la==STRING || _la==TEXT) {
+			while (_la==COLEND) {
 				{
-				State = 16; _localctx._csvCol = csvCol();
+				{
+				State = 19; Match(COLEND);
+				State = 20; _localctx._csvCol = csvCol();
 				_localctx._cols.Add(_localctx._csvCol);
-				State = 21;
+				}
+				}
+				State = 25;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
-				while (_la==COLEND) {
-					{
-					{
-					State = 17; Match(COLEND);
-					State = 18; _localctx._csvCol = csvCol();
-					_localctx._cols.Add(_localctx._csvCol);
-					}
-					}
-					State = 23;
-					ErrorHandler.Sync(this);
-					_la = TokenStream.LA(1);
-				}
-				}
 			}
-
 			}
 		}
 		catch (RecognitionException re) {
@@ -239,8 +240,16 @@ public partial class CsvParser : Parser {
 	}
 
 	public partial class CsvColContext : ParserRuleContext {
-		public ITerminalNode TEXT() { return GetToken(CsvParser.TEXT, 0); }
-		public ITerminalNode STRING() { return GetToken(CsvParser.STRING, 0); }
+		public TxtFieldContext txtField() {
+			return GetRuleContext<TxtFieldContext>(0);
+		}
+		public StrFieldContext strField() {
+			return GetRuleContext<StrFieldContext>(0);
+		}
+		public ITerminalNode[] WS() { return GetTokens(CsvParser.WS); }
+		public ITerminalNode WS(int i) {
+			return GetToken(CsvParser.WS, i);
+		}
 		public CsvColContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
@@ -267,17 +276,210 @@ public partial class CsvParser : Parser {
 		EnterRule(_localctx, 4, RULE_csvCol);
 		int _la;
 		try {
+			State = 33;
+			ErrorHandler.Sync(this);
+			switch ( Interpreter.AdaptivePredict(TokenStream,3,Context) ) {
+			case 1:
+				EnterOuterAlt(_localctx, 1);
+				{
+				State = 26; txtField();
+				}
+				break;
+			case 2:
+				EnterOuterAlt(_localctx, 2);
+				{
+				State = 27; strField();
+				}
+				break;
+			case 3:
+				EnterOuterAlt(_localctx, 3);
+				{
+				State = 29;
+				ErrorHandler.Sync(this);
+				_la = TokenStream.LA(1);
+				do {
+					{
+					{
+					State = 28; Match(WS);
+					}
+					}
+					State = 31;
+					ErrorHandler.Sync(this);
+					_la = TokenStream.LA(1);
+				} while ( _la==WS );
+				}
+				break;
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class TxtFieldContext : ParserRuleContext {
+		public IToken _TEXT;
+		public IList<IToken> _txt = new List<IToken>();
+		public IToken _WS;
+		public ITerminalNode[] TEXT() { return GetTokens(CsvParser.TEXT); }
+		public ITerminalNode TEXT(int i) {
+			return GetToken(CsvParser.TEXT, i);
+		}
+		public ITerminalNode[] WS() { return GetTokens(CsvParser.WS); }
+		public ITerminalNode WS(int i) {
+			return GetToken(CsvParser.WS, i);
+		}
+		public TxtFieldContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_txtField; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			ICsvListener typedListener = listener as ICsvListener;
+			if (typedListener != null) typedListener.EnterTxtField(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			ICsvListener typedListener = listener as ICsvListener;
+			if (typedListener != null) typedListener.ExitTxtField(this);
+		}
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ICsvVisitor<TResult> typedVisitor = visitor as ICsvVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitTxtField(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public TxtFieldContext txtField() {
+		TxtFieldContext _localctx = new TxtFieldContext(Context, State);
+		EnterRule(_localctx, 6, RULE_txtField);
+		int _la;
+		try {
+			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 26;
+			State = 36;
+			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ( !(_la==STRING || _la==TEXT) ) {
-			ErrorHandler.RecoverInline(this);
+			if (_la==WS) {
+				{
+				State = 35; Match(WS);
+				}
 			}
-			else {
-				ErrorHandler.ReportMatch(this);
-			    Consume();
+
+			State = 38; _localctx._TEXT = Match(TEXT);
+			_localctx._txt.Add(_localctx._TEXT);
+			State = 43;
+			ErrorHandler.Sync(this);
+			_alt = Interpreter.AdaptivePredict(TokenStream,6,Context);
+			while ( _alt!=1 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
+				if ( _alt==1+1 ) {
+					{
+					State = 41;
+					ErrorHandler.Sync(this);
+					switch (TokenStream.LA(1)) {
+					case TEXT:
+						{
+						State = 39; _localctx._TEXT = Match(TEXT);
+						_localctx._txt.Add(_localctx._TEXT);
+						}
+						break;
+					case WS:
+						{
+						State = 40; _localctx._WS = Match(WS);
+						_localctx._txt.Add(_localctx._WS);
+						}
+						break;
+					default:
+						throw new NoViableAltException(this);
+					}
+					} 
+				}
+				State = 45;
+				ErrorHandler.Sync(this);
+				_alt = Interpreter.AdaptivePredict(TokenStream,6,Context);
 			}
+			State = 47;
+			ErrorHandler.Sync(this);
+			_la = TokenStream.LA(1);
+			if (_la==WS) {
+				{
+				State = 46; Match(WS);
+				}
+			}
+
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class StrFieldContext : ParserRuleContext {
+		public IToken txt;
+		public ITerminalNode STRING() { return GetToken(CsvParser.STRING, 0); }
+		public ITerminalNode[] WS() { return GetTokens(CsvParser.WS); }
+		public ITerminalNode WS(int i) {
+			return GetToken(CsvParser.WS, i);
+		}
+		public StrFieldContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_strField; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			ICsvListener typedListener = listener as ICsvListener;
+			if (typedListener != null) typedListener.EnterStrField(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			ICsvListener typedListener = listener as ICsvListener;
+			if (typedListener != null) typedListener.ExitStrField(this);
+		}
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ICsvVisitor<TResult> typedVisitor = visitor as ICsvVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitStrField(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public StrFieldContext strField() {
+		StrFieldContext _localctx = new StrFieldContext(Context, State);
+		EnterRule(_localctx, 8, RULE_strField);
+		int _la;
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 50;
+			ErrorHandler.Sync(this);
+			_la = TokenStream.LA(1);
+			if (_la==WS) {
+				{
+				State = 49; Match(WS);
+				}
+			}
+
+			State = 52; _localctx.txt = Match(STRING);
+			State = 54;
+			ErrorHandler.Sync(this);
+			_la = TokenStream.LA(1);
+			if (_la==WS) {
+				{
+				State = 53; Match(WS);
+				}
+			}
+
 			}
 		}
 		catch (RecognitionException re) {
@@ -293,32 +495,56 @@ public partial class CsvParser : Parser {
 
 	private static char[] _serializedATN = {
 		'\x3', '\x608B', '\xA72A', '\x8133', '\xB9ED', '\x417C', '\x3BE7', '\x7786', 
-		'\x5964', '\x3', '\a', '\x1F', '\x4', '\x2', '\t', '\x2', '\x4', '\x3', 
-		'\t', '\x3', '\x4', '\x4', '\t', '\x4', '\x3', '\x2', '\x3', '\x2', '\x3', 
-		'\x2', '\a', '\x2', '\f', '\n', '\x2', '\f', '\x2', '\xE', '\x2', '\xF', 
-		'\v', '\x2', '\x5', '\x2', '\x11', '\n', '\x2', '\x3', '\x3', '\x3', '\x3', 
-		'\x3', '\x3', '\a', '\x3', '\x16', '\n', '\x3', '\f', '\x3', '\xE', '\x3', 
-		'\x19', '\v', '\x3', '\x5', '\x3', '\x1B', '\n', '\x3', '\x3', '\x4', 
-		'\x3', '\x4', '\x3', '\x4', '\x2', '\x2', '\x5', '\x2', '\x4', '\x6', 
-		'\x2', '\x3', '\x3', '\x2', '\x5', '\x6', '\x2', '\x1F', '\x2', '\x10', 
-		'\x3', '\x2', '\x2', '\x2', '\x4', '\x1A', '\x3', '\x2', '\x2', '\x2', 
-		'\x6', '\x1C', '\x3', '\x2', '\x2', '\x2', '\b', '\r', '\x5', '\x4', '\x3', 
-		'\x2', '\t', '\n', '\a', '\x3', '\x2', '\x2', '\n', '\f', '\x5', '\x4', 
-		'\x3', '\x2', '\v', '\t', '\x3', '\x2', '\x2', '\x2', '\f', '\xF', '\x3', 
-		'\x2', '\x2', '\x2', '\r', '\v', '\x3', '\x2', '\x2', '\x2', '\r', '\xE', 
-		'\x3', '\x2', '\x2', '\x2', '\xE', '\x11', '\x3', '\x2', '\x2', '\x2', 
-		'\xF', '\r', '\x3', '\x2', '\x2', '\x2', '\x10', '\b', '\x3', '\x2', '\x2', 
-		'\x2', '\x10', '\x11', '\x3', '\x2', '\x2', '\x2', '\x11', '\x3', '\x3', 
-		'\x2', '\x2', '\x2', '\x12', '\x17', '\x5', '\x6', '\x4', '\x2', '\x13', 
-		'\x14', '\a', '\x4', '\x2', '\x2', '\x14', '\x16', '\x5', '\x6', '\x4', 
-		'\x2', '\x15', '\x13', '\x3', '\x2', '\x2', '\x2', '\x16', '\x19', '\x3', 
-		'\x2', '\x2', '\x2', '\x17', '\x15', '\x3', '\x2', '\x2', '\x2', '\x17', 
-		'\x18', '\x3', '\x2', '\x2', '\x2', '\x18', '\x1B', '\x3', '\x2', '\x2', 
-		'\x2', '\x19', '\x17', '\x3', '\x2', '\x2', '\x2', '\x1A', '\x12', '\x3', 
-		'\x2', '\x2', '\x2', '\x1A', '\x1B', '\x3', '\x2', '\x2', '\x2', '\x1B', 
-		'\x5', '\x3', '\x2', '\x2', '\x2', '\x1C', '\x1D', '\t', '\x2', '\x2', 
-		'\x2', '\x1D', '\a', '\x3', '\x2', '\x2', '\x2', '\x6', '\r', '\x10', 
-		'\x17', '\x1A',
+		'\x5964', '\x3', '\a', ';', '\x4', '\x2', '\t', '\x2', '\x4', '\x3', '\t', 
+		'\x3', '\x4', '\x4', '\t', '\x4', '\x4', '\x5', '\t', '\x5', '\x4', '\x6', 
+		'\t', '\x6', '\x3', '\x2', '\x3', '\x2', '\x3', '\x2', '\a', '\x2', '\x10', 
+		'\n', '\x2', '\f', '\x2', '\xE', '\x2', '\x13', '\v', '\x2', '\x3', '\x3', 
+		'\x3', '\x3', '\x3', '\x3', '\a', '\x3', '\x18', '\n', '\x3', '\f', '\x3', 
+		'\xE', '\x3', '\x1B', '\v', '\x3', '\x3', '\x4', '\x3', '\x4', '\x3', 
+		'\x4', '\x6', '\x4', ' ', '\n', '\x4', '\r', '\x4', '\xE', '\x4', '!', 
+		'\x5', '\x4', '$', '\n', '\x4', '\x3', '\x5', '\x5', '\x5', '\'', '\n', 
+		'\x5', '\x3', '\x5', '\x3', '\x5', '\x3', '\x5', '\a', '\x5', ',', '\n', 
+		'\x5', '\f', '\x5', '\xE', '\x5', '/', '\v', '\x5', '\x3', '\x5', '\x5', 
+		'\x5', '\x32', '\n', '\x5', '\x3', '\x6', '\x5', '\x6', '\x35', '\n', 
+		'\x6', '\x3', '\x6', '\x3', '\x6', '\x5', '\x6', '\x39', '\n', '\x6', 
+		'\x3', '\x6', '\x3', '-', '\x2', '\a', '\x2', '\x4', '\x6', '\b', '\n', 
+		'\x2', '\x3', '\x3', '\x3', '\x3', '\x3', '\x2', '@', '\x2', '\x11', '\x3', 
+		'\x2', '\x2', '\x2', '\x4', '\x14', '\x3', '\x2', '\x2', '\x2', '\x6', 
+		'#', '\x3', '\x2', '\x2', '\x2', '\b', '&', '\x3', '\x2', '\x2', '\x2', 
+		'\n', '\x34', '\x3', '\x2', '\x2', '\x2', '\f', '\r', '\x5', '\x4', '\x3', 
+		'\x2', '\r', '\xE', '\t', '\x2', '\x2', '\x2', '\xE', '\x10', '\x3', '\x2', 
+		'\x2', '\x2', '\xF', '\f', '\x3', '\x2', '\x2', '\x2', '\x10', '\x13', 
+		'\x3', '\x2', '\x2', '\x2', '\x11', '\xF', '\x3', '\x2', '\x2', '\x2', 
+		'\x11', '\x12', '\x3', '\x2', '\x2', '\x2', '\x12', '\x3', '\x3', '\x2', 
+		'\x2', '\x2', '\x13', '\x11', '\x3', '\x2', '\x2', '\x2', '\x14', '\x19', 
+		'\x5', '\x6', '\x4', '\x2', '\x15', '\x16', '\a', '\x4', '\x2', '\x2', 
+		'\x16', '\x18', '\x5', '\x6', '\x4', '\x2', '\x17', '\x15', '\x3', '\x2', 
+		'\x2', '\x2', '\x18', '\x1B', '\x3', '\x2', '\x2', '\x2', '\x19', '\x17', 
+		'\x3', '\x2', '\x2', '\x2', '\x19', '\x1A', '\x3', '\x2', '\x2', '\x2', 
+		'\x1A', '\x5', '\x3', '\x2', '\x2', '\x2', '\x1B', '\x19', '\x3', '\x2', 
+		'\x2', '\x2', '\x1C', '$', '\x5', '\b', '\x5', '\x2', '\x1D', '$', '\x5', 
+		'\n', '\x6', '\x2', '\x1E', ' ', '\a', '\a', '\x2', '\x2', '\x1F', '\x1E', 
+		'\x3', '\x2', '\x2', '\x2', ' ', '!', '\x3', '\x2', '\x2', '\x2', '!', 
+		'\x1F', '\x3', '\x2', '\x2', '\x2', '!', '\"', '\x3', '\x2', '\x2', '\x2', 
+		'\"', '$', '\x3', '\x2', '\x2', '\x2', '#', '\x1C', '\x3', '\x2', '\x2', 
+		'\x2', '#', '\x1D', '\x3', '\x2', '\x2', '\x2', '#', '\x1F', '\x3', '\x2', 
+		'\x2', '\x2', '$', '\a', '\x3', '\x2', '\x2', '\x2', '%', '\'', '\a', 
+		'\a', '\x2', '\x2', '&', '%', '\x3', '\x2', '\x2', '\x2', '&', '\'', '\x3', 
+		'\x2', '\x2', '\x2', '\'', '(', '\x3', '\x2', '\x2', '\x2', '(', '-', 
+		'\a', '\x6', '\x2', '\x2', ')', ',', '\a', '\x6', '\x2', '\x2', '*', ',', 
+		'\a', '\a', '\x2', '\x2', '+', ')', '\x3', '\x2', '\x2', '\x2', '+', '*', 
+		'\x3', '\x2', '\x2', '\x2', ',', '/', '\x3', '\x2', '\x2', '\x2', '-', 
+		'.', '\x3', '\x2', '\x2', '\x2', '-', '+', '\x3', '\x2', '\x2', '\x2', 
+		'.', '\x31', '\x3', '\x2', '\x2', '\x2', '/', '-', '\x3', '\x2', '\x2', 
+		'\x2', '\x30', '\x32', '\a', '\a', '\x2', '\x2', '\x31', '\x30', '\x3', 
+		'\x2', '\x2', '\x2', '\x31', '\x32', '\x3', '\x2', '\x2', '\x2', '\x32', 
+		'\t', '\x3', '\x2', '\x2', '\x2', '\x33', '\x35', '\a', '\a', '\x2', '\x2', 
+		'\x34', '\x33', '\x3', '\x2', '\x2', '\x2', '\x34', '\x35', '\x3', '\x2', 
+		'\x2', '\x2', '\x35', '\x36', '\x3', '\x2', '\x2', '\x2', '\x36', '\x38', 
+		'\a', '\x5', '\x2', '\x2', '\x37', '\x39', '\a', '\a', '\x2', '\x2', '\x38', 
+		'\x37', '\x3', '\x2', '\x2', '\x2', '\x38', '\x39', '\x3', '\x2', '\x2', 
+		'\x2', '\x39', '\v', '\x3', '\x2', '\x2', '\x2', '\f', '\x11', '\x19', 
+		'!', '#', '&', '+', '-', '\x31', '\x34', '\x38',
 	};
 
 	public static readonly ATN _ATN =

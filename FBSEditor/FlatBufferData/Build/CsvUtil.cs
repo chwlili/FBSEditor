@@ -11,10 +11,17 @@ namespace FlatBufferData.Build
     {
         public static object ParseCSV(string filePath, Table type, AttributeTable attributes, ErrorReport errorReport)
         {
+            var csv = attributes.GetAttribute<CSV>();
+
             var csvLexer = new CsvLexer(new AntlrInputStream(File.ReadAllText(filePath)));
             var csvParser = new CsvParser(new CommonTokenStream(csvLexer));
-            var tab = csvParser.csvTab();
 
+            csvLexer.separators = csv.separators;
+            if (string.IsNullOrEmpty(csvLexer.separators))
+                csvLexer.separators = ",";
+
+            var tab = csvParser.csvTab();
+            
             return null;
         }
 

@@ -108,6 +108,7 @@
         public string filePath;
         public int titleRow;
         public int dataBeginRow;
+        public string separators = ",";
 
         public CSV(string filePath)
         {
@@ -123,6 +124,13 @@
             this.filePath = filePath;
             this.titleRow = titleRow;
             this.dataBeginRow = dataBeginRow;
+        }
+        public CSV(string filePath, int titleRow, int dataBeginRow, string separators)
+        {
+            this.filePath = filePath;
+            this.titleRow = titleRow;
+            this.dataBeginRow = dataBeginRow;
+            this.separators = !string.IsNullOrEmpty(separators) ? separators.Replace("\\t", "\t") : ",";
         }
     }
 
