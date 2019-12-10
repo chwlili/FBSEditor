@@ -125,7 +125,7 @@ namespace FlatBufferData.Editor
                         }
                         else if (csv != null)
                         {
-                            CsvUtil.ParseCSV(csv.filePath, file.RootTable, file.RootTable.Attributes, ErrorHandler);
+                            CsvUtil.ParseCSV(csv.filePath, csv, file.RootTable, file.RootTable.Attributes, ErrorHandler);
                         }
                         //new DataReaderFactory(selectedProject.Name, ErrorHandler).ReadData(file.RootTable);
                     }

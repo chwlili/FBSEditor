@@ -240,6 +240,8 @@ public partial class CsvParser : Parser {
 	}
 
 	public partial class CsvColContext : ParserRuleContext {
+		public TxtFieldContext txt;
+		public StrFieldContext str;
 		public TxtFieldContext txtField() {
 			return GetRuleContext<TxtFieldContext>(0);
 		}
@@ -282,13 +284,13 @@ public partial class CsvParser : Parser {
 			case 1:
 				EnterOuterAlt(_localctx, 1);
 				{
-				State = 26; txtField();
+				State = 26; _localctx.txt = txtField();
 				}
 				break;
 			case 2:
 				EnterOuterAlt(_localctx, 2);
 				{
-				State = 27; strField();
+				State = 27; _localctx.str = strField();
 				}
 				break;
 			case 3:

@@ -12,7 +12,7 @@ grammar Csv;
 csvTab : (rows += csvRow (ROWEND|EOF))*;
 
 csvRow : cols += csvCol (COLEND cols += csvCol)*;
-csvCol : txtField | strField | WS+;
+csvCol : txt = txtField | str = strField | WS+;
 txtField : WS? txt+=TEXT (txt+=TEXT|txt+=WS)*?  WS?;
 strField : WS? txt = STRING WS?;
 
@@ -28,5 +28,6 @@ TEXT   :   ~[ ,\r\n]+ {IsSeparator(",")}?
 		 | ~[ ;\r\n]+ {IsSeparator(";")}?
 		 | ~[ \t\r\n]+ {IsSeparator("\t")}?
 		 ;
+
 WS : [ ]+;
 
