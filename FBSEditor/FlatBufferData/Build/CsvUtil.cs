@@ -194,6 +194,7 @@ namespace FlatBufferData.Build
                     }
                     else
                     {
+
                         if (cellData == null || cellData.CellType == CellType.Blank)
                         {
                             if (!isNullable || isUnique)
