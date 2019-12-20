@@ -166,6 +166,52 @@ namespace FlatBufferData.Build
                 }
             }
 
+            //转换数据
+            for (int i = dataBeginRowIndex; i < dataset.Count; i++)
+            {
+                foreach (var field in table.Fields)
+                {
+                    int columnIndex = columnName2ColumnIndex[field.DataField];
+
+                    CsvCol column = dataset[i][columnIndex];
+                    string text = column.text;
+
+                    var isUnique = field.Attributes.GetAttribute<Unique>() != null;
+                    var isNullable = field.Attributes.HasAttribute<Nullable>();
+                    var defaultValue = field.DefaultValue;
+
+                    if (field.IsArray)
+                    {
+                        ParseArrayValue(field.Attributes, field.Type, field.TypeDefined, text);
+                    }
+                    else if (field.TypeDefined is Model.Struct)
+                    {
+
+                    }
+                    else if (field.TypeDefined is Model.Enum)
+                    {
+
+                    }
+                    else
+                    {
+                        if (cellData == null || cellData.CellType == CellType.Blank)
+                        {
+                            if (!isNullable || isUnique)
+                                errors.Add(String.Format("内容不允许为空!"));
+                            else if (isIndex)
+                                errors.Add(String.Format("索引字段不允许为空!"));
+                            else
+                                fieldValue = defaultValue != null ? defaultValue : 0;
+                        }
+                        else if (BaseUtil.IsBaseType(field.Type))
+                            fieldValue = GetScalar(field.Type, cellData, errors);
+                    }
+                }
+            }
+        }
+
+        private static void ParseArrayValue(AttributeTable attributes, string type, object typeDefined, string text)
+        {
 
         }
 
