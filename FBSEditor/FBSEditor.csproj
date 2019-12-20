@@ -253,6 +253,7 @@
     <Compile Include="FlatBufferData\Build\DataReaderFactory.cs" />
     <Compile Include="FlatBufferData\Build\JsonUtil.cs" />
     <Compile Include="FlatBufferData\Build\XLSReader.cs" />
+    <Compile Include="FlatBufferData\Editor\ErrorTracking.cs" />
     <Compile Include="FlatBufferData\Grammar\Csv\CsvBaseListener.cs" />
     <Compile Include="FlatBufferData\Grammar\Csv\CsvBaseVisitor.cs" />
     <Compile Include="FlatBufferData\Grammar\Csv\CsvLexer.cs" />

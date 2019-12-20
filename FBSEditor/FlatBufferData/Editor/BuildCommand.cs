@@ -12,10 +12,12 @@ using System.Text;
 using FlatBufferData.Model.Attributes;
 using FlatBufferData.Build;
 using System.Windows.Forms;
+using static FBSEditor.FlatBufferData.Editor.ErrorTracking;
+using FBSEditor.FlatBufferData.Editor;
 
 namespace FlatBufferData.Editor
 {
-    public sealed class BuildCommand
+    public sealed class BuildCommand : ErrorViewProvider
     {
         public static readonly Guid CommandSet = new Guid("04f51c64-0c0a-412c-818c-57880c441058");
 
@@ -101,8 +103,11 @@ namespace FlatBufferData.Editor
                 var selectedItem = dte.SelectedItems.Item(1).ProjectItem;
                 var selectedProject = selectedItem.ContainingProject;
 
-                errorCount = 0;
-                package.ClearError();
+                var provider = ErrorTracking.Provider;
+
+                ErrorTracking.Provider = this;
+
+                ErrorTracking.ClearError();
 
                 var builder = new FBSProject(selectedProject.Name, GetAllFBSFiles(selectedProject), ErrorHandler);
                 var file = builder.Build(selectedItem.FileNames[0]);
@@ -119,22 +124,18 @@ namespace FlatBufferData.Editor
                             var obj = JsonUtil.ParseJson(json.filePath, file.RootTable, file.RootTable.Attributes, ErrorHandler);
                             foreach (var error in errors)
                             {
-                                errorCount++;
                                 package.AddError(json.filePath, json.filePath, error, 0, 0);
                             }
                         }
                         else if (csv != null)
                         {
-                            CsvUtil.ParseCSV(csv.filePath, csv, file.RootTable, file.RootTable.Attributes, ErrorHandler);
+                            CsvUtil.ParseCSV(csv.filePath, csv, file.RootTable, file.RootTable.Attributes);
                         }
                         //new DataReaderFactory(selectedProject.Name, ErrorHandler).ReadData(file.RootTable);
                     }
                 }
-                else
-                {
-                    package.ShowError();
-                    errorCount = 0;
-                }
+
+                ErrorTracking.Provider = provider;
             }
         }
 
@@ -233,6 +234,29 @@ namespace FlatBufferData.Editor
         }
 
 
+        #region 错误处理
+
+        public void PrintLog(string text)
+        {
+            package.Output(text);
+        }
+
+        public void ClearError()
+        {
+            errorCount = 0;
+            package.ClearError();
+        }
+
+        public void PrintError(string projectFileName, string filePath, string text, int line, int column)
+        {
+            errorCount++;
+            package.AddError(projectFileName, filePath, text, line, column);
+            package.ShowError();
+        }
+
+        #endregion
+
+        #region OLD
         private void ErrorHandler(string projectName, string path, string text, int line, int column)
         {
             errorCount++;
@@ -249,5 +273,6 @@ namespace FlatBufferData.Editor
             errorCount++;
             package.AddError("", path, text, line, column);
         }
+        #endregion
     }
 }

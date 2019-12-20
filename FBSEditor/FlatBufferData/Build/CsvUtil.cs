@@ -1,4 +1,5 @@
 ﻿using Antlr4.Runtime;
+using FBSEditor.FlatBufferData.Editor;
 using FlatBufferData.Model;
 using FlatBufferData.Model.Attributes;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace FlatBufferData.Build
 {
     public class CsvUtil
     {
-        public static object ParseCSV(string filePath, CSV csv, Table type, AttributeTable attributes, ErrorReport errorReport)
+        public static object ParseCSV(string filePath, CSV csv, Table type, AttributeTable attributes)
         {
             var csvLexer = new CsvLexer(new AntlrInputStream(File.ReadAllText(filePath)));
             var csvParser = new CsvParser(new CommonTokenStream(csvLexer));
@@ -22,7 +23,7 @@ namespace FlatBufferData.Build
             var tab = csvParser.csvTab();
             var ast = CreateCsvAST(tab);
 
-            ParseTable(type, ast, csv, errorReport);
+            ParseTable(type, ast, csv);
 
             return null;
         }
@@ -114,27 +115,27 @@ namespace FlatBufferData.Build
 
         #region 解析Table
 
-        private static void ParseTable(Table table, CsvTable dataset, CSV csv, ErrorReport errorReport)
+        private static void ParseTable(Table table, CsvTable dataset, CSV csv)
         {
-            int titleRowIndex = csv.titleRow - 1;
-            int dataBeginRowIndex = csv.dataBeginRow - 1;
+            var titleRowIndex = csv.titleRow - 1;
+            var dataBeginRowIndex = csv.dataBeginRow - 1;
+            var columnName2ColumnIndex = new Dictionary<string, int>();
 
             //验证标题行有效性
             if (titleRowIndex < 0 || titleRowIndex >= dataset.Count)
             {
-                errorReport.Invoke(csv.filePath, "指定的标题行("+csv.titleRow+")超出了数据表的范围!", 0, 0, 0, 0);
+                ErrorTracking.LogCsvError(csv.filePath, titleRowIndex, string.Format("找不到标题行({0})",CsvIndex(titleRowIndex)));
                 return;
             }
 
             //验证数据起始行有效性
             if ((dataBeginRowIndex < 0 || dataBeginRowIndex >= dataset.Count))
             {
-                errorReport.Invoke(csv.filePath, "指定的数据起始行(" + csv.dataBeginRow + ")超出了数据表的范围!", 0, 0, 0, 0);
+                ErrorTracking.LogCsvError(csv.filePath, dataBeginRowIndex, string.Format("找不到数据起始行({0})", CsvIndex(dataBeginRowIndex)));
                 return;
             }
 
-            //收集数据表列名
-            Dictionary<string, int> columnName2ColumnIndex = new Dictionary<string, int>();
+            //检查标题行是否有重复的列名
             CsvRow titleRow = dataset[titleRowIndex];
             for(int i=0;i<titleRow.Count;i++)
             {
@@ -143,17 +144,38 @@ namespace FlatBufferData.Build
                     continue;
 
                 if (columnName2ColumnIndex.ContainsKey(colName))
-                    errorReport.Invoke(csv.filePath, "重复的标题名" + colName + "(" + (titleRowIndex + 1) + "," + (i + 1) + "/" + (titleRowIndex + 1) + "," + (columnName2ColumnIndex[colName] + 1) + ")", 0, 0, 0, 0);
+                    ErrorTracking.LogCsvError(csv.filePath, titleRowIndex, string.Format("标题行({0})名称重复({1})", CsvIndex(titleRowIndex, i), colName));
                 else
                     columnName2ColumnIndex.Add(colName, i);
             }
+
+            //检查标题行是否有有效数据
             if (columnName2ColumnIndex.Count == 0)
             {
-                errorReport.Invoke(csv.filePath, "指定的标题行(" + csv.titleRow + "),没有有效的数据！", 0, 0, 0, 0);
+                ErrorTracking.LogCsvError(csv.filePath, titleRowIndex, string.Format("标题行({0})没有有效的数据！", CsvIndex(dataBeginRowIndex)));
                 return;
             }
 
+            //检测数据表中是否缺少字段
+            foreach (var field in table.Fields)
+            {
+                var fieldName = field.DataField;
+                if(!columnName2ColumnIndex.ContainsKey(fieldName))
+                {
+                    ErrorTracking.LogCsvError(csv.filePath, titleRowIndex, string.Format("标题行{0}缺少名为\"{1}\"的列！", CsvIndex(dataBeginRowIndex), fieldName));
+                }
+            }
 
+
+        }
+
+        private static string CsvIndex(int row)
+        {
+            return (row + 1).ToString();
+        }
+        private static string CsvIndex(int row,int col)
+        {
+            return (row + 1) + "," + (col + 1);
         }
 
         #endregion

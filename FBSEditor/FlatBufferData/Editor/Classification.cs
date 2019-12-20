@@ -297,7 +297,12 @@ namespace FlatBufferData.Editor
         public override int VisitTableField([NotNull] FlatbufferParser.TableFieldContext context)
         {
             MakeClassificationSpan(context.fieldName, classificater.FBSFieldName);
-            MakeClassificationSpan(context.fieldType, classificater.FBSFieldType);
+
+            if (context.fieldType != null)
+                MakeClassificationSpan(context.fieldType, classificater.FBSFieldType);
+            else if (context.arrayType != null)
+                MakeClassificationSpan(context.arrayType.type, classificater.FBSFieldType);
+
             MakeClassificationSpan(context.fieldValue, classificater.FBSFieldValue);
             MakeClassificationSpan(context.fieldArrow, classificater.FBSFieldMap);
             MakeClassificationSpan(context.fieldMap, classificater.FBSFieldMap);
