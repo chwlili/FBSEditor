@@ -64,7 +64,7 @@ public partial class CsvBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, 
 	/// <return>The visitor result.</return>
 	public virtual Result VisitCsvCol([NotNull] CsvParser.CsvColContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CsvParser.txtField"/>.
+	/// Visit a parse tree produced by <see cref="CsvParser.csvEndCol"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -72,9 +72,9 @@ public partial class CsvBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, 
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitTxtField([NotNull] CsvParser.TxtFieldContext context) { return VisitChildren(context); }
+	public virtual Result VisitCsvEndCol([NotNull] CsvParser.CsvEndColContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CsvParser.strField"/>.
+	/// Visit a parse tree produced by <see cref="CsvParser.csvTxt"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -82,5 +82,5 @@ public partial class CsvBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, 
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitStrField([NotNull] CsvParser.StrFieldContext context) { return VisitChildren(context); }
+	public virtual Result VisitCsvTxt([NotNull] CsvParser.CsvTxtContext context) { return VisitChildren(context); }
 }

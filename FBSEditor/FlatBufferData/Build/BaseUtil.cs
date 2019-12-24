@@ -62,7 +62,25 @@ namespace FlatBufferData.Build
             return IsInteger(type) || IsFloat(type) || IsBool(type) || IsString(type);
         }
 
+        /// <summary>
+        /// 获取默认值
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="defaultValue"></param>
+        /// <returns></returns>
+        public static object GetDefaultValue(string type, object defaultValue)
+        {
+            if (defaultValue != null)
+                return defaultValue;
+            if (IsInteger(type) || IsFloat(type))
+                return 0;
+            if (IsBool(type))
+                return false;
+            if (IsString(type))
+                return string.Empty;
 
+            return null;
+        }
 
         /// <summary>
         /// 标量
@@ -75,53 +93,43 @@ namespace FlatBufferData.Build
         {
             if (type.Equals("byte") || type.Equals("int8"))
             {
-                sbyte value = 0;
-                if (sbyte.TryParse(text, out value)) return value;
+                if (sbyte.TryParse(text, out sbyte value)) return value;
             }
             else if (type.Equals("ubyte") || type.Equals("uint8"))
             {
-                byte value = 0;
-                if (byte.TryParse(text, out value)) return value;
+                if (byte.TryParse(text, out byte value)) return value;
             }
             else if (type.Equals("short") || type.Equals("int16"))
             {
-                short value = 0;
-                if (short.TryParse(text, out value)) return value;
+                if (short.TryParse(text, out short value)) return value;
             }
             else if (type.Equals("ushort") || type.Equals("uint16"))
             {
-                ushort value = 0;
-                if (ushort.TryParse(text, out value)) return value;
+                if (ushort.TryParse(text, out ushort value)) return value;
             }
             else if (type.Equals("int") || type.Equals("int32"))
             {
-                int value = 0;
-                if (int.TryParse(text, out value)) return value;
+                if (int.TryParse(text, out int value)) return value;
             }
             else if (type.Equals("uint") || type.Equals("uint32"))
             {
-                uint value = 0;
-                if (uint.TryParse(text, out value)) return value;
+                if (uint.TryParse(text, out uint value)) return value;
             }
             else if (type.Equals("long") || type.Equals("int64"))
             {
-                long value = 0;
-                if (long.TryParse(text, out value)) return value;
+                if (long.TryParse(text, out long value)) return value;
             }
             else if (type.Equals("ulong") || type.Equals("uint64"))
             {
-                ulong value = 0;
-                if (ulong.TryParse(text, out value)) return value;
+                if (ulong.TryParse(text, out ulong value)) return value;
             }
             else if (type.Equals("float") || type.Equals("float32"))
             {
-                float value = 0;
-                if (float.TryParse(text, out value)) return value;
+                if (float.TryParse(text, out float value)) return value;
             }
             else if (type.Equals("double") || type.Equals("double64"))
             {
-                double value = 0;
-                if (double.TryParse(text, out value)) return value;
+                if (double.TryParse(text, out double value)) return value;
             }
             else if (type.Equals("bool"))
             {

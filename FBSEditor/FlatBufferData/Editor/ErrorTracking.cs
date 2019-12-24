@@ -61,9 +61,30 @@ namespace FBSEditor.FlatBufferData.Editor
         {
             if (Provider != null)
             {
-                Provider.PrintError(String.Empty, filePath, text, row + 1, col + 1);
+                Provider.PrintError(String.Empty, filePath, filePath + " <" + CsvIndex(row, col) + "> " + text, row + 1, col + 1);
             }
         }
+        private static string CsvIndex(int row)
+        {
+            return (row + 1).ToString();
+        }
+        private static string CsvIndex(int row, int col)
+        {
+            return (row + 1) + "," + FormatXlsColumnName(col);
+        }
+        /// <summary>
+        /// 格式化Xls的列名
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        private static string FormatXlsColumnName(int index)
+        {
+            if (index < 24)
+                return ((char)('A' + index)).ToString();
+            else
+                return FormatXlsColumnName((int)Math.Floor(index / 24.0f)) + FormatXlsColumnName(index % 24);
+        }
+
 
         public static void Log(string text)
         {

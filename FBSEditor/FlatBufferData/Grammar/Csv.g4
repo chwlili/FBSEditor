@@ -7,27 +7,21 @@ grammar Csv;
 	{
 		return  !string.IsNullOrEmpty(separators) && !string.IsNullOrEmpty(ch) ? separators.Contains(ch):false;
 	}
+	public bool IgnoreSpace = false;
 }
 
-csvTab : (rows += csvRow (ROWEND|EOF))*;
+csvTab    : rows += csvRow*;
+csvRow    : (cols += csvCol)* end = csvEndCol;
+csvCol	  : content = csvTxt? COLEND;
+csvEndCol : content = csvTxt? ROWEND;
+csvTxt    : 
+			{IgnoreSpace}? WS? (txt += STRING | txt += TEXT) WS? | 
+			txt += WS? (txt += STRING | txt += TEXT) txt += WS? |
+			WS;
 
-csvRow : cols += csvCol (COLEND cols += csvCol)*;
-csvCol : txt = txtField | str = strField | WS+;
-txtField : WS? txt+=TEXT (txt+=TEXT|txt+=WS)*?  WS?;
-strField : WS? txt = STRING WS?;
-
+COLEND :   ',';
 ROWEND : '\r'? '\n';
-
-COLEND :   ','{IsSeparator(",")}?
-		 | ';'{IsSeparator(";")}?
-		 | '\t' {IsSeparator("\t")}?;
-
-STRING : '"'( '""'| ~'"')* '"' ;
-
-TEXT   :   ~[ ,\r\n]+ {IsSeparator(",")}?
-		 | ~[ ;\r\n]+ {IsSeparator(";")}?
-		 | ~[ \t\r\n]+ {IsSeparator("\t")}?
-		 ;
-
+STRING : '"'( '""'| ~'"')* '"';
+TEXT   : ~[ ,\r\n]+ (' '+ ~[ ,\r\n]+)*;
 WS : [ ]+;
 

@@ -61,23 +61,23 @@ public interface ICsvListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitCsvCol([NotNull] CsvParser.CsvColContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="CsvParser.txtField"/>.
+	/// Enter a parse tree produced by <see cref="CsvParser.csvEndCol"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterTxtField([NotNull] CsvParser.TxtFieldContext context);
+	void EnterCsvEndCol([NotNull] CsvParser.CsvEndColContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="CsvParser.txtField"/>.
+	/// Exit a parse tree produced by <see cref="CsvParser.csvEndCol"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitTxtField([NotNull] CsvParser.TxtFieldContext context);
+	void ExitCsvEndCol([NotNull] CsvParser.CsvEndColContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="CsvParser.strField"/>.
+	/// Enter a parse tree produced by <see cref="CsvParser.csvTxt"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterStrField([NotNull] CsvParser.StrFieldContext context);
+	void EnterCsvTxt([NotNull] CsvParser.CsvTxtContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="CsvParser.strField"/>.
+	/// Exit a parse tree produced by <see cref="CsvParser.csvTxt"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitStrField([NotNull] CsvParser.StrFieldContext context);
+	void ExitCsvTxt([NotNull] CsvParser.CsvTxtContext context);
 }

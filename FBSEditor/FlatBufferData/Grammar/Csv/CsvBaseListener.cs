@@ -71,29 +71,29 @@ public partial class CsvBaseListener : ICsvListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitCsvCol([NotNull] CsvParser.CsvColContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="CsvParser.txtField"/>.
+	/// Enter a parse tree produced by <see cref="CsvParser.csvEndCol"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterTxtField([NotNull] CsvParser.TxtFieldContext context) { }
+	public virtual void EnterCsvEndCol([NotNull] CsvParser.CsvEndColContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="CsvParser.txtField"/>.
+	/// Exit a parse tree produced by <see cref="CsvParser.csvEndCol"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitTxtField([NotNull] CsvParser.TxtFieldContext context) { }
+	public virtual void ExitCsvEndCol([NotNull] CsvParser.CsvEndColContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="CsvParser.strField"/>.
+	/// Enter a parse tree produced by <see cref="CsvParser.csvTxt"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterStrField([NotNull] CsvParser.StrFieldContext context) { }
+	public virtual void EnterCsvTxt([NotNull] CsvParser.CsvTxtContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="CsvParser.strField"/>.
+	/// Exit a parse tree produced by <see cref="CsvParser.csvTxt"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitStrField([NotNull] CsvParser.StrFieldContext context) { }
+	public virtual void ExitCsvTxt([NotNull] CsvParser.CsvTxtContext context) { }
 
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>

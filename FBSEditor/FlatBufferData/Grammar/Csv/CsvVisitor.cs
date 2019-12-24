@@ -50,15 +50,15 @@ public interface ICsvVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitCsvCol([NotNull] CsvParser.CsvColContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CsvParser.txtField"/>.
+	/// Visit a parse tree produced by <see cref="CsvParser.csvEndCol"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitTxtField([NotNull] CsvParser.TxtFieldContext context);
+	Result VisitCsvEndCol([NotNull] CsvParser.CsvEndColContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CsvParser.strField"/>.
+	/// Visit a parse tree produced by <see cref="CsvParser.csvTxt"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitStrField([NotNull] CsvParser.StrFieldContext context);
+	Result VisitCsvTxt([NotNull] CsvParser.CsvTxtContext context);
 }

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using static CsvParser;
 
 namespace FlatBufferData.Build
 {
@@ -16,6 +17,8 @@ namespace FlatBufferData.Build
             var csvLexer = new CsvLexer(new AntlrInputStream(File.ReadAllText(filePath)));
             var csvParser = new CsvParser(new CommonTokenStream(csvLexer));
 
+            //var tokens = csvLexer.GetAllTokens();
+            //return null;
             csvLexer.separators = csv.separators;
             if (string.IsNullOrEmpty(csvLexer.separators))
                 csvLexer.separators = ",";
@@ -38,50 +41,55 @@ namespace FlatBufferData.Build
         private static CsvTable CreateCsvAST(CsvParser.CsvTabContext parseTree)
         {
             var table = new CsvTable();
+            
             for (int i = 0; i < parseTree._rows.Count; i++)
             {
                 var row = new CsvRow();
 
                 var cols = parseTree._rows[i]._cols;
-                for (int j = 0; j < cols.Count; j++)
+                for (int j = 0; j < cols.Count + 1; j++)
                 {
                     var col = new CsvCol();
 
-                    if (cols[j].txt != null && cols[j].txt._txt != null && cols[j].txt._txt.Count > 0)
+                    ParserRuleContext colField = null;
+                    CsvTxtContext txtField = null;
+
+                    if(j<cols.Count)
                     {
-                        IList<IToken> tokens = cols[j].txt._txt;
+                        colField = cols[j];
+                        txtField = cols[j].content;
+                    }
+                    else
+                    {
+                        colField = parseTree._rows[i].end;
+                        txtField = colField != null ? parseTree._rows[i].end.content : null;
+                    }
+
+                    if (txtField != null && txtField._txt.Count > 0)
+                    {
+                        IList<IToken> tokens = txtField._txt;
+
                         StringBuilder sb = new StringBuilder();
-                        foreach (var token in tokens)
-                        {
-                            sb.Append(token.Text);
-                        }
+                        foreach (var token in tokens) { sb.Append(token.Text); }
+
                         col.text = sb.ToString();
                         col.row = tokens[0].Line;
                         col.col = tokens[0].Column;
                         col.start = tokens[0].StartIndex;
                         col.stop = tokens[tokens.Count - 1].StopIndex;
                     }
-                    else if (cols[j].str != null && cols[j].str.txt != null)
-                    {
-                        IToken token = cols[j].str.txt;
-                        col.text = token.Text.Trim('"');
-                        col.row = token.Line;
-                        col.col = token.Column;
-                        col.start = token.StartIndex;
-                    }
                     else
                     {
-                        col.text = "";
-                        col.row = cols[j].Start.Line;
-                        col.col = cols[j].Start.Column;
-                        col.start = cols[j].Start.StartIndex;
-                        col.stop = cols[j].Stop.StopIndex;
+                        col.text = string.Empty;
+                        col.row = colField.Start.Line;
+                        col.col = colField.Start.Column;
+                        col.start = colField.Start.StartIndex;
+                        col.stop = colField.Stop.StartIndex;
                     }
                     row.Add(col);
                 }
                 table.Add(row);
             }
-
             return table;
         }
 
@@ -166,55 +174,90 @@ namespace FlatBufferData.Build
                 }
             }
 
+            //找出所有带索引的列
+            var indexKeys = new HashSet<string>();
+            foreach (var index in table.Attributes.GetAttributes<Index>())
+            {
+                foreach (var indexKey in index.IndexFields)
+                {
+                    foreach (var field in table.Fields)
+                    {
+                        if (field.Name.Equals(indexKey))
+                            indexKeys.Add(field.DataField);
+                    }
+                }
+            }
+
             //转换数据
             for (int i = dataBeginRowIndex; i < dataset.Count; i++)
             {
                 foreach (var field in table.Fields)
                 {
-                    int columnIndex = columnName2ColumnIndex[field.DataField];
+                    string fieldName = field.DataField;
+                    object fieldValue = null;
+                    object fieldDefaultValue = field.DefaultValue;
 
-                    CsvCol column = dataset[i][columnIndex];
-                    string text = column.text;
-
-                    var isUnique = field.Attributes.GetAttribute<Unique>() != null;
-                    var isNullable = field.Attributes.HasAttribute<Nullable>();
-                    var defaultValue = field.DefaultValue;
-
-                    if (field.IsArray)
+                    if (!columnName2ColumnIndex.ContainsKey(fieldName) 
+                        || (columnName2ColumnIndex[fieldName] < 0 || columnName2ColumnIndex[fieldName] >= dataset[i].Count) )
                     {
-                        ParseArrayValue(field.Attributes, field.Type, field.TypeDefined, text);
-                    }
-                    else if (field.TypeDefined is Model.Struct)
-                    {
-
-                    }
-                    else if (field.TypeDefined is Model.Enum)
-                    {
-
+                        //缺少对应的数据列 | 列索引超出数据行总列数
+                        if (BaseUtil.IsBaseType(field.Type))
+                            fieldValue = BaseUtil.GetDefaultValue(field.Type, fieldDefaultValue);
                     }
                     else
                     {
+                        bool isIndex = indexKeys.Contains(fieldName);
+                        bool isUnique = field.Attributes.GetAttribute<Unique>() != null;
+                        bool isNullable = field.Attributes.HasAttribute<Nullable>();
 
-                        if (cellData == null || cellData.CellType == CellType.Blank)
+                        int columnIndex = columnName2ColumnIndex[fieldName];
+                        CsvCol column = dataset[i][columnIndex];
+                        string columnText = column.text;
+                        bool isEmpty = string.IsNullOrEmpty(columnText);
+
+                        if(BaseUtil.IsBaseType(field.Type))
                         {
-                            if (!isNullable || isUnique)
-                                errors.Add(String.Format("内容不允许为空!"));
-                            else if (isIndex)
-                                errors.Add(String.Format("索引字段不允许为空!"));
+                            if (field.IsArray)
+                            {
+
+                            }
                             else
-                                fieldValue = defaultValue != null ? defaultValue : 0;
+                            {
+                                object scalarValue = null;
+
+                                if (isEmpty)
+                                {
+                                    if (!isNullable)
+                                        ErrorTracking.LogCsvError(csv.filePath, i, columnIndex, string.Format("列{0}不允许为空!", fieldName));
+                                    if (isUnique)
+                                        ErrorTracking.LogCsvError(csv.filePath, i, columnIndex, string.Format("列{0}有唯一性约束，不允许为空！", fieldName));
+                                    if (isIndex)
+                                        ErrorTracking.LogCsvError(csv.filePath, i, columnIndex, string.Format("列{0}有索引，不允许为空！", fieldName));
+
+                                    scalarValue = BaseUtil.GetDefaultValue(field.Type, fieldDefaultValue);
+                                }
+                                else
+                                {
+                                    scalarValue = BaseUtil.GetScalar(field.Type, columnText);
+
+                                    if (scalarValue == null)
+                                        ErrorTracking.LogCsvError(csv.filePath, i, columnIndex, string.Format("'{0}'无法转换成一个'{1}'", columnText, field.Type));
+                                }
+                            }
                         }
-                        else if (BaseUtil.IsBaseType(field.Type))
-                            fieldValue = GetScalar(field.Type, cellData, errors);
+                        else if(field.TypeDefined is Model.Struct)
+                        {
+
+                        }
+                        else if(field.TypeDefined is Model.Enum)
+                        {
+
+                        }
                     }
                 }
             }
         }
 
-        private static void ParseArrayValue(AttributeTable attributes, string type, object typeDefined, string text)
-        {
-
-        }
 
         private static string CsvIndex(int row)
         {
