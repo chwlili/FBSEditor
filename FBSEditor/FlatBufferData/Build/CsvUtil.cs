@@ -19,9 +19,12 @@ namespace FlatBufferData.Build
 
             //var tokens = csvLexer.GetAllTokens();
             //return null;
-            csvLexer.separators = csv.separators;
-            if (string.IsNullOrEmpty(csvLexer.separators))
-                csvLexer.separators = ",";
+            //csvLexer.separators = csv.separators;
+            //if (string.IsNullOrEmpty(csvLexer.separators))
+            //    csvLexer.separators = ",";
+
+            csvLexer.IgnoreSpace = true;
+            csvParser.IgnoreSpace = true;
 
             var tab = csvParser.csvTab();
             var ast = CreateCsvAST(tab);
@@ -152,7 +155,7 @@ namespace FlatBufferData.Build
                     continue;
 
                 if (columnName2ColumnIndex.ContainsKey(colName))
-                    ErrorTracking.LogCsvError(csv.filePath, titleRowIndex, string.Format("标题行({0})名称重复({1})", CsvIndex(titleRowIndex, i), colName));
+                    ErrorTracking.LogCsvError(csv.filePath, titleRowIndex, i, string.Format("标题行有重复列名:{0}", colName));
                 else
                     columnName2ColumnIndex.Add(colName, i);
             }
@@ -160,7 +163,7 @@ namespace FlatBufferData.Build
             //检查标题行是否有有效数据
             if (columnName2ColumnIndex.Count == 0)
             {
-                ErrorTracking.LogCsvError(csv.filePath, titleRowIndex, string.Format("标题行({0})没有有效的数据！", CsvIndex(dataBeginRowIndex)));
+                ErrorTracking.LogCsvError(csv.filePath, titleRowIndex, -1, "标题行没有有效的数据！");
                 return;
             }
 

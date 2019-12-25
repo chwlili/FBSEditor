@@ -70,7 +70,7 @@ namespace FBSEditor.FlatBufferData.Editor
         }
         private static string CsvIndex(int row, int col)
         {
-            return (row + 1) + "," + FormatXlsColumnName(col);
+            return (row + 1) + "," + (col == -1 ? "?" : FormatXlsColumnName(col));
         }
         /// <summary>
         /// 格式化Xls的列名
