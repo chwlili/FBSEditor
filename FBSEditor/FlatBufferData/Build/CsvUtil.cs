@@ -27,7 +27,7 @@ namespace FlatBufferData.Build
             csvParser.IgnoreSpace = true;
 
             var tab = csvParser.csvTab();
-            var ast = CreateCsvAST(tab);
+            var ast = CreateCsvAST(filePath, tab);
 
             ParseTable(type, ast, csv);
 
@@ -41,14 +41,16 @@ namespace FlatBufferData.Build
         /// </summary>
         /// <param name="parseTree">解析树</param>
         /// <returns>CSV结构</returns>
-        private static CsvTable CreateCsvAST(CsvParser.CsvTabContext parseTree)
+        private static CsvTable CreateCsvAST(string filePath, CsvParser.CsvTabContext parseTree)
         {
             var table = new CsvTable();
             
             for (int i = 0; i < parseTree._rows.Count; i++)
             {
                 var row = new CsvRow();
+                row.isEmpty = false;
 
+                var emptyCount = 0;
                 var cols = parseTree._rows[i]._cols;
                 for (int j = 0; j < cols.Count + 1; j++)
                 {
@@ -90,7 +92,12 @@ namespace FlatBufferData.Build
                         col.stop = colField.Stop.StartIndex;
                     }
                     row.Add(col);
+
+                    if (string.IsNullOrEmpty(col.text))
+                        emptyCount++;
                 }
+
+                row.isEmpty = emptyCount == row.Count;
                 table.Add(row);
             }
             return table;
@@ -108,6 +115,7 @@ namespace FlatBufferData.Build
         /// </summary>
         private class CsvRow :List<CsvCol>
         {
+            public bool isEmpty;
         }
 
         /// <summary>
@@ -135,14 +143,14 @@ namespace FlatBufferData.Build
             //验证标题行有效性
             if (titleRowIndex < 0 || titleRowIndex >= dataset.Count)
             {
-                ErrorTracking.LogCsvError(csv.filePath, titleRowIndex, string.Format("找不到标题行({0})",CsvIndex(titleRowIndex)));
+                LogError(csv.filePath, titleRowIndex, -1, "标题行不存在！");
                 return;
             }
 
             //验证数据起始行有效性
             if ((dataBeginRowIndex < 0 || dataBeginRowIndex >= dataset.Count))
             {
-                ErrorTracking.LogCsvError(csv.filePath, dataBeginRowIndex, string.Format("找不到数据起始行({0})", CsvIndex(dataBeginRowIndex)));
+                LogError(csv.filePath, dataBeginRowIndex, -1, "数据起始行不存在！");
                 return;
             }
 
@@ -155,7 +163,7 @@ namespace FlatBufferData.Build
                     continue;
 
                 if (columnName2ColumnIndex.ContainsKey(colName))
-                    ErrorTracking.LogCsvError(csv.filePath, titleRowIndex, i, string.Format("标题行有重复列名:{0}", colName));
+                    LogError(csv.filePath, titleRowIndex, i, string.Format("标题行有重复列名:{0}！", colName));
                 else
                     columnName2ColumnIndex.Add(colName, i);
             }
@@ -163,7 +171,7 @@ namespace FlatBufferData.Build
             //检查标题行是否有有效数据
             if (columnName2ColumnIndex.Count == 0)
             {
-                ErrorTracking.LogCsvError(csv.filePath, titleRowIndex, -1, "标题行没有有效的数据！");
+                LogError(csv.filePath, titleRowIndex, -1, "标题行没有有效的数据！");
                 return;
             }
 
@@ -172,9 +180,7 @@ namespace FlatBufferData.Build
             {
                 var fieldName = field.DataField;
                 if(!columnName2ColumnIndex.ContainsKey(fieldName))
-                {
-                    ErrorTracking.LogCsvError(csv.filePath, titleRowIndex, string.Format("标题行{0}缺少名为\"{1}\"的列！", CsvIndex(dataBeginRowIndex), fieldName));
-                }
+                    LogError(csv.filePath, titleRowIndex,-1, string.Format("标题行缺少名为\"{0}\"的列！", fieldName));
             }
 
             //找出所有带索引的列
@@ -194,6 +200,13 @@ namespace FlatBufferData.Build
             //转换数据
             for (int i = dataBeginRowIndex; i < dataset.Count; i++)
             {
+                //忽略空行
+                if (dataset[i].isEmpty)
+                {
+                    LogWarning(csv.filePath, i, -1, "整行内容为空，忽略！");
+                    continue;
+                }
+
                 foreach (var field in table.Fields)
                 {
                     string fieldName = field.DataField;
@@ -231,11 +244,11 @@ namespace FlatBufferData.Build
                                 if (isEmpty)
                                 {
                                     if (!isNullable)
-                                        ErrorTracking.LogCsvError(csv.filePath, i, columnIndex, string.Format("列{0}不允许为空!", fieldName));
+                                        LogError(csv.filePath, i, columnIndex, string.Format("列{0}不允许为空！", fieldName));
                                     if (isUnique)
-                                        ErrorTracking.LogCsvError(csv.filePath, i, columnIndex, string.Format("列{0}有唯一性约束，不允许为空！", fieldName));
+                                        LogError(csv.filePath, i, columnIndex, string.Format("列{0}有唯一性约束，不允许为空！", fieldName));
                                     if (isIndex)
-                                        ErrorTracking.LogCsvError(csv.filePath, i, columnIndex, string.Format("列{0}有索引，不允许为空！", fieldName));
+                                        LogError(csv.filePath, i, columnIndex, string.Format("列{0}有索引，不允许为空！", fieldName));
 
                                     scalarValue = BaseUtil.GetDefaultValue(field.Type, fieldDefaultValue);
                                 }
@@ -244,7 +257,7 @@ namespace FlatBufferData.Build
                                     scalarValue = BaseUtil.GetScalar(field.Type, columnText);
 
                                     if (scalarValue == null)
-                                        ErrorTracking.LogCsvError(csv.filePath, i, columnIndex, string.Format("'{0}'无法转换成一个'{1}'", columnText, field.Type));
+                                        LogError(csv.filePath, i, columnIndex, string.Format("'{0}'无法转换成一个'{1}'！", columnText, field.Type));
                                 }
                             }
                         }
@@ -261,14 +274,83 @@ namespace FlatBufferData.Build
             }
         }
 
+        /// <summary>
+        /// 解析常量数组
+        /// </summary>
+        /// <param name="json"></param>
+        /// <param name="type"></param>
+        private object ParseScalarArray(string json, string type)
+        {
+            var jsonLexer = new JsonLexer(new AntlrInputStream(json));
+            var jsonParser = new JsonParser(new CommonTokenStream(jsonLexer));
 
-        private static string CsvIndex(int row)
+            var jsonValue = jsonParser.jsonValue();
+            if (jsonValue == null)
+            {
+                ErrorTracking.LogError("", "无法解析成一个Json.", 0, 0);
+                return null;
+            }
+
+            if (jsonValue.arraryValue != null)
+            {
+                foreach (var element in jsonValue.arraryValue._arrayElement)
+                {
+
+                }
+            }
+
+            return null;
+        }
+
+        private void ParseScalarValue()
+        {
+
+        }
+
+        #endregion
+
+        #region 错误处理部分
+
+        /// <summary>
+        /// 记录错误
+        /// </summary>
+        public static void LogError(string filePath, int row, int col, string text)
+        {
+            ErrorTracking.LogError(filePath, filePath + " <" + FormatIndex(row, col) + "> " + text, -1, -1);
+        }
+        /// <summary>
+        /// 记录警告
+        /// </summary>
+        public static void LogWarning(string filePath, int row, int col, string text)
+        {
+            ErrorTracking.LogWarning(filePath, filePath + " <" + FormatIndex(row, col) + "> " + text, -1, -1);
+        }
+
+        /// <summary>
+        /// 格式化索引
+        /// </summary>
+        private static string FormatIndex(int row)
         {
             return (row + 1).ToString();
         }
-        private static string CsvIndex(int row,int col)
+
+        /// <summary>
+        /// 格式化索引
+        /// </summary>
+        private static string FormatIndex(int row, int col)
         {
-            return (row + 1) + "," + (col + 1);
+            return (row + 1) + "," + (col == -1 ? "*" : FormatColumnName(col));
+        }
+
+        /// <summary>
+        /// 格式化列名
+        /// </summary>
+        private static string FormatColumnName(int colIndex)
+        {
+            if (colIndex < 24)
+                return ((char)('A' + colIndex)).ToString();
+            else
+                return FormatColumnName((int)System.Math.Floor(colIndex / 24.0f)) + FormatColumnName(colIndex % 24);
         }
 
         #endregion

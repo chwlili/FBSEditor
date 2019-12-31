@@ -48,6 +48,20 @@ namespace FBSEditor.FlatBufferData.Editor
                 Provider.PrintError(String.Empty, filePath, text, line, column);
             }
         }
+        public static void LogWarning(string projectFileName, string filePath, string text, int line, int column)
+        {
+            if (Provider != null)
+            {
+                Provider.PrintWarning(projectFileName, filePath, text, line, column);
+            }
+        }
+        public static void LogWarning(string filePath, string text, int line, int column)
+        {
+            if (Provider != null)
+            {
+                Provider.PrintWarning(String.Empty, filePath, text, line, column);
+            }
+        }
 
         public static void LogCsvError(string filePath, int row, string text)
         {
@@ -56,12 +70,18 @@ namespace FBSEditor.FlatBufferData.Editor
                 Provider.PrintError(String.Empty, filePath, text, row + 1, 0);
             }
         }
-
         public static void LogCsvError(string filePath, int row, int col, string text)
         {
             if (Provider != null)
             {
                 Provider.PrintError(String.Empty, filePath, filePath + " <" + CsvIndex(row, col) + "> " + text, row + 1, col + 1);
+            }
+        }
+        public static void LogCsvWarning(string filePath, int row, int col, string text)
+        {
+            if (Provider != null)
+            {
+                Provider.PrintWarning(String.Empty, filePath, filePath + " <" + CsvIndex(row, col) + "> " + text, row + 1, col + 1);
             }
         }
         private static string CsvIndex(int row)
@@ -102,6 +122,7 @@ namespace FBSEditor.FlatBufferData.Editor
             void ClearError();
 
             void PrintError(string projectFileName, string filePath, string text, int line, int column);
+            void PrintWarning(string projectFileName, string filePath, string text, int line, int column);
         }
 
         private struct ErrorScope

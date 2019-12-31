@@ -59,7 +59,15 @@ namespace FBSEditor
             ErrorList.Tasks.Clear();
         }
 
-        public void AddError(string projectFileName,string filePath,string text,int line,int column)
+        public void AddError(string projectFileName, string filePath, string text, int line, int column)
+        {
+            AddError(TaskErrorCategory.Error, projectFileName, filePath, text, line, column);
+        }
+        public void AddWarning(string projectFileName, string filePath, string text, int line, int column)
+        {
+            AddError(TaskErrorCategory.Warning, projectFileName, filePath, text, line, column);
+        }
+        private void AddError(TaskErrorCategory category, string projectFileName,string filePath,string text,int line,int column)
         {
             var ivsSolution = (IVsSolution)Package.GetGlobalService(typeof(IVsSolution));
             IVsHierarchy hierarchyItem;
@@ -69,7 +77,7 @@ namespace FBSEditor
             error.Line = line - 1;
             error.Column = column;
             error.Text = text;
-            error.ErrorCategory = TaskErrorCategory.Error;
+            error.ErrorCategory = category;
             error.Category = TaskCategory.BuildCompile;
             error.Document = filePath;
             error.HierarchyItem = hierarchyItem;

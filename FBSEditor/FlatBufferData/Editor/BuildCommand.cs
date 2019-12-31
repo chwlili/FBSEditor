@@ -254,6 +254,13 @@ namespace FlatBufferData.Editor
             package.ShowError();
         }
 
+        public void PrintWarning(string projectFileName, string filePath, string text, int line, int column)
+        {
+            errorCount++;
+            package.AddWarning(projectFileName, filePath, text, line, column);
+            package.ShowError();
+        }
+
         #endregion
 
         #region OLD
